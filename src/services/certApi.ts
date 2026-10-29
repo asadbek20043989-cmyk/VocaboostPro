@@ -2,7 +2,7 @@
 import { getTelegramWebApp } from './telegram';
 import { Certificate } from '../types';
 
-const URL_BASE = '/.netlify/functions/cert';
+const URL_BASE = '/api/fn/cert';
 
 /** Ommaviy tekshirish (QR kod shu orqali sertifikatni topadi) */
 export async function fetchCertificate(id: string): Promise<Certificate | null> {

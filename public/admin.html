@@ -73,8 +73,6 @@
     <div class="tabs" id="tabs">
       <button data-t="stats" class="on">📊 Umumiy</button>
       <button data-t="words">📖 So'zlar</button>
-      <button data-t="shop">🛒 Do'kon</button>
-      <button data-t="referral">👥 Takliflar</button>
       <button data-t="plan">🗓 Kunlik reja</button>
       <button data-t="packs">📅 Bugungi mashqlar</button>
       <button data-t="chal">🏁 Chellenjlar</button>
@@ -87,6 +85,8 @@
       <button data-t="league">🏆 Liga</button>
       <button data-t="inbox">✉️ Xabarlar <span id="inboxBadge" class="tag d" style="display:none"></span></button>
       <button data-t="certs">🎓 Sertifikat</button>
+      <button data-t="shop">🛒 Do'kon</button>
+      <button data-t="refs">📣 Taklif</button>
       <button data-t="settings">⚙️ Sozlamalar</button>
     </div>
 
@@ -129,175 +129,6 @@
         <p class="small">Har bir qator — bitta so'z. Ustunlar tartibi (Tab bilan ajratilgan, Sheets'dan nusxalaganda avtomatik): <b>en, uz, ipa, pos, ex, exUz, col (| bilan), hook, topic, level (A1/A2/B1/B2+), order</b>. Barcha so'zlar bir xil — eng muhim so'zlar sifatida qaraladi (muloqot/IELTS bo'linmaydi). Faqat birinchi ikkitasi majburiy. Bir marta ko'pi bilan 300 qator.</p>
         <textarea id="bulk" style="min-height:140px" placeholder="afford&#9;xarajatini ko'tara olmoq&#9;/əˈfɔːd/&#9;verb&#9;I can not afford a car.&#9;Men mashina ololmayman.&#9;can afford to&#9;A-FORD: Ford ...&#9;Pul&#9;B1&#9;101"></textarea>
         <div class="row" style="margin-top:8px"><button id="bulkBtn">Yuklash</button><span class="small" id="bulkInfo"></span></div>
-      </div>
-    </section>
-
-    <section id="t-shop" class="hide">
-      <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <h2>🛒 Do'kon mahsulotlari boshqaruvi <span class="small" id="shopItemCount"></span></h2>
-          <div class="row">
-            <button id="shopNewBtn">+ Yangi mahsulot qo'shish</button>
-            <button class="sec" id="shopResetBtn">Standart to'plamni qaytarish</button>
-          </div>
-        </div>
-        <p class="small">Foydalanuvchilar ilovadagi yangi «Do'kon» bo'limida tanga yoki XP sarflab mahsulot xarid qilishadi. Xarid qilingan zahoti ularga kuchaytirgichlar, ramkalar, VIP va unvonlar beriladi. Barcha mahsulotlar narxi va chegirmasini shu yerdan nazorat qilishingiz mumkin.</p>
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr><th>Tartib</th><th>Ikonka/Rasm</th><th>Nomi</th><th>Kategoriya</th><th>Narx (Tanga)</th><th>Chegirma</th><th>Neon</th><th>Yorliq</th><th>Holat</th><th>Amallar</th></tr>
-            </thead>
-            <tbody id="shopTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card hide" id="shopItemEditor">
-        <h2 id="shopEdTitle">Mahsulotni tahrirlash</h2>
-        <div class="f3">
-          <div><label>ID *</label><input id="sh_id" placeholder="item_id" /></div>
-          <div><label>Nomi *</label><input id="sh_name" placeholder="2x XP (1 soat)" /></div>
-          <div><label>Kategoriya</label>
-            <select id="sh_category">
-              <option value="booster">Kuchaytirgichlar (Boosters)</option>
-              <option value="cosmetic">Kosmetika (Ramkalar, Avatarlar, Unvonlar)</option>
-              <option value="special">Maxsus (VIP, Baraban, Quti, Stars)</option>
-              <option value="content">Kontent (Kitoblar, So'zlar, Lo-Fi)</option>
-            </select>
-          </div>
-          <div><label>Turi (Type)</label><input id="sh_type" placeholder="double_xp_1h / frame / vip / ..." /></div>
-          <div><label>Tartibi (Ilovada joylashuv o'rni)</label><input id="sh_order" type="number" min="1" value="10" /></div>
-          <div><label>Neon Ramka Aurasining Rangi</label><input id="sh_neonColor" type="color" value="#f59e0b" style="height:38px;padding:2px" /></div>
-          <div><label>Maxsus Yorliq (Badge: HOT, NEW, TOP, VIP...)</label><input id="sh_badgeTag" placeholder="HOT, NEW, TOP..." /></div>
-          <div><label>Ikonka (Emoji yoki URL)</label><input id="sh_icon" placeholder="⚡ yoki https://..." /></div>
-          <div><label>Rasm / Banner URL (Ixtiyoriy)</label><input id="sh_image" placeholder="https://..." /></div>
-          <div><label>Narx (Tangalarda)</label><input id="sh_priceCoins" type="number" min="0" value="100" /></div>
-          <div><label>Narx (XP da, ixtiyoriy)</label><input id="sh_priceXp" type="number" min="0" placeholder="0" /></div>
-          <div><label>Chegirma (%)</label><input id="sh_discount" type="number" min="0" max="90" value="0" /></div>
-        </div>
-        <label>Tavsifi (O'zbekcha)</label>
-        <textarea id="sh_desc" placeholder="Mahsulot haqida qisqacha ma'lumot..."></textarea>
-        <div class="row" style="margin-top:10px">
-          <label class="chk"><input type="checkbox" id="sh_active" checked /> Faol (Do'konda ko'rinadi)</label>
-          <label class="chk"><input type="checkbox" id="sh_badgeHot" /> HOT belgisi</label>
-          <label class="chk"><input type="checkbox" id="sh_badgeNew" /> NEW belgisi</label>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <button id="shopSaveItemBtn">Saqlash ✅</button>
-          <button class="sec" id="shopCancelItemBtn">Bekor qilish</button>
-        </div>
-      </div>
-
-      <!-- Foydalanuvchiga tanga berish (Admin Tanga granti) -->
-      <div class="card">
-        <h2>🪙 Foydalanuvchiga tanga berish (Grant Coins)</h2>
-        <p class="small">Admin istalgan foydalanuvchiga istalganicha tanga (coin) taqdim etishi mumkin. Tanga berilishi bilan foydalanuvchining hisobiga bir necha soniyada yetib boradi.</p>
-        <div class="f3">
-          <div><label>Foydalanuvchi ID</label><input id="sh_grantUser" placeholder="u_12345678 yoki tg_..." /></div>
-          <div><label>Tanga miqdori</label><input id="sh_grantAmt" type="number" min="1" value="100" /></div>
-          <div><label>Sabab / Izoh (ixtiyoriy)</label><input id="sh_grantReason" placeholder="Faollik uchun sovg'a" /></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button id="sh_grantBtn">Tangalarni yuborish 🪙</button>
-        </div>
-      </div>
-
-      <!-- Inglizcha TOP Kitoblar boshqaruvi -->
-      <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <h2>📚 Inglizcha TOP Kitoblar boshqaruvi <span class="small" id="bookCount"></span></h2>
-          <button class="sec" id="bookNewBtn">+ Yangi kitob qo'shish</button>
-        </div>
-        <p class="small">Do'konda o'quvchilar xarid qilishi mumkin bo'lgan inglizcha badiiy va motivatsion kitoblar to'plami.</p>
-        <div class="scroll">
-          <table>
-            <thead><tr><th>Muqova</th><th>Kitob nomi</th><th>Muallif</th><th>Daraja</th><th>Sahifalar</th><th>Amallar</th></tr></thead>
-            <tbody id="booksTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Lo-Fi musiqa boshqaruvi -->
-      <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <h2>🎧 Lo-Fi Music for Studying boshqaruvi <span class="small" id="lofiCount"></span></h2>
-          <button class="sec" id="lofiNewBtn">+ Yangi trek qo'shish</button>
-        </div>
-        <p class="small">O'quvchilar so'z o'rganayotganda fon rejimida eshitishi mumkin bo'lgan Lo-Fi musiqalar. Admin audio fayl URL manzillarini yangilashi mumkin.</p>
-        <div class="scroll">
-          <table>
-            <thead><tr><th>Nomi</th><th>Muallif</th><th>Davomiyligi</th><th>Audio havola</th><th>Amallar</th></tr></thead>
-            <tbody id="lofiTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section id="t-referral" class="hide">
-      <div class="card">
-        <h2>👥 Do'stlarni taklif qilish (Referral tizimi) sozlamalari</h2>
-        <p class="small">Har bir o'quvchiga alohida maxsus link beriladi. O'sha link orqali botga start bosgan har bir do'st uchun taklif qilgan odamga XP va tanga beriladi hamda bot orqali unga darhol xabar boradi.</p>
-        <div class="f3">
-          <div><label>Har bir taklif uchun XP mukofoti *</label><input id="rf_rewardXp" type="number" min="0" value="50" /></div>
-          <div><label>Har bir taklif uchun Tanga mukofoti *</label><input id="rf_rewardCoins" type="number" min="0" value="30" /></div>
-        </div>
-        <label>Do'stni taklif qilish reklama matni (foydalanuvchi linkini do'stiga ulashganda yuboriladigan matn) *</label>
-        <textarea id="rf_inviteText" style="min-height:90px" placeholder="Salom! Men VocaBoost orqali ingliz tili so'zlarini o'rganyapman. Siz ham qo'shiling va birga o'rganaylik:"></textarea>
-        <div class="row" style="margin-top:10px">
-          <button id="rf_saveConfigBtn">Sozlamalarni saqlash ✅</button>
-        </div>
-      </div>
-
-      <!-- Targ'ibotchilarga maxsus sovg'alar yuborish -->
-      <div class="card">
-        <h2>🎁 Targ'ibotchilarga maxsus sovg'alar yuborish</h2>
-        <p class="small">Aynan do'stini taklif qilgan o'quvchilarga (yoki ularning barchasiga birvarakay) admin panelidan turib maxsus sovg'alar (Tangalar, XP, Baraban aylantirish, VIP) yuborishingiz mumkin.</p>
-        <div class="f3">
-          <div>
-            <label>Kimga yuborilsin?</label>
-            <select id="rf_giftTarget">
-              <option value="all_referrers">👥 Barcha do'stini taklif qilganlarga (Targ'ibotchilar)</option>
-              <option value="specific">Alohida bitta foydalanuvchiga</option>
-            </select>
-          </div>
-          <div id="rf_giftUserBox" style="display:none">
-            <label>Foydalanuvchi ID</label>
-            <input id="rf_giftUser" placeholder="u_12345678 yoki tg_..." />
-          </div>
-          <div>
-            <label>Sovg'a turi</label>
-            <select id="rf_giftType">
-              <option value="coins">🪙 Tangalar (Coins)</option>
-              <option value="xp">💎 XP ballari</option>
-              <option value="spins">🎡 Baraban aylantirish</option>
-              <option value="vip">👑 VIP maqomi (soat)</option>
-            </select>
-          </div>
-          <div>
-            <label>Miqdor</label>
-            <input id="rf_giftAmt" type="number" min="1" value="50" />
-          </div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button id="rf_sendGiftBtn">Sovg'ani yuborish 🎁</button>
-        </div>
-      </div>
-
-      <!-- Targ'ibotchilar reytingi jadvali -->
-      <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <h2>🏆 Targ'ibotchilar reytingi <span class="small" id="refUserCount"></span></h2>
-          <input id="rf_search" placeholder="Ism yoki ID bo'yicha qidirish..." style="max-width:240px" />
-        </div>
-        <p class="small">Kim nechta do'stini taklif qilganiga qarab tuzilgan reyting jadvali.</p>
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr><th>#</th><th>Foydalanuvchi</th><th>Taklif qilgan do'stlari</th><th>Olingan XP</th><th>Olingan tangalar</th><th>Jami XP</th><th>Amallar</th></tr>
-            </thead>
-            <tbody id="refTableBody"></tbody>
-          </table>
-        </div>
       </div>
     </section>
 
@@ -511,19 +342,6 @@
           <div><label>3-tugma URL havolasi</label><input id="ad_b3_u" placeholder="https://t.me/menejer" /></div>
         </div>
 
-        <div style="margin-top:14px;padding:12px;background:#0E1524;border:1px solid #223048;border-radius:12px">
-          <label class="chk" style="font-weight:bold;color:#38bdf8">
-            <input type="checkbox" id="ad_include_ref" /> 👥 Har bir foydalanuvchining o'z taklif linki bilan tugma qo'shish (Referral promo)
-          </label>
-          <div id="ad_ref_options" style="margin-top:8px;display:none">
-            <label>Referral tugmasi matni</label>
-            <input id="ad_ref_btn_text" value="👥 Do'stimni taklif qilish" />
-            <p class="small" style="margin-top:4px;color:#94a3b8">
-              Xabar matnida <code>{ref_link}</code> tegini ishlatsangiz, u har bir foydalanuvchining shaxsiy taklif URL-havolasiga avtomatik aylanadi. Shuningdek xabar ostidagi ushbu tugma orqali do'stlariga bir bosishda ulasha oladi.
-            </p>
-          </div>
-        </div>
-
         <!-- Live Telegram Preview Box -->
         <h3 style="margin:20px 0 6px;font-size:14px">📱 Xabarning Telegramdagi ko'rinishi (Live Preview):</h3>
         <div style="max-width:380px;background:#18222d;border:1px solid #283747;border-radius:18px;padding:12px;margin:10px 0">
@@ -546,7 +364,7 @@
         <h2>🗓 Haftalik ligani yangilash <span class="small" id="lgWeek"></span></h2>
         <p class="small">«Yangi hafta» bosilganda: <b>1)</b> TOP-20 ning to'plagan XP si <b>Tarix zali</b>ga o'zgarmas qilib yoziladi (keyin hech kim o'zgartira olmaydi); <b>2)</b> hamma foydalanuvchining liga XP si 0 ga tushadi; <b>3)</b> yangi hafta boshlanadi. Streak, so'zlar va sertifikatlar o'zgarmaydi.</p>
         <label class="chk"><input type="checkbox" id="lgSpins" checked> 🎁 TOP-3 ga baraban aylantirishlari sovg'a qilinsin (1-o'rin: 5, 2-o'rin: 3, 3-o'rin: 2 ta, 3 kun ichida ishlatish)</label>
-        <label class="chk"><input type="checkbox" id="lgCert"> 🏆 1-o'ringa «Chempion» sertifikati berilsin</label>
+        <label class="chk"><input type="checkbox" id="lgCert" checked> 🏆 1-o'ringa «N-HAFTA CHEMPIONI» sertifikati berilsin (har hafta avtomatik)</label>
         <div class="row"><select id="lgCertFmt" style="max-width:260px"><option value="story">📱 Sertifikat 9:16</option><option value="wide">🖥 Sertifikat 16:9</option></select><button class="bad" id="resetLeague">🔄 Yangi hafta (hammaning XP si 0 dan)</button></div>
       </div>
       <div class="card">
@@ -612,6 +430,92 @@
       </div>
     </section>
 
+
+    <section id="t-shop" class="hide">
+      <div class="card">
+        <h2>🪙 Tanga sozlamalari</h2>
+        <div class="grid">
+          <div><label>Do'kon</label><select id="sh_on"><option value="1">Yoqilgan</option><option value="0">O'chirilgan</option></select></div>
+          <div><label>1 XP = necha tanga</label><input id="sh_rate" type="number" step="0.1" min="0" /></div>
+          <div><label>Yangi foydalanuvchiga boshlang'ich tanga</label><input id="sh_start" type="number" min="0" /></div>
+          <div><label>7 kunlik streak bonusi (tanga)</label><input id="sh_s7" type="number" min="0" /></div>
+          <div><label>30 kunlik streak bonusi (tanga)</label><input id="sh_s30" type="number" min="0" /></div>
+          <div><label>Barcha kunlik missiyalar bonusi (tanga)</label><input id="sh_q" type="number" min="0" /></div>
+          <div><label>Buyurtma xabari uchun admin Telegram ID</label><input id="sh_chat" placeholder="123456789" /></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📦 Mahsulotlar <span class="small" id="shCount"></span></h2>
+        <p class="small">Narx, chegirma, nom, tavsif, rasm havolasi, yoqish/o'chirish. «Rasm» bo'sh bo'lsa mahsulot rangli belgi bilan ko'rinadi. <b>Saqlash</b> bosilganda hammasi foydalanuvchilarga bir necha soniyada yetadi.</p>
+        <div class="scroll" style="max-height:640px"><table><thead><tr><th>Mahsulot</th><th>Narx</th><th>Chegirma %</th><th>Kuniga</th><th>Rasm havolasi</th><th>Faol</th><th></th></tr></thead><tbody id="shBody"></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button class="sec" id="shAdd">➕ Yangi mahsulot (qo'lda beriladigan)</button></div>
+      </div>
+      <div class="card">
+        <h2>🧠 Premium so'zlar to'plami</h2>
+        <p class="small">Har qator: <code>inglizcha | o'zbekcha | misol | misol tarjimasi</code>. Bo'sh qoldirilsa standart 30 ta so'z ishlatiladi.</p>
+        <textarea id="sh_prem" style="min-height:160px" placeholder="ubiquitous | hamma joyda uchraydigan | Smartphones are ubiquitous. | Smartfonlar hamma joyda."></textarea>
+        <h2 style="margin-top:14px">📚 Inglizcha TOP kitoblar</h2>
+        <p class="small">Har qator: <code>nomi | muallif | daraja | qisqacha tavsif</code>. Bo'sh bo'lsa standart ro'yxat.</p>
+        <textarea id="sh_books" style="min-height:160px"></textarea>
+        <h2 style="margin-top:14px">🎧 Lo-Fi musiqa</h2>
+        <p class="small">Har qator: <code>Nomi | https://.../musiqa.mp3</code>. Bo'sh bo'lsa ilovaning o'zi tinch Lo-Fi musiqa hosil qiladi. To'g'ridan-to'g'ri mp3 havolasi kerak.</p>
+        <textarea id="sh_lofi" style="min-height:90px"></textarea>
+        <div class="row" style="margin-top:12px"><button id="shSave">💾 Do'kon sozlamalarini saqlash</button></div>
+      </div>
+      <div class="card">
+        <h2>🎁 Tanga / mahsulot sovg'a qilish</h2>
+        <div class="row">
+          <div style="flex:1"><label>Kimga</label><select id="sg_aud"><option value="one">Bitta foydalanuvchiga (ID)</option><option value="referrers">Do'st taklif qilganlarga</option><option value="all">Hammaga</option></select></div>
+          <div style="flex:1" id="sg_userBox"><label>Foydalanuvchi ID</label><input id="sg_user" placeholder="tg_123456789" /></div>
+          <div style="flex:1;display:none" id="sg_minBox"><label>Kamida nechta do'st taklif qilgan</label><input id="sg_min" type="number" min="1" value="1" /></div>
+        </div>
+        <div class="row">
+          <div style="flex:1"><label>Nima</label><select id="sg_type"><option value="coins">Tanga</option><option value="xp">XP</option><option value="item">Do'kon mahsuloti</option></select></div>
+          <div style="flex:1" id="sg_amtBox"><label>Miqdor</label><input id="sg_amt" type="number" min="1" value="100" /></div>
+          <div style="flex:1;display:none" id="sg_itemBox"><label>Mahsulot</label><select id="sg_item"></select></div>
+          <div style="flex:1"><label>Izoh (ixtiyoriy)</label><input id="sg_note" maxlength="80" /></div>
+        </div>
+        <div class="row" style="margin-top:10px"><button id="sgSend">Yuborish 🎁</button></div>
+      </div>
+      <div class="card">
+        <h2>🧾 Buyurtmalar (Telegram Premium / Stars va qo'lda beriladigan sovg'alar) <span class="small" id="ordCount"></span></h2>
+        <div class="scroll"><table><thead><tr><th>Mahsulot</th><th>Kim</th><th>Narx</th><th>Vaqt</th><th>Holat</th><th></th></tr></thead><tbody id="ordBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="t-refs" class="hide">
+      <div class="card">
+        <h2>👥 Do'st taklif qilish sozlamalari</h2>
+        <div class="grid">
+          <div><label>Tizim</label><select id="rf_on"><option value="1">Yoqilgan</option><option value="0">O'chirilgan</option></select></div>
+          <div><label>Har bir do'st uchun XP</label><input id="rf_xp" type="number" min="0" /></div>
+          <div><label>Bot username (ixtiyoriy, @siz)</label><input id="rf_bot" placeholder="VocaBoostProBot" /></div>
+        </div>
+        <label>Do'stga yuboriladigan reklama matni (foydalanuvchi havolasini yuborganda shu matn qo'shiladi)</label>
+        <textarea id="rf_share" style="min-height:90px" placeholder="🚀 VocaBoost — inglizcha so'zlarni tez va uzoq yodlash ilovasi! Sen ham qo'shil 👇"></textarea>
+        <label>Taklif qiluvchiga boradigan xabar matni. Ishlatish mumkin: {name} — do'st ismi, {xp}, {count} — jami do'stlar soni</label>
+        <textarea id="rf_notify" style="min-height:90px"></textarea>
+        <div class="row" style="margin-top:10px"><button id="rfSave">Saqlash</button></div>
+        <p class="small">Do'st faqat <b>birinchi marta</b> havola orqali botga Start bosganda hisobga olinadi. Bot webhook ulangan bo'lishi shart (🔔 Eslatmalar → «Botni ulash»).</p>
+      </div>
+      <div class="card">
+        <h2>📣 Shaxsiy taklif tugmali xabar yuborish</h2>
+        <p class="small">Xabar hammaga (botni bloklamaganlarga) yuboriladi. Xabar ostiga har bir foydalanuvchi uchun <b>o'zining maxsus havolasi</b> bilan tugma bot tomonidan avtomatik qo'shiladi.</p>
+        <label>Xabar matni ({name} — ism)</label>
+        <textarea id="ib_text" style="min-height:110px" placeholder="👋 {name}, do'stlaringizni taklif qiling va har biri uchun XP oling!"></textarea>
+        <div class="row">
+          <div style="flex:1"><label>Tugma yozuvi</label><input id="ib_label" value="👥 Do'stlarni taklif qilish" maxlength="40" /></div>
+          <div style="flex:1"><label>Tugma turi</label><select id="ib_mode"><option value="share">Do'stga yuborish oynasi (havola + reklama matni)</option><option value="link">Faqat havolaning o'zi</option></select></div>
+        </div>
+        <div class="row" style="margin-top:10px"><button id="ibSend">📨 Hammaga yuborish</button><span class="small" id="ibStatus"></span></div>
+      </div>
+      <div class="card">
+        <h2>🏆 Targ'ibotchilar reytingi <span class="small" id="rfCount"></span></h2>
+        <div class="scroll"><table><thead><tr><th>#</th><th>Foydalanuvchi</th><th>Do'stlar</th><th></th></tr></thead><tbody id="rfBody"></tbody></table></div>
+        <div id="rfList" class="small" style="margin-top:8px"></div>
+      </div>
+    </section>
+
     <section id="t-settings" class="hide">
       <div class="card">
         <h2>Umumiy sozlamalar</h2>
@@ -620,8 +524,6 @@
           <div><label>Yangi so'z uchun XP</label><input id="s_new" type="number" min="0" /></div>
           <div><label>To'g'ri takrorlash uchun XP (kuniga 1 marta)</label><input id="s_ok" type="number" min="0" /></div>
           <div><label>Kunlik mashq bonusi (XP)</label><input id="s_bonus" type="number" min="0" /></div>
-          <div><label>Mashqlarda to'g'ri so'z uchun tanga (Coin)</label><input id="s_coinWord" type="number" min="0" /></div>
-          <div><label>O'yinda g'alaba uchun tanga (Coin)</label><input id="s_coinGame" type="number" min="0" /></div>
         </div>
         <div class="row" style="margin-top:10px"><button id="sSave">Saqlash</button></div>
       </div>
@@ -632,39 +534,10 @@
         <div class="row" style="margin-top:10px"><button id="saveN">Saqlash</button></div>
       </div>
       <div class="card">
-        <h2>🎁 Foydalanuvchiga sovg'a yuborish (Mahsulot / Tangalar / XP)</h2>
-        <label>Foydalanuvchi ID (Liga bo'limidan nusxalang)</label><input id="gUser" placeholder="tg_123456789 yoki u_..." />
-        <div class="row">
-          <div style="flex:1">
-            <label>Sovg'a turi</label>
-            <select id="gType">
-              <option value="item">🛍️ Do'kondagi mahsulot (Sovg'a)</option>
-              <option value="coins">🪙 Tangalar (Coins)</option>
-              <option value="spins">🎡 Baraban aylantirish</option>
-              <option value="vip">👑 VIP maqomi (soat)</option>
-              <option value="xp">💎 XP ballari</option>
-            </select>
-          </div>
-          <div style="flex:1" id="gItemBox">
-            <label>Qaysi mahsulot?</label>
-            <select id="gItemId"></select>
-          </div>
-          <div style="flex:1" id="gAmtBox" style="display:none">
-            <label>Miqdor</label>
-            <input id="gAmt" type="number" min="1" value="100" />
-          </div>
-          <div style="flex:1" id="gValidBox" style="display:none">
-            <label>Amal qilish muddati (aylantirish uchun)</label>
-            <select id="gValid">
-              <option value="24">Shu kuni (24 soat)</option>
-              <option value="72">3 kun</option>
-              <option value="168">7 kun</option>
-              <option value="0">Foydalanilguncha</option>
-            </select>
-          </div>
-        </div>
-        <p class="small">Admin istalgan do'kondagi mahsulotni (Lo-Fi musiqa, ramkalar, mavzular, unvonlar va hk) yoki tanga/XP ni istalgan kishiga sovg'a tariqasida yuborishi mumkin. Foydalanuvchi ilovani ochganda sovg'a darhol hisobiga biriktiriladi va Telegram botidan tabrik xabarnomasi boradi.</p>
-        <div class="row" style="margin-top:10px"><button id="gSend">Sovg'ani yuborish 🎁</button></div>
+        <h2>Foydalanuvchiga sovg'a</h2>
+        <label>Foydalanuvchi ID (Liga bo'limidan)</label><input id="gUser" placeholder="tg_123456789" />
+        <div class="row"><div style="flex:1"><label>Tur</label><select id="gType"><option value="spins">Baraban aylantirish</option><option value="vip">VIP (soat)</option><option value="xp">XP</option></select></div><div style="flex:1"><label>Miqdor</label><input id="gAmt" type="number" min="1" value="1" /></div><div style="flex:1" id="gValidBox"><label>Amal qilish muddati (aylantirish uchun)</label><select id="gValid"><option value="24">Shu kuni (24 soat)</option><option value="72">3 kun</option><option value="168">7 kun</option><option value="0">Foydalanilguncha</option></select></div></div><p class="small">Sovg'a faqat bir marta, berilgan miqdorcha qo'llanadi (har kuni emas). Aylantirish sovg'asi muddati tugagach qolgan qismi yonib ketadi.</p>
+        <div class="row" style="margin-top:10px"><button id="gSend">Yuborish 🎁</button></div>
       </div>
     </section>
   </div>
@@ -683,7 +556,7 @@ const arr = v => Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.val
 const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 async function api(action, extra = {}) {
-  const r = await fetch('/.netlify/functions/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code, action, ...extra }) });
+  const r = await fetch('/api/fn/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code, action, ...extra }) });
   const j = await r.json().catch(() => ({ error: "Server javobi noto'g'ri" }));
   if (!r.ok) throw new Error(j.error || ('Xato ' + r.status));
   return j;
@@ -713,7 +586,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderShop(); renderReferral(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); }
+function renderAll() { loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderRefs(); loadOrders(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -951,6 +824,7 @@ $('inFilter').onchange = renderInbox; $('inRefresh').onclick = () => loadInbox()
 
 /* ---------- sertifikatlar ---------- */
 const TPL = {
+  weekly:['Hafta chempioni','#F5B301'],
   bronze:['Bronza','#CD7F32'], silver:['Kumush','#C0C7D1'], gold:['Oltin','#F5B301'], platinum:['Platina','#7DD3FC'],
   champion:['Chempion','#EF4444'], active:['Eng faol','#22C55E'], marathon:['Marafon','#60A5FA'], thanks:['Minnatdorchilik','#A855F7'],
   trust:['Ishonch','#38BDF8'], growth:['Yuksalish','#F59E0B'], wisdom:['Bilim donosi','#D97706'], speed:['Tezkor','#06B6D4'],
@@ -964,7 +838,7 @@ function fillUsers() {
 $('cUserQ').oninput = fillUsers;
 function renderCerts() {
   fillUsers();
-  $('cTpls').innerHTML = Object.entries(TPL).map(([k,[n,c]]) => `<div class="tplb ${curTpl===k?'on':''}" data-k="${k}" style="border-left:6px solid ${c}">${n}</div>`).join('');
+  $('cTpls').innerHTML = Object.entries(TPL).filter(([k]) => ['bronze','silver','gold','marathon','thanks','growth','wisdom','consistent','weekly'].includes(k)).map(([k,[n,c]]) => `<div class="tplb ${curTpl===k?'on':''}" data-k="${k}" style="border-left:6px solid ${c}">${n}</div>`).join('');
   $('cTpls').querySelectorAll('.tplb').forEach(b => b.onclick = () => { curTpl = b.dataset.k; renderCerts(); });
   $('cBody').innerHTML = certs.map(c => `<tr><td><b>${esc(c.id)}</b></td><td>${esc(c.name||'')}<br><span class="small">${esc(c.userId)}</span></td><td>${esc(c.title)}<br><span class="small">${esc(c.reason||'')}${c.auto?' · avtomatik':''}</span></td><td>${esc((TPL[c.tpl]||[c.tpl])[0])}<br><span class="small">${c.fmt==='story'?'📱 9:16':'🖥 16:9'}</span></td><td>${esc(c.date||'')}</td><td><div class="acts"><button class="sec" data-v="${esc(c.id)}">Ko'rish / QR</button><button class="bad" data-u="${esc(c.userId)}" data-id="${esc(c.id)}">Bekor qilish</button></div></td></tr>`).join('') || '<tr><td colspan="6" class="small">Hali sertifikat yuborilmagan</td></tr>';
   $('cBody').querySelectorAll('button[data-v]').forEach(b => b.onclick = () => { const c = certs.find(x => x.id === b.dataset.v); if (c) viewCert(c); });
@@ -1127,12 +1001,7 @@ $('tcSave').onclick = guard(async () => {
   await api('setThanksCert', { title: $('tc_title').value, reason: $('tc_reason').value });
   flash('Minnatdorchilik sertifikati matni saqlandi ✅');
 });
-function gValidUi() {
-  const t = $('gType').value;
-  if ($('gValidBox')) $('gValidBox').style.display = t === 'spins' ? '' : 'none';
-  if ($('gItemBox')) $('gItemBox').style.display = t === 'item' ? '' : 'none';
-  if ($('gAmtBox')) $('gAmtBox').style.display = t === 'item' ? 'none' : '';
-}
+function gValidUi() { $('gValidBox').style.display = $('gType').value === 'spins' ? '' : 'none'; }
 $('gType').onchange = gValidUi; gValidUi();
 
 /* ---------- sertifikat: ko'rib chiqish, QR, avtomatik matn ---------- */
@@ -1142,7 +1011,7 @@ async function viewCert(c) {
   $('certView').classList.remove('hide');
   $('cvTitle').textContent = `${c.id} — ${c.name || ''}`;
   const cv = $('cvCanvas');
-  await VBC.drawCertificate(cv, { id: c.id, tpl: c.tpl, title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', special: !c.auto, fmt: c.fmt === 'story' ? 'story' : 'wide', stats: c.stats || undefined });
+  await VBC.drawCertificate(cv, { id: c.id, tpl: c.tpl, label: c.label || '', title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', special: !c.auto, fmt: c.fmt === 'story' ? 'story' : 'wide', stats: c.stats || undefined });
   $('cvDl').href = cv.toDataURL('image/png'); $('cvDl').download = VBC.certFileName({ id: c.id });
   $('cvUrl').textContent = 'QR kod ochadigan manzil: ' + VBC.certUrl(c.id);
 }
@@ -1261,7 +1130,7 @@ function renderRemind() {
   if (document.activeElement && ['r_texts','b_text','t_id'].includes(document.activeElement.id)) return;
   $('r_on').checked = !!r.enabled; $('r_hour').value = r.hour ?? 19; $('r_skip').checked = r.skipActive !== false;
   $('r_texts').value = arr(r.texts).join('\n');
-  api('botInfo').then(i => { $('botInfo').innerHTML = !i.configured ? '<span style="color:#fca5a5">BOT_TOKEN kiritilmagan — Netlify > Environment variables ga BOT_TOKEN qo\'shing (ADMIN.md ga qarang).</span>' : i.error ? `<span style="color:#fca5a5">Bot xatosi: ${esc(i.error)}</span>` : `<span style="color:#86efac">✔ Bot ulangan: @${esc(i.username)}</span> · Ilova manzili: ${esc(i.site || 'SITE_URL kiritilmagan!')}`; }).catch(() => {});
+  api('botInfo').then(i => { $('botInfo').innerHTML = !i.configured ? '<span style="color:#fca5a5">BOT_TOKEN kiritilmagan — Vercel > Settings > Environment Variables ga BOT_TOKEN qo\'shing (ADMIN.md ga qarang).</span>' : i.error ? `<span style="color:#fca5a5">Bot xatosi: ${esc(i.error)}</span>` : `<span style="color:#86efac">✔ Bot ulangan: @${esc(i.username)}</span> · Ilova manzili: ${esc(i.site || 'SITE_URL kiritilmagan!')}`; }).catch(() => {});
 }
 $('rSave').onclick = guard(async () => {
   const texts = $('r_texts').value.split(/\r?\n/).map(t => t.trim()).filter(Boolean);
@@ -1373,40 +1242,7 @@ function getAdPayload() {
     { text: $('ad_b2_t').value.trim(), url: $('ad_b2_u').value.trim() },
     { text: $('ad_b3_t').value.trim(), url: $('ad_b3_u').value.trim() },
   ].filter(b => b.text && b.url);
-  const includeRefButton = !!$('ad_include_ref')?.checked;
-  const refBtnText = $('ad_ref_btn_text')?.value?.trim() || "👥 Do'stimni taklif qilish";
-  return { text, photoUrl: photoUrl || null, buttons, includeRefButton, refBtnText };
-}
-
-function updateAdPreview() {
-  const txt = $('ad_text').value;
-  const photo = $('ad_photo').value.trim();
-  $('ad_pv_img').style.display = photo ? 'block' : 'none';
-  if (photo) $('ad_pv_img_el').src = photo;
-  $('ad_pv_text').innerHTML = txt.replace(/\{name\}/g, "Do'st").replace(/\{ref_link\}/g, "https://t.me/VocaBoostProBot?start=ref_12345") || '<span style="color:#64748b">Xabar matni...</span>';
-
-  const btns = [
-    { t: $('ad_b1_t').value.trim(), u: $('ad_b1_u').value.trim() },
-    { t: $('ad_b2_t').value.trim(), u: $('ad_b2_u').value.trim() },
-    { t: $('ad_b3_t').value.trim(), u: $('ad_b3_u').value.trim() },
-  ].filter(b => b.t && b.u);
-
-  let btnHtml = btns.map(b => `<a href="${esc(b.u)}" target="_blank" style="display:block;background:#2b5278;color:#fff;text-align:center;padding:8px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">${esc(b.t)}</a>`).join('');
-
-  if ($('ad_include_ref')?.checked) {
-    const refTxt = $('ad_ref_btn_text')?.value?.trim() || "👥 Do'stimni taklif qilish";
-    btnHtml += `<a href="#" style="display:block;background:linear-gradient(90deg,#4f46e5,#9333ea);color:#fff;text-align:center;padding:8px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">${esc(refTxt)} (Shaxsiy link)</a>`;
-  }
-
-  $('ad_pv_btns').innerHTML = btnHtml;
-}
-
-if ($('ad_include_ref')) {
-  $('ad_include_ref').onchange = () => {
-    $('ad_ref_options').style.display = $('ad_include_ref').checked ? 'block' : 'none';
-    updateAdPreview();
-  };
-  $('ad_ref_btn_text').oninput = updateAdPreview;
+  return { text, photoUrl: photoUrl || null, buttons };
 }
 
 $('adSendTest').onclick = guard(async () => {
@@ -1434,305 +1270,86 @@ $('adSendAll').onclick = guard(async () => {
 /* ---------- sozlamalar ---------- */
 function renderSettings() {
   const s = data.config.settings || {};
-  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','s_coinWord','s_coinGame','nText'].includes(document.activeElement.id)) return;
+  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText'].includes(document.activeElement.id)) return;
   $('s_cap').value = s.reviewCap ?? 30; $('s_new').value = s.xpNewWord ?? 3; $('s_ok').value = s.xpCorrect ?? 2; $('s_bonus').value = s.xpDailyBonus ?? 10;
-  $('s_coinWord').value = s.coinsPerWord ?? 2; $('s_coinGame').value = s.coinsPerGame ?? 5;
   const a = data.config.announcement || {}; $('nText').value = a.text || ''; $('nActive').checked = !!a.active;
 }
-$('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value, coinsPerWord: +$('s_coinWord').value, coinsPerGame: +$('s_coinGame').value } }); flash('Saqlandi ✅'); await load(); });
+$('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
-$('gSend').onclick = guard(async () => {
-  const type = $('gType').value;
-  const userId = $('gUser').value.trim();
-  if (!userId) return flash('Foydalanuvchi ID sini kiriting', false);
-  const p = { userId, type, validHours: +$('gValid').value };
-  if (type === 'item') {
-    const sel = $('gItemId');
-    if (!sel || !sel.value) return flash('Sovg\'a qilinadigan mahsulotni tanlang', false);
-    p.itemId = sel.value;
-    p.itemName = sel.options[sel.selectedIndex]?.text || sel.value;
-    p.amount = 1;
-  } else {
-    p.amount = +$('gAmt').value;
-  }
-  await api('grant', p);
-  flash('Sovg\'a yuborildi 🎁 (foydalanuvchi ilovani ochganda qo\'llanadi)');
+$('gSend').onclick = guard(async () => { await api('grant', { userId: $('gUser').value.trim(), type: $('gType').value, amount: +$('gAmt').value, validHours: +$('gValid').value }); flash('Sovg\'a yuborildi 🎁 (foydalanuvchi ilovani ochganda qo\'llanadi)'); });
+
+/* ---------- 🛒 Do'kon ---------- */
+const SHOP_DEF = [
+  ['boost_1h','2x XP (1 soat)',40],['boost_24h','2x XP (24 soat)',150],['streak_saver','Streak himoyasi',80],['spin_1','Baraban aylantirish',60],['mystery','Sirli quti',120],
+  ['frame_gold','Oltin ramka',250],['frame_fire','Olov ramka',350],['frame_crystal','Kristall ramka',450],['avatars',"Noyob avatarlar to'plami",400],['nickcolor','Nik rangi va belgi',200],
+  ['glow','Yaltiroq ism',500],['skin_neon','Neon mavzusi',300],['skin_nature','Tabiat mavzusi',300],['skin_royal','Qirollik mavzusi',350],['titles','Maxsus unvon',250],
+  ['rankbadge','Reytingda maxsus belgi',350],['verified','VIP maqomi (galochka)',1500],['premium_words',"Premium so'zlar to'plami",600],['top_books','Inglizcha TOP kitoblar',700],['lofi','Lo-Fi musiqa',300],['tg_stars','Telegram Premium / Stars',5000],
+];
+let shItems = {}; // id -> {title,price,discount,active,img,dayLimit,desc?,custom?,icon?}
+const toLines = a => arr(a).map(x => x.title + ' | ' + x.url).join('\n');
+function renderShop() {
+  const c = data.config.shop || {};
+  const ae = document.activeElement && document.activeElement.id;
+  if (ae && ae.startsWith('sh_')) return;
+  $('sh_on').value = c.enabled === false ? '0' : '1'; $('sh_rate').value = c.coinPerXp ?? 0.5; $('sh_start').value = c.startCoins ?? 50;
+  $('sh_s7').value = c.streak7 ?? 30; $('sh_s30').value = c.streak30 ?? 150; $('sh_q').value = c.allQuests ?? 15; $('sh_chat').value = c.adminChat || '';
+  $('sh_prem').value = c.premiumText || ''; $('sh_books').value = c.booksText || ''; $('sh_lofi').value = toLines(c.lofi);
+  shItems = {}; const ov = c.items || {};
+  SHOP_DEF.forEach(([id,title,price]) => { const o = ov[id] || {}; shItems[id] = { title: o.title || title, price: o.price ?? price, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, _def: true }; });
+  Object.entries(ov).forEach(([id,o]) => { if (o && o.custom && !shItems[id]) shItems[id] = { title: o.title || '', price: o.price ?? 100, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, desc: o.desc || '', icon: o.icon || '🎁', custom: true }; });
+  drawShop();
+  $('sg_item').innerHTML = Object.entries(shItems).map(([id,x]) => `<option value="${esc(id)}">${esc(x.title)}</option>`).join('');
+}
+function drawShop() {
+  $('shCount').textContent = `(${Object.keys(shItems).length})`;
+  $('shBody').innerHTML = Object.entries(shItems).map(([id,x]) => `<tr data-id="${esc(id)}"><td><input data-f="title" value="${esc(x.title)}" style="min-width:150px" />${x.custom ? `<input data-f="desc" value="${esc(x.desc||'')}" placeholder="Tavsif" style="margin-top:4px" /><input data-f="icon" value="${esc(x.icon||'🎁')}" style="width:60px;margin-top:4px" />` : ''}<div class="small">${esc(id)}</div></td><td><input data-f="price" type="number" min="0" value="${+x.price}" style="width:90px" /></td><td><input data-f="discount" type="number" min="0" max="90" value="${+x.discount}" style="width:70px" /></td><td><input data-f="dayLimit" type="number" min="0" value="${+x.dayLimit}" style="width:60px" /></td><td><input data-f="img" value="${esc(x.img)}" placeholder="https://..." style="min-width:160px" /></td><td><input data-f="active" type="checkbox" ${x.active ? 'checked' : ''} style="width:auto" /></td><td>${x.custom ? '<button class="bad" data-del="1">×</button>' : ''}</td></tr>`).join('');
+  $('shBody').querySelectorAll('tr').forEach(tr => {
+    tr.querySelectorAll('[data-f]').forEach(i => i.oninput = i.onchange = () => { const it = shItems[tr.dataset.id]; const f = i.dataset.f; it[f] = i.type === 'checkbox' ? i.checked : (['price','discount','dayLimit'].includes(f) ? +i.value : i.value); });
+    const d = tr.querySelector('[data-del]'); if (d) d.onclick = () => { delete shItems[tr.dataset.id]; drawShop(); };
+  });
+}
+$('shAdd').onclick = () => { const id = 'c' + Date.now().toString(36); shItems[id] = { title: 'Yangi sovg\'a', price: 100, discount: 0, active: true, img: '', dayLimit: 0, desc: '', icon: '🎁', custom: true }; drawShop(); };
+$('shSave').onclick = guard(async () => {
+  const items = {};
+  Object.entries(shItems).forEach(([id,x]) => { const o = { title: x.title, price: Math.max(0, Math.round(+x.price || 0)), discount: Math.max(0, Math.min(90, Math.round(+x.discount || 0))), active: !!x.active, img: x.img || '', dayLimit: Math.max(0, Math.round(+x.dayLimit || 0)) }; if (x.custom) { o.custom = true; o.desc = x.desc || ''; o.icon = x.icon || '🎁'; } items[id] = o; });
+  const lofi = $('sh_lofi').value.split('\n').map(l => l.split('|').map(t => t.trim())).filter(c => c.length >= 2 && /^https?:\/\//.test(c[1])).map(c => ({ title: c[0] || 'Lo-Fi', url: c[1] }));
+  const value = { enabled: $('sh_on').value === '1', coinPerXp: +$('sh_rate').value, startCoins: +$('sh_start').value, streak7: +$('sh_s7').value, streak30: +$('sh_s30').value, allQuests: +$('sh_q').value, adminChat: $('sh_chat').value.trim(), premiumText: $('sh_prem').value, booksText: $('sh_books').value, lofi, items };
+  await api('setShop', { value }); flash("Do'kon saqlandi ✅"); await load();
 });
-
-/* ---------- do'kon va takliflar ---------- */
-let shopItems = [], editingShopItem = null, booksList = [], lofiList = [];
-
-async function renderShop() {
-  try {
-    const res = await api('getShopConfig');
-    shopItems = res.items || [];
-    if ($('shopItemCount')) $('shopItemCount').textContent = `(${shopItems.length} ta)`;
-    if ($('gItemId') && shopItems.length) {
-      const cur = $('gItemId').value;
-      $('gItemId').innerHTML = shopItems.map(it => `<option value="${esc(it.id)}" ${it.id === cur ? 'selected' : ''}>${esc(it.icon || '🛍️')} ${esc(it.title || it.name)} (${it.priceCoins || 0} tanga)</option>`).join('');
-    }
-    const tbody = $('shopTableBody');
-    if (tbody) {
-      tbody.innerHTML = shopItems.map(item => `
-        <tr>
-          <td style="text-align:center"><b>${item.sortOrder || '—'}</b></td>
-          <td style="font-size:20px;text-align:center">${item.icon?.startsWith('http') ? `<img src="${esc(item.icon)}" style="width:28px;height:28px;object-fit:cover;border-radius:6px">` : esc(item.icon || '🛍️')}</td>
-          <td><b>${esc(item.title || item.name)}</b><br><span class="small">${esc(item.description || item.desc || '')}</span></td>
-          <td><span class="tag">${esc(item.category)}</span></td>
-          <td><b style="color:#fbbf24">${(item.priceCoins || 0).toLocaleString()}</b> tanga</td>
-          <td>${(item.discountPct || item.discount) ? `<span class="tag d">-${item.discountPct || item.discount}%</span>` : '<span class="small">0%</span>'}</td>
-          <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${item.neonColor || '#f59e0b'};vertical-align:middle;box-shadow:0 0 6px ${item.neonColor || '#f59e0b'}"></span></td>
-          <td>${item.badge ? `<span class="tag" style="background:#f59e0b22;color:#fbbf24;border:1px solid #f59e0b44">${esc(item.badge)}</span>` : '<span class="small">—</span>'}</td>
-          <td>${(item.isActive !== false && item.active !== false) ? '<span class="tag ok">Faol</span>' : '<span class="tag d">O‘chiq</span>'}</td>
-          <td>
-            <div class="acts">
-              <button class="sec" data-act="sh-edit" data-id="${esc(item.id)}">Tahrir</button>
-              <button class="sec" data-act="sh-toggle" data-id="${esc(item.id)}">${(item.isActive !== false && item.active !== false) ? "O'chirish" : "Yoqish"}</button>
-              <button class="bad" data-act="sh-del" data-id="${esc(item.id)}">×</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') || '<tr><td colspan="10" class="small">Do‘konda mahsulot yo‘q.</td></tr>';
-
-      tbody.querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
-        const act = b.dataset.act, id = b.dataset.id;
-        const it = shopItems.find(x => x.id === id);
-        if (act === 'sh-edit') openShopItemEditor(it);
-        else if (act === 'sh-toggle') {
-          const nextActive = !(it.isActive !== false && it.active !== false);
-          it.active = nextActive;
-          it.isActive = nextActive;
-          await api('saveShopItem', { item: it });
-          flash('Mahsulot holati yangilandi ✅');
-          renderShop();
-        } else if (act === 'sh-del') {
-          if (!confirm(`"${it.title || it.name}" o'chirilsinmi?`)) return;
-          await api('deleteShopItem', { id });
-          flash('O‘chirildi ✅');
-          renderShop();
-        }
-      }));
-    }
-
-    // Books
-    const bRes = await api('getBooks');
-    booksList = bRes.items || [];
-    if ($('bookCount')) $('bookCount').textContent = `(${booksList.length} ta)`;
-    if ($('booksTableBody')) {
-      $('booksTableBody').innerHTML = booksList.map(bk => `
-        <tr>
-          <td>${bk.cover ? `<img src="${esc(bk.cover)}" style="width:32px;height:42px;object-fit:cover;border-radius:4px">` : '📖'}</td>
-          <td><b>${esc(bk.title)}</b></td>
-          <td>${esc(bk.author)}</td>
-          <td><span class="tag">${esc(bk.level)}</span></td>
-          <td>${bk.pages?.length || 0} bet</td>
-          <td><button class="bad" data-act="bk-del" data-id="${esc(bk.id)}">×</button></td>
-        </tr>
-      `).join('') || '<tr><td colspan="6" class="small">Kitoblar yo‘q.</td></tr>';
-      $('booksTableBody').querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
-        if (!confirm("Ushbu kitob o'chirilsinmi?")) return;
-        await api('deleteBook', { id: b.dataset.id });
-        flash('Kitob o‘chirildi ✅');
-        renderShop();
-      }));
-    }
-
-    // Lo-Fi
-    const lRes = await api('getLofi');
-    lofiList = lRes.items || [];
-    if ($('lofiCount')) $('lofiCount').textContent = `(${lofiList.length} ta)`;
-    if ($('lofiTableBody')) {
-      $('lofiTableBody').innerHTML = lofiList.map(tr => `
-        <tr>
-          <td><b>${esc(tr.title)}</b></td>
-          <td>${esc(tr.artist || '')}</td>
-          <td>${esc(tr.duration || '')}</td>
-          <td class="small" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tr.src)}</td>
-          <td><button class="bad" data-act="lf-del" data-id="${esc(tr.id)}">×</button></td>
-        </tr>
-      `).join('') || '<tr><td colspan="5" class="small">Treklar yo‘q.</td></tr>';
-      $('lofiTableBody').querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
-        if (!confirm("Ushbu trek o'chirilsinmi?")) return;
-        await api('deleteLofiTrack', { id: b.dataset.id });
-        flash('Trek o‘chirildi ✅');
-        renderShop();
-      }));
-    }
-  } catch (e) {
-    console.warn('renderShop error:', e);
-  }
+function sgUi() { const a = $('sg_aud').value, t = $('sg_type').value; $('sg_userBox').style.display = a === 'one' ? '' : 'none'; $('sg_minBox').style.display = a === 'referrers' ? '' : 'none'; $('sg_amtBox').style.display = t === 'item' ? 'none' : ''; $('sg_itemBox').style.display = t === 'item' ? '' : 'none'; }
+$('sg_aud').onchange = $('sg_type').onchange = sgUi; sgUi();
+$('sgSend').onclick = guard(async () => {
+  const aud = $('sg_aud').value, type = $('sg_type').value;
+  if (aud !== 'one' && !confirm(aud === 'all' ? 'Hamma foydalanuvchilarga yuborilsinmi?' : "Do'st taklif qilgan foydalanuvchilarga yuborilsinmi?")) return;
+  const r = await api('grant', { userId: $('sg_user').value.trim(), audience: aud === 'one' ? '' : aud, minRefs: +$('sg_min').value, type, amount: +$('sg_amt').value, itemId: $('sg_item').value, note: $('sg_note').value });
+  flash(`Yuborildi 🎁 (${r.count} ta foydalanuvchi). Ilovani ochganlarda shu zahoti qo'llanadi`);
+});
+let orders = [];
+async function loadOrders() { try { const r = await api('listOrders'); orders = r.items || []; renderOrders(); } catch (e) { flash(e.message, false); } }
+function renderOrders() {
+  $('ordCount').textContent = `(${orders.filter(o => o.status !== 'done').length} ta yangi)`;
+  $('ordBody').innerHTML = orders.map(o => `<tr><td><b>${esc(o.title)}</b></td><td>${esc(o.name)}${o.un ? ' @' + esc(o.un) : ''}<br><span class="small">${esc(o.uid)}</span></td><td>${+o.price}</td><td class="small">${new Date(o.ts).toLocaleString()}</td><td>${o.status === 'done' ? '<span class="tag">bajarildi</span>' : '<span class="tag d">yangi</span>'}</td><td><div class="acts">${o.status === 'done' ? '' : `<button class="ok" data-d="${esc(o.id)}">Bajarildi + xabar</button>`}<button class="bad" data-x="${esc(o.id)}">×</button></div></td></tr>`).join('') || '<tr><td colspan="6" class="small">Buyurtma yo\'q</td></tr>';
+  $('ordBody').querySelectorAll('[data-d]').forEach(b => b.onclick = guard(async () => { const o = orders.find(x => x.id === b.dataset.d); await api('setOrder', { id: o.id, status: 'done', notify: true, uid: o.uid, title: o.title }); await loadOrders(); }));
+  $('ordBody').querySelectorAll('[data-x]').forEach(b => b.onclick = guard(async () => { if (!confirm("O'chirilsinmi?")) return; await api('setOrder', { id: b.dataset.x, remove: true }); await loadOrders(); }));
 }
 
-function openShopItemEditor(it) {
-  editingShopItem = it;
-  $('shopItemEditor').classList.remove('hide');
-  $('shopEdTitle').textContent = it ? `Tahrirlash: ${it.title || it.name}` : 'Yangi mahsulot';
-  $('sh_id').value = it?.id || 'item_' + Date.now();
-  $('sh_id').disabled = !!it;
-  $('sh_name').value = it?.title || it?.name || '';
-  $('sh_category').value = it?.category || 'booster';
-  $('sh_type').value = it?.itemType || it?.type || 'permanent';
-  $('sh_order').value = it?.sortOrder ?? 10;
-  $('sh_neonColor').value = it?.neonColor || '#f59e0b';
-  $('sh_badgeTag').value = it?.badge || '';
-  $('sh_icon').value = it?.icon || '🛍️';
-  $('sh_image').value = it?.image || '';
-  $('sh_priceCoins').value = it?.priceCoins ?? 100;
-  $('sh_priceXp').value = it?.priceXp || '';
-  $('sh_discount').value = it?.discountPct ?? (it?.discount || 0);
-  $('sh_desc').value = it?.description || it?.desc || '';
-  $('sh_active').checked = it ? (it.isActive !== false && it.active !== false) : true;
-  $('sh_badgeHot').checked = it?.badge === 'HOT';
-  $('sh_badgeNew').checked = it?.badge === 'NEW';
-  $('shopItemEditor').scrollIntoView({ behavior: 'smooth' });
+/* ---------- 📣 Taklif ---------- */
+function renderRefs() {
+  const c = data.config.referral || {};
+  const ae = document.activeElement && document.activeElement.id;
+  if (!(ae && ae.startsWith('rf_'))) { $('rf_on').value = c.enabled === false ? '0' : '1'; $('rf_xp').value = c.xp ?? 50; $('rf_bot').value = c.botUsername || ''; $('rf_share').value = c.shareText || ''; $('rf_notify').value = c.notifyText || ''; }
+  const rows = Object.entries(data.leaderboard || {}).filter(([,u]) => u && !u.deleted && (+u.refs || 0) > 0).map(([id,u]) => ({ id, ...u })).sort((a,b) => (+b.refs) - (+a.refs));
+  $('rfCount').textContent = `(${rows.length} ta targ'ibotchi, jami ${rows.reduce((t,u) => t + (+u.refs||0), 0)} do'st)`;
+  $('rfBody').innerHTML = rows.slice(0, 100).map((u,i) => `<tr><td>${i+1}</td><td><b>${esc(u.name||'—')}</b><br><span class="small">${esc(u.id)}</span></td><td><b>${+u.refs}</b></td><td><button class="sec" data-r="${esc(u.id)}">Ro'yxat</button></td></tr>`).join('') || '<tr><td colspan="4" class="small">Hali hech kim do\'st taklif qilmagan</td></tr>';
+  $('rfBody').querySelectorAll('[data-r]').forEach(b => b.onclick = guard(async () => { const r = await api('listReferrals', { id: b.dataset.r }); $('rfList').innerHTML = `<b>${esc(b.dataset.r)} taklif qilganlar:</b> ` + (r.items.map(x => esc(x.name) + ' (' + new Date(x.ts).toLocaleDateString() + ')').join(', ') || '—'); }));
 }
-
-if ($('shopNewBtn')) $('shopNewBtn').onclick = () => openShopItemEditor(null);
-if ($('shopCancelItemBtn')) $('shopCancelItemBtn').onclick = () => $('shopItemEditor').classList.add('hide');
-
-if ($('shopSaveItemBtn')) $('shopSaveItemBtn').onclick = guard(async () => {
-  const item = {
-    id: $('sh_id').value.trim(),
-    title: $('sh_name').value.trim(),
-    name: $('sh_name').value.trim(),
-    category: $('sh_category').value,
-    itemType: $('sh_type').value.trim() || 'permanent',
-    type: $('sh_type').value.trim() || 'permanent',
-    sortOrder: +$('sh_order').value || 10,
-    neonColor: $('sh_neonColor').value.trim() || '#f59e0b',
-    icon: $('sh_icon').value.trim() || '🛍️',
-    image: $('sh_image').value.trim() || undefined,
-    priceCoins: +$('sh_priceCoins').value || 0,
-    priceXp: +$('sh_priceXp').value || undefined,
-    discountPct: +$('sh_discount').value || 0,
-    discount: +$('sh_discount').value || 0,
-    description: $('sh_desc').value.trim(),
-    desc: $('sh_desc').value.trim(),
-    isActive: $('sh_active').checked,
-    active: $('sh_active').checked,
-    badge: $('sh_badgeTag').value.trim() || ($('sh_badgeHot').checked ? 'HOT' : ($('sh_badgeNew').checked ? 'NEW' : undefined)),
-  };
-  if (!item.id || !item.title) return flash('ID va Nom majburiy', false);
-  await api('saveShopItem', { item });
-  flash('Mahsulot saqlandi ✅');
-  $('shopItemEditor').classList.add('hide');
-  renderShop();
+$('rfSave').onclick = guard(async () => { await api('setReferral', { value: { enabled: $('rf_on').value === '1', xp: +$('rf_xp').value, botUsername: $('rf_bot').value, shareText: $('rf_share').value, notifyText: $('rf_notify').value } }); flash('Saqlandi ✅'); await load(); });
+$('ibSend').onclick = guard(async () => {
+  if (!$('ib_text').value.trim()) return flash('Xabar matnini yozing', false);
+  if (!confirm('Xabar BARCHA foydalanuvchilarga yuborilsinmi?')) return;
+  await api('inviteBroadcast', { text: $('ib_text').value, label: $('ib_label').value, mode: $('ib_mode').value });
+  flash('Yuborish boshlandi 📨'); const t = setInterval(async () => { try { const r = await api('broadcastStatus'); const st = r.status; if (st) $('ibStatus').textContent = `${st.sent}/${st.total} yuborildi${st.done ? ' ✅' : ''}`; if (!st || st.done) clearInterval(t); } catch { clearInterval(t); } }, 3000);
 });
-
-if ($('sh_grantBtn')) $('sh_grantBtn').onclick = guard(async () => {
-  const userId = $('sh_grantUser').value.trim();
-  const amount = +$('sh_grantAmt').value || 0;
-  const reason = $('sh_grantReason').value.trim();
-  if (!userId) return flash('Foydalanuvchi ID kiriting', false);
-  if (amount <= 0) return flash('Tanga miqdorini to‘g‘ri kiriting', false);
-  await api('grant', { userId, type: 'coins', amount, reason });
-  flash(`${userId} hisobiga ${amount} tanga yuborildi 🪙`);
-  $('sh_grantUser').value = '';
-});
-
-// Book new
-if ($('bookNewBtn')) $('bookNewBtn').onclick = guard(async () => {
-  const title = prompt("Kitob nomi:");
-  if (!title) return;
-  const author = prompt("Muallif:", "Unknown");
-  const level = prompt("Daraja (A1, A2, B1, B2, C1):", "B1");
-  const firstPage = prompt("1-sahifa matni (inglizcha):", "Once upon a time...");
-  const book = {
-    id: 'book_' + Date.now(),
-    title,
-    author: author || 'Classic',
-    level: level || 'B1',
-    cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400',
-    pages: [firstPage || '']
-  };
-  await api('saveBook', { book });
-  flash('Kitob qo‘shildi ✅');
-  renderShop();
-});
-
-// Lofi new
-if ($('lofiNewBtn')) $('lofiNewBtn').onclick = guard(async () => {
-  const title = prompt("Trek nomi:");
-  if (!title) return;
-  const artist = prompt("Ijrochi:", "Lofi Beats");
-  const src = prompt("Audio URL (mp3):", "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3");
-  if (!src) return;
-  const track = {
-    id: 'lofi_' + Date.now(),
-    title,
-    artist: artist || 'Chillhop',
-    duration: '2:45',
-    src
-  };
-  await api('saveLofiTrack', { track });
-  flash('Lo-Fi trek qo‘shildi ✅');
-  renderShop();
-});
-
-async function renderReferral() {
-  try {
-    const cfg = await api('getReferralConfig');
-    if (cfg) {
-      if ($('rf_rewardXp') && document.activeElement !== $('rf_rewardXp')) $('rf_rewardXp').value = cfg.rewardXp ?? 50;
-      if ($('rf_rewardCoins') && document.activeElement !== $('rf_rewardCoins')) $('rf_rewardCoins').value = cfg.rewardCoins ?? 30;
-      if ($('rf_inviteText') && document.activeElement !== $('rf_inviteText')) $('rf_inviteText').value = cfg.inviteText || '';
-    }
-
-    const q = ($('rf_search')?.value || '').toLowerCase();
-    const users = Object.entries(data.leaderboard || {})
-      .map(([id, u]) => ({ id, ...u }))
-      .filter(u => !u.deleted && (u.refCount > 0 || (u.name||'').toLowerCase().includes(q) || u.id.toLowerCase().includes(q)))
-      .sort((a, b) => ((b.refCount || 0) - (a.refCount || 0)) || ((b.xp || 0) - (a.xp || 0)));
-
-    if ($('refUserCount')) $('refUserCount').textContent = `(${users.length} ta)`;
-    const tbody = $('refTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = users.slice(0, 100).map((u, i) => `
-      <tr>
-        <td class="small">${i + 1}</td>
-        <td><b>${esc(u.name || "O'quvchi")}</b><br><span class="small font-mono">${esc(u.id)}</span></td>
-        <td><b style="color:#818cf8;font-size:15px">${(u.refCount || 0).toLocaleString()}</b> ta do‘st</td>
-        <td><b style="color:#38bdf8">+${((u.refCount || 0) * (cfg?.rewardXp || 50)).toLocaleString()}</b> XP</td>
-        <td><b style="color:#fbbf24">+${((u.refCount || 0) * (cfg?.rewardCoins || 30)).toLocaleString()}</b> tanga</td>
-        <td>${(u.xp || 0).toLocaleString()} XP</td>
-        <td>
-          <button class="sec" style="font-size:11px" onclick="$('rf_giftTarget').value='specific';$('rf_giftUserBox').style.display='block';$('rf_giftUser').value='${esc(u.id)}';$('rf_giftAmt').focus()">Sovg‘a 🎁</button>
-        </td>
-      </tr>
-    `).join('') || '<tr><td colspan="7" class="small">Hozircha do‘stini taklif qilgan o‘quvchilar yo‘q.</td></tr>';
-  } catch (e) {
-    console.warn('renderReferral error:', e);
-  }
-}
-
-if ($('rf_saveConfigBtn')) $('rf_saveConfigBtn').onclick = guard(async () => {
-  const rewardXp = +$('rf_rewardXp').value || 50;
-  const rewardCoins = +$('rf_rewardCoins').value || 30;
-  const inviteText = $('rf_inviteText').value.trim();
-  await api('setReferralConfig', { rewardXp, rewardCoins, inviteText });
-  flash('Referral sozlamalari saqlandi ✅');
-});
-
-if ($('rf_giftTarget')) $('rf_giftTarget').onchange = () => {
-  $('rf_giftUserBox').style.display = $('rf_giftTarget').value === 'specific' ? 'block' : 'none';
-};
-
-if ($('rf_sendGiftBtn')) $('rf_sendGiftBtn').onclick = guard(async () => {
-  const target = $('rf_giftTarget').value;
-  const type = $('rf_giftType').value;
-  const amount = +$('rf_giftAmt').value || 1;
-  if (target === 'all_referrers') {
-    if (!confirm(`Barcha do‘stini taklif qilgan targ‘ibotchilarga ${amount} ta ${type} yuborilsinmi?`)) return;
-    const r = await api('grant', { all_referrers: true, type, amount });
-    flash(`Sovg‘a ${r.count} ta targ‘ibotchiga yuborildi 🎁`);
-  } else {
-    const userId = $('rf_giftUser').value.trim();
-    if (!userId) return flash('Foydalanuvchi ID kiriting', false);
-    await api('grant', { userId, type, amount });
-    flash(`Sovg‘a ${userId} ga yuborildi 🎁`);
-  }
-});
-if ($('rf_search')) $('rf_search').oninput = renderReferral;
 
 if (code) login();
 </script>

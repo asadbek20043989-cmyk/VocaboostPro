@@ -2,7 +2,7 @@
 import { getTelegramWebApp } from './telegram';
 import { ACCOUNT_ID } from './account';
 
-const AI_URL: string = ((import.meta as any).env?.VITE_AI_URL as string) || '/.netlify/functions/ai';
+const AI_URL: string = ((import.meta as any).env?.VITE_AI_URL as string) || '/api/fn/ai';
 export const AI_DAILY_LIMIT = 10;
 
 export type AIAction = 'vocabStory' | 'xray' | 'checkSentence';
@@ -31,7 +31,7 @@ export async function callAI<T = any>(action: AIAction, payload: Record<string, 
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 404 && !data?.error) throw new Error('AI funksiyasi topilmadi. Saytni Netlify Functions bilan qayta deploy qiling.');
+    if (res.status === 404 && !data?.error) throw new Error('AI funksiyasi topilmadi. Saytni Vercel ga qayta deploy qiling.');
     throw new Error(data?.error || `AI xatosi (${res.status})`);
   }
   return data as T;

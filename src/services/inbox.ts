@@ -4,7 +4,7 @@ import { getTelegramWebApp } from './telegram';
 export type MsgKind = 'savol' | 'muammo' | 'taklif' | 'boshqa';
 
 export async function sendAdminMessage(uid: string, name: string, kind: MsgKind, text: string): Promise<void> {
-  const r = await fetch('/.netlify/functions/inbox', {
+  const r = await fetch('/api/fn/inbox', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ uid, name, kind, text, initData: getTelegramWebApp()?.initData || '' }),

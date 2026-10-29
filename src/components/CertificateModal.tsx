@@ -114,7 +114,7 @@ export const CertificateModal: React.FC<{ cert: Certificate; onClose: () => void
           onClick={async () => {
             triggerHaptic('medium');
             const origin = typeof window !== 'undefined' ? window.location.origin : '';
-            const certImageUrl = `${origin}/.netlify/functions/cert?id=${encodeURIComponent(cert.id)}&image=1`;
+            const certImageUrl = `${origin}/api/fn/cert?id=${encodeURIComponent(cert.id)}&image=1`;
 
             // Stories uchun HAR DOIM 9:16 (tik) rasm tayyorlanadi — kichrayib qolmaydi. Server keshiga bitta sertifikat uchun
             // FAQAT BIR MARTA yuboriladi (qayta bosilganda Netlify funksiyasi va Firebase yozuvi sarflanmaydi).
@@ -122,7 +122,7 @@ export const CertificateModal: React.FC<{ cert: Certificate; onClose: () => void
               const flag = `vb_story_up_${cert.id}`;
               if (!localStorage.getItem(flag)) {
                 const imageB64 = await certificateBase64({ ...cert, fmt: 'story' });
-                const rr = await fetch('/.netlify/functions/cert', {
+                const rr = await fetch('/api/fn/cert', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ action: 'storeImage', id: cert.id, image: imageB64 }),

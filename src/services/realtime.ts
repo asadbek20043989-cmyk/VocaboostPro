@@ -7,11 +7,11 @@ import { ACCOUNT_ID } from './account';
 // Ishonchlilik (telefon / mobil internet / Telegram WebView uchun):
 //  - har bir so'rovda vaqt chegarasi bor — "qotib qolish" yo'q;
 //  - to'g'ridan-to'g'ri Firebase ga ulanib bo'lmasa, so'rov avtomatik ravishda saytning o'z serveri
-//    (/.netlify/functions/db) orqali yuboriladi (ba'zi mobil tarmoqlar firebaseio.com ni sekinlatadi/to'sadi);
+//    (/api/fn/db) orqali yuboriladi (ba'zi mobil tarmoqlar firebaseio.com ni sekinlatadi/to'sadi);
 //  - SSE oqimi ochilmasa yoki jim qolsa, ma'lumot avtomatik so'rov (polling) orqali olinadi;
 //  - ekran qaytganda / internet qaytganda yangi holat darhol olinadi.
 const DB: string = ((import.meta as any).env?.VITE_FIREBASE_DB_URL || '').replace(/\/$/, '');
-const PROXY = '/.netlify/functions/db';
+const PROXY = '/api/fn/db';
 const MODE_KEY = 'vb_db_mode_v1';
 
 export const realtimeEnabled = !!DB;

@@ -2,7 +2,7 @@
 // server `initData` imzosini bot tokeni bilan tekshiradi, shuning uchun boshqa odam nomidan yuborib bo'lmaydi.
 import { getTelegramWebApp } from './telegram';
 
-const BOT_URL: string = ((import.meta as any).env?.VITE_BOT_URL as string) || '/.netlify/functions/bot';
+const BOT_URL: string = ((import.meta as any).env?.VITE_BOT_URL as string) || '/api/fn/bot';
 
 export const canUseBot = () => !!getTelegramWebApp()?.initData;
 
@@ -29,7 +29,3 @@ export const botSetRemind = (remind: boolean) => call<{ ok: boolean }>('setRemin
 /** Sertifikat rasmini foydalanuvchining Telegram chatiga yuboradi. kind: 'photo' (ko'rinish) yoki 'document' (fayl) */
 export const botSendCertificate = (c: { id: string; title: string; date: string; image: string; kind?: 'photo' | 'document' }) =>
   call<{ ok: boolean }>('sendCertificate', c);
-
-/** Do'stlik (referral) havolasi orqali kirganlikni tasdiqlash va sovg'alarni yozish */
-export const botProcessReferral = (startParam: string) =>
-  call<{ ok: boolean; rewardXp?: number; rewardCoins?: number }>('processReferral', { startParam });
