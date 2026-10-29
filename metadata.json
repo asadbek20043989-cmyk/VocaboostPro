@@ -1,0 +1,8 @@
+{
+  "name": "VocaBoost",
+  "description": "Inglizcha so'zlarni tez va uzoq yodlash uchun Telegram Mini App: aqlli takrorlash, o'yinlar, jonli reyting, sertifikatlar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #0B0F17;
+    color: #F8FAFC;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Telegram safe-area padding helper */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 12px);
+}
+
+/* Lucky wheel effects */
+@keyframes lw-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.9; }
+}
+.lw-confetti {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: lw-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes lw-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.lw-pop { animation: lw-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes lw-bounce {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.2) rotate(-8deg); }
+  75% { transform: scale(1.2) rotate(8deg); }
+}
+.lw-emoji { animation: lw-bounce 1.1s ease-in-out infinite; display: inline-block; }
+
+/* Wheel golden aura */
+@keyframes lw-spin-slow { to { transform: rotate(360deg); } }
+.lw-rays {
+  background: conic-gradient(from 0deg, transparent 0 8%, rgba(251,191,36,0.35) 10%, transparent 14% 25%, rgba(251,191,36,0.3) 27%, transparent 31% 42%, rgba(253,224,71,0.35) 44%, transparent 48% 58%, rgba(251,191,36,0.3) 60%, transparent 64% 75%, rgba(253,224,71,0.35) 77%, transparent 81% 92%, rgba(251,191,36,0.3) 94%, transparent 98%);
+  -webkit-mask-image: radial-gradient(circle, transparent 38%, #000 52%, transparent 72%);
+  mask-image: radial-gradient(circle, transparent 38%, #000 52%, transparent 72%);
+  animation: lw-spin-slow 24s linear infinite;
+}
+@keyframes lw-glow-pulse { 0%, 100% { opacity: 0.22; } 50% { opacity: 0.42; } }
+.lw-glow { animation: lw-glow-pulse 3.2s ease-in-out infinite; }
+.lw-glow-fast { animation-duration: 0.9s; }
+@keyframes lw-bulb-a { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.lw-bulb { animation: lw-bulb-a 1.6s ease-in-out infinite; }
+.lw-bulb-b { animation-delay: 0.8s; }
+.lw-bulb-fast { animation-duration: 0.35s; }
+.lw-bulb-fast.lw-bulb-b { animation-delay: 0.175s; }
+
+
+/* =====================================================================
+   KUN REJIMI (html.light). Ilova komponentlari tun ranglarida yozilgan —
+   quyida ranglar kun rejimi uchun qayta belgilanadi.
+   ===================================================================== */
+html.light { color-scheme: light; }
+html.light body { background-color: #F3F5F9; color: #0F172A; }
+html.light ::-webkit-scrollbar-track { background: #F3F5F9; }
+html.light ::-webkit-scrollbar-thumb { background: #CBD5E1; }
+
+/* kulrang shkala (matn, chiziq, fon) teskari */
+html.light {
+  --color-slate-100: #0F172A;
+  --color-slate-200: #1E293B;
+  --color-slate-300: #334155;
+  --color-slate-400: #52617A;
+  --color-slate-500: #64748B;
+  --color-slate-600: #94A3B8;
+  --color-slate-700: #CBD5E1;
+  --color-slate-800: #E2E8F0;
+  --color-slate-900: #F1F5F9;
+}
+
+/* sahifa va kartalar */
+html.light [class*="bg-[#0B0F17]"] { background-color: #F3F5F9; }
+html.light [class*="bg-[#0B0F17]/"] { background-color: rgb(243 245 249 / 0.96); }
+html.light [class*="bg-[#151C28]"] { background-color: #FFFFFF; }
+html.light [class*="bg-[#151C28]/"] { background-color: rgb(255 255 255 / 0.7); }
+html.light [class*="bg-[#0E1524]"] { background-color: #EDF1F7; }
+html.light [class*="bg-[#0E1524]/"] { background-color: rgb(255 255 255 / 0.96); }
+html.light [class*="bg-[#1B2433]"], html.light [class*="bg-[#1B2333]"] { background-color: #F1F5F9; }
+html.light [class*="bg-[#121822]"] { background-color: #F8FAFC; }
+html.light [class*="hover:bg-[#1B2333]"]:hover { background-color: #F1F5F9; }
+html.light .from-\[\#1B2433\], html.light .from-\[\#151C28\] { --tw-gradient-from: #FFFFFF; }
+html.light .via-\[\#1B2433\] { --tw-gradient-via: #F6F8FC; }
+html.light .to-\[\#121822\] { --tw-gradient-to: #EAEFF6; }
+html.light .shadow-black\/20 { --tw-shadow-color: rgb(15 23 42 / 0.08); }
+html.light .bg-black\/80, html.light .bg-black\/85 { background-color: rgb(15 23 42 / 0.55); }
+
+/* oq matn -> to'q matn */
+html.light { --color-white: #0F172A; }
+html.light .fill-white { fill: #0F172A; }
+
+/* rangli matnlar (oq fonda o'qilishi uchun to'qroq) */
+html.light .text-amber-100 { color: #78350F; }
+html.light .text-amber-200 { color: #92400E; }
+html.light .text-amber-300, html.light .text-amber-400 { color: #B45309; }
+html.light .text-orange-400 { color: #C2410C; }
+html.light .fill-orange-400 { fill: #C2410C; }
+html.light .text-emerald-100, html.light .text-emerald-200 { color: #065F46; }
+html.light .text-emerald-300, html.light .text-emerald-400 { color: #047857; }
+html.light .text-rose-200 { color: #9F1239; }
+html.light .text-rose-300, html.light .text-rose-400 { color: #BE123C; }
+html.light .text-sky-200 { color: #075985; }
+html.light .text-sky-300, html.light .text-sky-400 { color: #0369A1; }
+html.light .text-violet-100, html.light .text-violet-300, html.light .text-violet-400 { color: #6D28D9; }
+html.light .text-pink-100, html.light .text-pink-300 { color: #BE185D; }
+html.light .text-cyan-100, html.light .text-cyan-300 { color: #0E7490; }
+html.light .fill-amber-400 { fill: #D97706; }
+
+/* rangli to'ldirilgan tugmalardagi oq matn oq bo'lib qoladi */
+html.light .bg-emerald-600.text-white, html.light .bg-rose-600.text-white,
+html.light .bg-emerald-500.text-white, html.light .bg-rose-500.text-white,
+html.light .bg-sky-500.text-white, html.light .bg-sky-400.text-white { color: #FFFFFF; }
+
+/* to'q rangli kartalar (baraban, sertifikat va h.k.) kun rejimida ham to'q qoladi: ichidagi matn o'z rangida */
+html.light .keep-dark { color: #F8FAFC; }
+html.light .keep-dark .text-white { color: #FFFFFF; }
+html.light .keep-dark .text-amber-300 { color: #FCD34D; }
+html.light .keep-dark .text-amber-200 { color: #FDE68A; }
+html.light .keep-dark .text-amber-100 { color: #FEF3C7; }
+html.light .keep-dark .text-pink-100 { color: #FCE7F3; }
+html.light .keep-dark .text-cyan-100 { color: #CFFAFE; }
+html.light .keep-dark [class*="text-purple-100"] { color: rgb(243 232 255 / 0.85); }
+html.light .keep-dark [class*="bg-[#0B0F17]"], html.light .keep-dark [class*="bg-[#151C28]"] { background-color: rgb(15 23 42 / 0.55); }
+
+/* yumshoq tus: sovg'alar kartasi va h.k. */
+html.light [class*="shadow-xl"] { --tw-shadow-color: rgb(15 23 42 / 0.1); }
+html.light input, html.light textarea, html.light select { color: #0F172A; }
+html.light input::placeholder, html.light textarea::placeholder { color: #94A3B8; }
+
+/* Streak oynasi */
+@keyframes sp-pop {
+  0% { opacity: 0; transform: scale(0.85) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes sp-flame {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.12) rotate(3deg); }
+}
+.sp-pop { animation: sp-pop 0.28s ease-out both; }
+.sp-flame { display: inline-block; animation: sp-flame 1.6s ease-in-out infinite; }
+
+
+/* E'lon banneri: tun va kun rejimida alohida fon (oldin kun rejimida o'rtasi qora bo'lib qolardi) */
+.vb-announce { background: linear-gradient(90deg, rgb(245 158 11 / 0.16), #162133 50%, rgb(14 165 233 / 0.16)); }
+html.light .vb-announce { background: linear-gradient(90deg, #FEF3C7, #FFFBEB 50%, #E0F2FE); border-color: rgb(245 158 11 / 0.55); }
+
+/* Kun rejimida o'qilmay qolgan och rangli matnlar (to'q rangga o'tkaziladi) */
+html.light .text-rose-100 { color: #881337; }
+html.light .text-cyan-200 { color: #155E75; }
+html.light .text-cyan-400 { color: #0E7490; }
+html.light .text-sky-300\/80 { color: #0369A1; }
+html.light .text-amber-200\/90 { color: #92400E; }
+html.light .text-violet-100 { color: #5B21B6; }
+html.light .text-emerald-100 { color: #065F46; }
+html.light .text-amber-600 { color: #B45309; }
+html.light .text-orange-500 { color: #C2410C; }
+html.light .text-yellow-200, html.light .text-yellow-300 { color: #854D0E; }
+html.light .text-green-300, html.light .text-green-400 { color: #15803D; }
+html.light .text-red-300, html.light .text-red-400 { color: #B91C1C; }
+html.light .text-purple-100\/85 { color: #6B21A8; }
+/* Yarim shaffof rangli fonlar kun rejimida biroz kuchliroq bo'lsin */
+html.light .bg-rose-500\/10 { background-color: rgb(244 63 94 / 0.10); }
+html.light .bg-sky-500\/10 { background-color: rgb(14 165 233 / 0.10); }
+html.light .bg-amber-500\/10 { background-color: rgb(245 158 11 / 0.14); }
+html.light .bg-emerald-500\/10 { background-color: rgb(16 185 129 / 0.12); }
+
+
+/* =====================================================================
+   PODIUM: TOP-3 uchun porlovchi avatarlar, toj va yulduzchalar
+   ===================================================================== */
+@keyframes pd-spin { to { transform: rotate(360deg); } }
+@keyframes pd-pulse { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+@keyframes pd-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-4px) rotate(3deg); } }
+@keyframes pd-twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+@keyframes pd-shine { 0% { transform: translateX(-120%) skewX(-20deg); } 60%, 100% { transform: translateX(260%) skewX(-20deg); } }
+.pd-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.pd-halo { position: absolute; inset: -14px; border-radius: 9999px; filter: blur(14px); animation: pd-pulse 2.4s ease-in-out infinite; }
+.pd-ring { position: absolute; inset: -5px; border-radius: 9999px; animation: pd-spin 4s linear infinite; }
+.pd-ring::after { content: ''; position: absolute; inset: 3px; border-radius: 9999px; background: var(--pd-inner, #0B0F17); }
+.pd-avatar { position: relative; z-index: 2; border-radius: 9999px; }
+.pd-crown-pos { position: absolute; left: 50%; top: 0; z-index: 5; transform: translate(-50%, -66%); line-height: 0; pointer-events: none; }
+.pd-crown { display: block; transform-origin: 50% 100%; animation: pd-float 2.6s ease-in-out infinite; filter: drop-shadow(0 4px 8px rgba(251,191,36,.7)); }
+.pd-spark { position: absolute; z-index: 4; width: 10px; height: 10px; animation: pd-twinkle 2.2s ease-in-out infinite; }
+.pd-spark::before, .pd-spark::after { content: ''; position: absolute; background: #fff; border-radius: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 6px 1px currentColor; }
+.pd-spark::before { width: 100%; height: 2px; }
+.pd-spark::after { width: 2px; height: 100%; }
+.pd-base { position: relative; overflow: hidden; }
+.pd-base::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: pd-shine 3.4s ease-in-out infinite; }
+html.light { --pd-inner: #FFFFFF; }
+.pd-gold { --c1: #FDE047; --c2: #F59E0B; --c3: #FFF7C2; }
+.pd-silver { --c1: #E0F2FE; --c2: #38BDF8; --c3: #FFFFFF; }
+.pd-bronze { --c1: #FDBA74; --c2: #EA580C; --c3: #FFE4C7; }
+.pd-gold .pd-ring { background: conic-gradient(from 0deg, #FDE047, #F59E0B, #FFF7C2, #F59E0B, #FDE047); }
+.pd-silver .pd-ring { background: conic-gradient(from 0deg, #E0F2FE, #38BDF8, #FFFFFF, #7DD3FC, #E0F2FE); }
+.pd-bronze .pd-ring { background: conic-gradient(from 0deg, #FDBA74, #EA580C, #FFE4C7, #C2410C, #FDBA74); }
+.pd-gold .pd-halo { background: radial-gradient(circle, rgba(250,204,21,.85), rgba(245,158,11,0) 70%); }
+.pd-silver .pd-halo { background: radial-gradient(circle, rgba(56,189,248,.8), rgba(125,211,252,0) 70%); }
+.pd-bronze .pd-halo { background: radial-gradient(circle, rgba(249,115,22,.8), rgba(234,88,12,0) 70%); }
+.pd-gold .pd-spark { color: #FDE047; } .pd-silver .pd-spark { color: #7DD3FC; } .pd-bronze .pd-spark { color: #FB923C; }
+/* Reyting ro'yxatida TOP-3 qatorlarining yengil nuri */
+.row-gold { box-shadow: 0 0 0 1px rgba(250,204,21,.55), 0 0 18px rgba(250,204,21,.25); }
+.row-silver { box-shadow: 0 0 0 1px rgba(56,189,248,.5), 0 0 16px rgba(56,189,248,.2); }
+.row-bronze { box-shadow: 0 0 0 1px rgba(249,115,22,.5), 0 0 16px rgba(249,115,22,.2); }
+@media (prefers-reduced-motion: reduce) { .pd-halo, .pd-ring, .pd-crown, .pd-spark, .pd-base::after { animation: none !important; } }
+
+
+/* =====================================================================
+   DO'KON: bezaklar (ramka, yaltiroq ism) va ilova mavzulari (skin)
+   ===================================================================== */
+@keyframes vb-spin { to { transform: rotate(360deg); } }
+.vb-frame { animation: vb-spin 5s linear infinite; }
+@keyframes vb-rainbow { to { background-position: 200% 0; } }
+.vb-fx-rainbow { background: linear-gradient(90deg,#f87171,#fbbf24,#34d399,#38bdf8,#c084fc,#f87171); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; animation: vb-rainbow 3s linear infinite; filter: drop-shadow(0 0 4px rgba(255,255,255,.25)); }
+.vb-fx-gold { background: linear-gradient(90deg,#fde047,#f59e0b,#fff7c2,#f59e0b,#fde047); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; animation: vb-rainbow 2.4s linear infinite; filter: drop-shadow(0 0 4px rgba(250,204,21,.45)); }
+@media (prefers-reduced-motion: reduce) { .vb-frame, .vb-fx-rainbow, .vb-fx-gold { animation: none !important; } }
+@keyframes vb-coin-pop { 0% { transform: scale(.5) rotate(-20deg); opacity: 0 } 60% { transform: scale(1.15) rotate(6deg); opacity: 1 } 100% { transform: scale(1) rotate(0) } }
+.vb-pop { animation: vb-coin-pop .55s cubic-bezier(.2,.9,.3,1.2) both; }
+
+/* Mavzular: qorong'u asosdagi ranglar qayta belgilanadi (kun rejimi bu mavzularni bekor qiladi) */
+html[data-skin="neon"]:not(.light) body { background-color: #07040F; }
+html[data-skin="neon"]:not(.light) [class*="bg-[#0B0F17]"] { background-color: #07040F; }
+html[data-skin="neon"]:not(.light) [class*="bg-[#151C28]"] { background-color: #130A24; border-color: rgb(217 70 239 / .35); }
+html[data-skin="neon"]:not(.light) [class*="bg-[#0E1524]"] { background-color: #0E0720; }
+html[data-skin="neon"]:not(.light) [class*="bg-[#1B2433"], html[data-skin="neon"]:not(.light) [class*="bg-[#1B2333"] { background-color: #1D0F33; }
+html[data-skin="neon"]:not(.light) .text-amber-400 { color: #22D3EE; }
+html[data-skin="neon"]:not(.light) .bg-amber-500 { background-color: #D946EF; }
+html[data-skin="neon"]:not(.light) nav { border-top-color: rgb(34 211 238 / .5); box-shadow: 0 -4px 24px rgb(217 70 239 / .25); }
+
+html[data-skin="nature"]:not(.light) body { background-color: #07140E; }
+html[data-skin="nature"]:not(.light) [class*="bg-[#0B0F17]"] { background-color: #07140E; }
+html[data-skin="nature"]:not(.light) [class*="bg-[#151C28]"] { background-color: #0F2218; border-color: rgb(74 222 128 / .22); }
+html[data-skin="nature"]:not(.light) [class*="bg-[#0E1524]"] { background-color: #0B1A12; }
+html[data-skin="nature"]:not(.light) [class*="bg-[#1B2433"], html[data-skin="nature"]:not(.light) [class*="bg-[#1B2333"] { background-color: #153024; }
+html[data-skin="nature"]:not(.light) .text-amber-400 { color: #86EFAC; }
+html[data-skin="nature"]:not(.light) .bg-amber-500 { background-color: #22C55E; }
+
+html[data-skin="royal"]:not(.light) body { background-color: #0A0B26; }
+html[data-skin="royal"]:not(.light) [class*="bg-[#0B0F17]"] { background-color: #0A0B26; }
+html[data-skin="royal"]:not(.light) [class*="bg-[#151C28]"] { background-color: #14173D; border-color: rgb(250 204 21 / .25); }
+html[data-skin="royal"]:not(.light) [class*="bg-[#0E1524]"] { background-color: #0F1131; }
+html[data-skin="royal"]:not(.light) [class*="bg-[#1B2433"], html[data-skin="royal"]:not(.light) [class*="bg-[#1B2333"] { background-color: #1C2050; }

@@ -1,0 +1,71 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "leaderboard": {
+      ".read": true,
+      ".write": false
+    },
+    "words": {
+      ".read": true,
+      ".write": false
+    },
+    "packs": {
+      ".read": true,
+      ".write": false
+    },
+    "config": {
+      ".read": true,
+      ".write": false
+    },
+    "certs": {
+      "$uid": {
+        ".read": true,
+        ".write": false
+      },
+      ".write": false
+    },
+    "grants": {
+      ".read": false,
+      ".write": false
+    },
+    "certIndex": {
+      ".read": false,
+      ".write": false
+    },
+    "milestoneIdx": {
+      ".read": false,
+      ".write": false
+    },
+    "state": {
+      "$uid": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "duels": {
+      ".read": true,
+      ".write": false
+    },
+    "challenges": {
+      ".read": true,
+      ".write": false
+    },
+    "certImages": {
+      ".read": false,
+      ".write": false
+    },
+    "messages": {
+      ".read": false,
+      ".write": false
+    },
+    "hall": {
+      ".read": true,
+      ".write": false
+    },
+    "adminState": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
