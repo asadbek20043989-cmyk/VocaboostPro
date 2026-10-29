@@ -13,7 +13,7 @@ export const CERT_BOT = '@VocaBoostProBot';
 let W = CERT_W;
 let H = CERT_H;
 
-type Deco = 'bronze' | 'silver' | 'gold' | 'platinum' | 'champion' | 'active' | 'marathon' | 'thanks' | 'trust' | 'growth' | 'wisdom' | 'speed' | 'reviewer' | 'expert' | 'consistent' | 'limitless';
+type Deco = 'bronze' | 'silver' | 'gold' | 'platinum' | 'champion' | 'active' | 'marathon' | 'thanks' | 'trust' | 'growth' | 'wisdom' | 'speed' | 'reviewer' | 'expert' | 'consistent' | 'limitless' | 'weekly';
 
 interface Tpl {
   name: string;
@@ -36,7 +36,7 @@ export const TEMPLATES: Record<string, Tpl> = {
   silver: { name: 'Kumush', ribbonText: 'KUMUSH', deco: 'silver', frame: ['#E8F1F8', '#A9C3D9', '#5F7C95'], accent: '#C9D8E6', head: ['#FFFFFF', '#9FB4C7'], ribbon: ['#E6ECF2', '#A9B6C3', '#6B7886'], ribbonInk: '#1B2530', nameGrad: ['#F4F8FC', '#9FB1C4'], wreath: '#C3D0DC' },
   gold: { name: 'Oltin', ribbonText: 'OLTIN', deco: 'gold', frame: ['#FFE58A', '#F2B705', '#A8730A'], accent: '#F5C21B', head: ['#FFE98F', '#D79B0A'], ribbon: ['#FFE079', '#E6A912', '#9A6A08'], ribbonInk: '#2E1F02', nameGrad: ['#FFE48A', '#D9A10E'], wreath: '#E9B820' },
   platinum: { name: 'Platina', ribbonText: 'PLATINA', deco: 'platinum', frame: ['#D4EEFF', '#8EC5E8', '#3F7FA6'], accent: '#8EC5E8', head: ['#EAF7FF', '#6FA9CF'], ribbon: ['#A9D4F0', '#6BA6CC', '#3A6E92'], ribbonInk: '#08202F', nameGrad: ['#DDF1FF', '#78B2D8'], wreath: '#A9D2EC' },
-  champion: { name: 'Chempion', ribbonText: '1-HAFTA CHEMPIONI', deco: 'champion', frame: ['#FFE08A', '#F2A91B', '#B4540E'], accent: '#F5B83A', head: ['#FFE08A', '#D58A12'], ribbon: ['#E0443F', '#B01C26', '#6E0E16'], ribbonInk: '#FFD978', nameGrad: ['#FFE08A', '#D58A12'], wreath: '#F2B33A', crown: true, corner: '#A3151F' },
+  champion: { name: 'Chempion', ribbonText: 'CHEMPION', deco: 'champion', frame: ['#FFE08A', '#F2A91B', '#B4540E'], accent: '#F5B83A', head: ['#FFE08A', '#D58A12'], ribbon: ['#E0443F', '#B01C26', '#6E0E16'], ribbonInk: '#FFD978', nameGrad: ['#FFE08A', '#D58A12'], wreath: '#F2B33A', crown: true, corner: '#A3151F' },
   active: { name: 'Eng faol', ribbonText: 'ENG FAOL', deco: 'active', frame: ['#7EE0A0', '#2DAA5F', '#166B3A'], accent: '#F5C21B', head: ['#FFE48A', '#D79B0A'], ribbon: ['#3FBF77', '#1F8C50', '#0F5A32'], ribbonInk: '#EAFFF1', nameGrad: ['#FFE48A', '#D9A10E'], wreath: '#4FC783' },
   marathon: { name: 'Marafon', ribbonText: 'MARAFON', deco: 'marathon', frame: ['#7FB6FF', '#2F7BFF', '#1546B8'], accent: '#4C95FF', head: ['#D8E9FF', '#4C8EEA'], ribbon: ['#3C8CFF', '#1F62E0', '#123F9C'], ribbonInk: '#F2F8FF', nameGrad: ['#CFE3FF', '#3F86F0'], wreath: null },
   thanks: { name: 'Minnatdorchilik', ribbonText: 'MINNATDORCHILIK', deco: 'thanks', frame: ['#D6BFFF', '#9B6BF2', '#5B2FB3'], accent: '#B58BFF', head: ['#EBDDFF', '#9A74E6'], ribbon: ['#7B4FD8', '#5A32B0', '#3A1D80'], ribbonInk: '#F4ECFF', nameGrad: ['#EBDDFF', '#A67FF0'], wreath: null },
@@ -47,6 +47,7 @@ export const TEMPLATES: Record<string, Tpl> = {
   reviewer: { name: 'Top Reviewer', ribbonText: 'TOP REVIEWER', deco: 'reviewer', frame: ['#FEF08A', '#EAB308', '#854D0E'], accent: '#EAB308', head: ['#FEF9C3', '#CA8A04'], ribbon: ['#FACC15', '#CA8A04', '#713F12'], ribbonInk: '#422006', nameGrad: ['#FEF08A', '#EAB308'], wreath: '#EAB308', crown: true },
   expert: { name: 'Mutaxassis', ribbonText: 'MUTAXASSIS', deco: 'expert', frame: ['#E9D5FF', '#C084FC', '#7E22CE'], accent: '#C084FC', head: ['#FAF5FF', '#A855F7'], ribbon: ['#D8B4FE', '#9333EA', '#581C87'], ribbonInk: '#3B0764', nameGrad: ['#FAF5FF', '#C084FC'], wreath: null },
   consistent: { name: 'Barqaror', ribbonText: 'BARQAROR', deco: 'consistent', frame: ['#A7F3D0', '#10B981', '#047857'], accent: '#10B981', head: ['#ECFDF5', '#059669'], ribbon: ['#34D399', '#059669', '#064E3B'], ribbonInk: '#022C22', nameGrad: ['#ECFDF5', '#10B981'], wreath: '#10B981' },
+  weekly: { name: 'Hafta chempioni', ribbonText: 'HAFTA CHEMPIONI', deco: 'gold', frame: ['#FFE58A', '#F2B705', '#A8730A'], accent: '#F5C21B', head: ['#FFE98F', '#D79B0A'], ribbon: ['#FFE079', '#E6A912', '#9A6A08'], ribbonInk: '#2E1F02', nameGrad: ['#FFE48A', '#D9A10E'], wreath: '#E9B820', crown: true },
   limitless: { name: 'Cheksiz', ribbonText: 'CHEKSIZ', deco: 'limitless', frame: ['#C7D2FE', '#818CF8', '#4338CA'], accent: '#818CF8', head: ['#EEF2FF', '#6366F1'], ribbon: ['#A5B4FC', '#4F46E5', '#312E81'], ribbonInk: '#1E1B4B', nameGrad: ['#EEF2FF', '#818CF8'], wreath: null },
 };
 
@@ -252,10 +253,9 @@ function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number,
   ctx.restore();
 }
 
-function ribbon(ctx: CanvasRenderingContext2D, t: Tpl, cx: number, cy: number, customText?: string): number {
-  const txt = (customText || t.ribbonText).toUpperCase();
-  ctx.font = `700 44px ${SERIF}`;
-  const textW = Array.from(txt).reduce((a, c) => a + ctx.measureText(c).width + 6, -6);
+function ribbon(ctx: CanvasRenderingContext2D, t: Tpl, cx: number, cy: number): number {
+  ctx.font = `700 46px ${SERIF}`;
+  const textW = Array.from(t.ribbonText).reduce((a, c) => a + ctx.measureText(c).width + 6, -6);
   const half = Math.max(210, textW / 2 + 70);
   const h = 70;
   const notch = 34;
@@ -285,7 +285,7 @@ function ribbon(ctx: CanvasRenderingContext2D, t: Tpl, cx: number, cy: number, c
   ctx.beginPath(); ctx.moveTo(x0 + notch + 6, y0 + 7); ctx.lineTo(x1 - notch - 6, y0 + 7); ctx.stroke();
   ctx.fillStyle = t.ribbonInk;
   ctx.textBaseline = 'middle';
-  spaced(ctx, txt, cx, cy + 2, 6);
+  spaced(ctx, t.ribbonText, cx, cy + 2, 6);
   ctx.textBaseline = 'alphabetic';
   return half;
 }
@@ -344,6 +344,232 @@ function statPills(ctx: CanvasRenderingContext2D, t: Tpl, cx: number, y: number,
   });
 }
 
+
+// =====================================================================================================
+// YANGI DIZAYNLAR (v5): tayyor badiiy fon rasmlari (/certs/bg_*.jpg) ustiga faqat o'zgaruvchan matnlar chiziladi.
+// 8 ta dizayn: bronze, silver, gold, marathon, thanks, growth (Yuksalish), wisdom (Bilim donosi), consistent (Barqaror)
+// + weekly (Hafta chempioni — oltin dizayn, lentada «N-HAFTA CHEMPIONI»). Boshqa eski nomlar avvalgi usulda chiziladi.
+// =====================================================================================================
+const IMG_BG: Record<string, string> = {
+  bronze: 'bg_bronze', silver: 'bg_silver', gold: 'bg_gold', marathon: 'bg_marathon', thanks: 'bg_thanks',
+  growth: 'bg_growth', wisdom: 'bg_wisdom', consistent: 'bg_consistent', weekly: 'bg_gold',
+};
+const IMG_LABEL: Record<string, string> = {
+  bronze: 'BRONZA', silver: 'KUMUSH', gold: 'OLTIN', marathon: 'MARAFON', thanks: 'MINNATDORCHILIK',
+  growth: 'YUKSALISH', wisdom: 'BILIM DONOSI', consistent: 'BARQAROR', weekly: 'HAFTA CHEMPIONI',
+};
+const IMG_INK: Record<string, string> = {
+  bronze: '#FFD3A8', silver: '#EEF5FC', gold: '#FFE48A', marathon: '#D6FFDC', thanks: '#FFE9A8',
+  growth: '#FFE48A', wisdom: '#2B1608', consistent: '#C9FFE8', weekly: '#FFE48A',
+};
+export const hasImageTemplate = (tpl: string): boolean => !!IMG_BG[tpl];
+
+interface Lay {
+  ribbon: [number, number, number]; // markaz x, y, eng katta kenglik
+  name: [number, number, number]; // markaz x, y, shrift
+  line: number; // chiziq y (0 — chizilmaydi)
+  title: number;
+  reason: number;
+  plates: [number, number, number, number]; // 3 ta markaz x + (yo'q) y quyida
+  plateY: number;
+  plateW: number;
+  inline: boolean; // "DARAJA / B1" bir qatorda
+  date: [number, number, number, number]; // x, sana y, raqam y (0 — sana yonida bir qatorda), shrift
+  qr: [number, number, number]; // markaz x, y, o'lcham
+  plateInk: string;
+}
+const LAY_A: Lay = {
+  ribbon: [800, 394, 340], name: [800, 530, 74], line: 577, title: 604, reason: 634,
+  plates: [534, 801, 1069, 0], plateY: 689, plateW: 220, inline: false, date: [96, 806, 0, 28], qr: [1444, 760, 104], plateInk: '#FFFFFF',
+};
+const LAY: Record<string, Lay> = {
+  bronze: { ...LAY_A, ribbon: [802, 389, 330], name: [802, 531, 72], line: 0, title: 596, reason: 628, plates: [531, 802, 1070, 0], date: [97, 806, 0, 27], qr: [1450, 758, 100] },
+  wisdom: { ...LAY_A, ribbon: [800, 391, 330], name: [790, 529, 72], line: 0, title: 596, reason: 636, plates: [465, 792, 1126, 0], plateY: 714, plateW: 300, inline: true, date: [104, 802, 830, 27], qr: [1435, 781, 112], plateInk: '#F5D58A' },
+};
+const loadImg = (src: string): Promise<HTMLImageElement | null> =>
+  new Promise(res => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = src;
+  });
+
+function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/** Yangi dizayn (16:9). Muvaffaqiyatsiz bo'lsa (rasm yuklanmasa) false qaytaradi — eski usul ishlatiladi */
+async function drawImageWide(canvas: HTMLCanvasElement, c: Certificate): Promise<boolean> {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return false;
+  const bg = await loadImg(`/certs/${IMG_BG[c.tpl]}.jpg`);
+  if (!bg) return false;
+  const k = c.tpl;
+  const L = LAY[k] || LAY_A;
+  canvas.width = 1600;
+  canvas.height = Math.round((1600 * bg.naturalHeight) / bg.naturalWidth);
+  const CW = canvas.width;
+  ctx.drawImage(bg, 0, 0, CW, canvas.height);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+
+  // Lenta yozuvi (tur nomi yoki «N-HAFTA CHEMPIONI»)
+  const label = String(c.label || IMG_LABEL[k] || '').toUpperCase().slice(0, 28);
+  const dark = k === 'wisdom';
+  let fs = 28;
+  ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
+  const maxLabel = L.ribbon[2];
+  while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) { fs -= 1; ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`; }
+  const lw = spacedWidth(ctx, label, 2.5);
+  if (!dark) {
+    const pw = lw + 46, ph = fs + 18;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8;
+    rrect(ctx, L.ribbon[0] - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 7);
+    const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
+    pg.addColorStop(0, 'rgba(14,22,44,0.92)'); pg.addColorStop(1, 'rgba(6,10,24,0.92)');
+    ctx.fillStyle = pg; ctx.fill();
+    ctx.restore();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#E7BE62'; rrect(ctx, L.ribbon[0] - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 7); ctx.stroke();
+  }
+  spaced(ctx, label, L.ribbon[0], L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || '#FFE48A');
+
+  // Ism (katta, oltin-oq gradient, nur bilan)
+  let ns = L.name[2];
+  const nm = c.name || 'F.I.SH.';
+  ctx.font = `italic 700 ${ns}px ${SERIF}`;
+  while (ctx.measureText(nm).width > 760 && ns > 36) { ns -= 4; ctx.font = `italic 700 ${ns}px ${SERIF}`; }
+  ctx.save();
+  const rg = ctx.createRadialGradient(L.name[0], L.name[1] - ns * 0.3, 10, L.name[0], L.name[1] - ns * 0.3, 360);
+  rg.addColorStop(0, 'rgba(4,8,20,0.55)'); rg.addColorStop(1, 'rgba(4,8,20,0)');
+  ctx.fillStyle = rg; ctx.fillRect(L.name[0] - 380, L.name[1] - ns * 1.2, 760, ns * 1.8);
+  ctx.shadowColor = dark ? 'rgba(255,190,70,0.65)' : 'rgba(255,214,120,0.7)';
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = vGrad(ctx, L.name[1] - ns * 0.8, L.name[1] + 8, '#FFFFFF', dark ? '#E9B24A' : '#F2CB74');
+  ctx.fillText(nm, L.name[0], L.name[1]);
+  ctx.restore();
+
+  // chiziq (faqat kerak bo'lsa)
+  if (L.line) {
+    const lg = ctx.createLinearGradient(L.name[0] - 340, 0, L.name[0] + 340, 0);
+    lg.addColorStop(0, 'rgba(240,196,99,0)'); lg.addColorStop(0.2, 'rgba(240,196,99,0.95)'); lg.addColorStop(0.8, 'rgba(240,196,99,0.95)'); lg.addColorStop(1, 'rgba(240,196,99,0)');
+    ctx.strokeStyle = lg; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(L.name[0] - 340, L.line); ctx.lineTo(L.name[0] + 340, L.line); ctx.stroke();
+  }
+
+  // Sarlavha va izoh
+  let ty = L.title;
+  ctx.fillStyle = dark ? '#F4DFA3' : '#FFF3C6';
+  ctx.font = `800 31px ${SANS}`;
+  const tl = wrap(ctx, c.title || '', 760).slice(0, 2);
+  tl.forEach((l, i) => ctx.fillText(l, L.name[0], ty + i * 36));
+  ty += Math.max(0, tl.length - 1) * 36;
+  if (c.reason) {
+    ctx.fillStyle = dark ? '#E4D2A4' : '#DCE3F0';
+    ctx.font = `500 22px ${SANS}`;
+    wrap(ctx, c.reason, 820).slice(0, 2).forEach((l, i) => ctx.fillText(l, L.name[0], ty + 32 + i * 28));
+  }
+
+  // Muhrlar: daraja / so'zlar / streak
+  const st = c.stats || {};
+  const vals: [string, string][] = [
+    ['DARAJA', st.lvl || '—'],
+    ["SO'ZLAR", st.words !== undefined ? String(st.words) : '—'],
+    ['STREAK', st.streak !== undefined ? `${st.streak} kun` : '—'],
+  ];
+  vals.forEach(([lab, val], i) => {
+    const cx = L.plates[i];
+    ctx.fillStyle = L.plateInk;
+    if (L.inline) {
+      ctx.font = `700 29px ${SERIF}`;
+      const full = `${lab} / `;
+      const w1 = ctx.measureText(full).width, w2 = ctx.measureText(val).width;
+      const x0 = cx - (w1 + w2) / 2;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#F2E2B8'; ctx.fillText(full, x0, L.plateY);
+      ctx.fillStyle = '#E9B24A'; ctx.fillText(val, x0 + w1, L.plateY);
+      ctx.textAlign = 'center';
+    } else {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 6;
+      ctx.font = `800 25px ${SANS}`;
+      ctx.fillText(lab, cx, L.plateY - 17);
+      let vs = 46;
+      ctx.font = `800 ${vs}px ${SANS}`;
+      while (ctx.measureText(val).width > L.plateW - 40 && vs > 22) { vs -= 2; ctx.font = `800 ${vs}px ${SANS}`; }
+      ctx.fillText(val, cx, L.plateY + 24);
+      ctx.restore();
+    }
+  });
+
+  // Sana va raqam
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 6;
+  ctx.fillStyle = dark ? '#D9A94F' : '#FFF1C2';
+  ctx.font = `600 ${L.date[3]}px ${SANS}`;
+  if (L.date[2]) {
+    ctx.fillText(`Sana: ${fmtDate(c.date)}`, L.date[0], L.date[1]);
+    ctx.fillText(`№ ${c.id}`, L.date[0], L.date[2]);
+  } else {
+    ctx.fillText(`Sana: ${fmtDate(c.date)}     № ${c.id}`, L.date[0], L.date[1]);
+  }
+  ctx.restore();
+
+  // QR (oq fon ustida — skaner uchun ishonchli)
+  const qs = L.qr[2];
+  const qx = L.qr[0] - qs / 2, qy = L.qr[1] - qs / 2;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#FFFFFF';
+  rrect(ctx, qx - 9, qy - 9, qs + 18, qs + 18, 8); ctx.fill();
+  ctx.restore();
+  if (c.verified !== false) drawQr(ctx, certUrl(c.id), qx, qy, qs, { dark: '#0A1220', light: '#FFFFFF', quiet: 1, ecc: 'M' });
+  else {
+    ctx.fillStyle = '#64748B'; ctx.font = `600 15px ${SANS}`; ctx.textAlign = 'center';
+    ctx.fillText('Mahalliy nusxa', L.qr[0], L.qr[1] + 5);
+  }
+  ctx.textAlign = 'center';
+  return true;
+}
+
+function spacedWidth(ctx: CanvasRenderingContext2D, text: string, gap: number): number {
+  const chars = Array.from(text);
+  return chars.reduce((a, ch) => a + ctx.measureText(ch).width, 0) + gap * Math.max(0, chars.length - 1);
+}
+
+/** Yangi dizaynni 16:9 yoki 9:16 (Stories) formatda chizadi */
+async function drawImageCertificate(canvas: HTMLCanvasElement, c: Certificate): Promise<boolean> {
+  if (c.fmt !== 'story') return drawImageWide(canvas, c);
+  const off = document.createElement('canvas');
+  if (!(await drawImageWide(off, c))) return false;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return false;
+  canvas.width = CERT_STORY_W;
+  canvas.height = CERT_STORY_H;
+  // fon: sertifikatning o'zi xira qilib kattalashtirilgan
+  const sc = CERT_STORY_H / off.height;
+  ctx.save();
+  try { (ctx as any).filter = 'blur(26px) brightness(0.55)'; } catch { /* eski brauzer */ }
+  ctx.drawImage(off, (CERT_STORY_W - off.width * sc) / 2, 0, off.width * sc, CERT_STORY_H);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(4,8,20,0.35)';
+  ctx.fillRect(0, 0, CERT_STORY_W, CERT_STORY_H);
+  const w = CERT_STORY_W - 40;
+  const h = (w * off.height) / off.width;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 40;
+  ctx.drawImage(off, 20, (CERT_STORY_H - h) / 2, w, h);
+  ctx.restore();
+  return true;
+}
+
 /** Sertifikatni canvas'ga chizadi: 16:9 (albom) yoki 9:16 (tik, Stories) format, QR bilan */
 export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate): Promise<void> {
   const ctx = canvas.getContext('2d');
@@ -353,6 +579,8 @@ export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate)
   } catch {
     /* shrift yuklanmasa, zaxira shrift ishlatiladi */
   }
+  // Yangi (rasmli) dizayn: muvaffaqiyatli chizilsa, shu bilan tugaydi
+  if (hasImageTemplate(c.tpl) && (await drawImageCertificate(canvas, c))) return;
   const logo = await loadLogo();
   const t = TEMPLATES[c.tpl] || TEMPLATES.gold;
   const story = c.fmt === 'story';
@@ -363,8 +591,8 @@ export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate)
   canvas.height = H;
   ctx.textAlign = 'center';
 
-  // Aniq, tiniq va hashamatli vektorli fon va hoshiya (hech qanday xiralashish yoki aralashishsiz)
   background(ctx, t);
+
   frame(ctx, t);
 
   // VocaBoost yozuvi (+ logotip)
@@ -404,8 +632,7 @@ export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate)
 
   // lenta (tur nomi), gul, toj
   const ry = story ? 560 : 428;
-  const badgeText = (c.badgeText || (c.tpl === 'champion' ? '1-HAFTA CHEMPIONI' : t.ribbonText)).toUpperCase();
-  const half = ribbon(ctx, t, W / 2, ry, badgeText);
+  const half = ribbon(ctx, t, W / 2, ry);
   const sx = half + (story ? 62 : 90);
   if (W / 2 + sx + 36 < W - 100) {
     [-1, 1].forEach(sd => {

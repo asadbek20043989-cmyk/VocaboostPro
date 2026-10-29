@@ -1,6 +1,6 @@
 # VocaBoost — so'zlarni tez va uzoq yodlang
 
-Telegram Mini App (Vite + React + Tailwind) + Netlify Functions + Firebase Realtime Database.
+Telegram Mini App (Vite + React + Tailwind) + Vercel Functions (api/fn) + Firebase Realtime Database.
 
 - Ishga tushirish: `npm install && npm run dev`
 - O'rnatish, bot va admin panel qo'llanmasi: **ADMIN.md**

@@ -12,9 +12,9 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       {
-        // og:image uchun to'liq manzil (Netlify build paytida URL beradi)
+        // og:image uchun to'liq manzil (Vercel build paytida domen beradi)
         name: 'site-url',
-        transformIndexHtml: (html: string) => html.replace(/%SITE_URL%/g, (process.env.SITE_URL || process.env.URL || '').replace(/\/$/, '')),
+        transformIndexHtml: (html: string) => html.replace(/%SITE_URL%/g, (process.env.SITE_URL || process.env.URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')).replace(/\/$/, '')),
       },
     ],
     resolve: {

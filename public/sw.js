@@ -1,5 +1,5 @@
 // VocaBoost PWA Service Worker — Offline rejim va tezkor kesh
-const CACHE_NAME = 'vocaboost-v4.6.0';
+const CACHE_NAME = 'vocaboost-v5.0.0';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -42,7 +42,7 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   // Firebase REST yoki Netlify funksiyalarini keshga olmaymiz
-  if (url.pathname.startsWith('/.netlify/') || url.hostname.includes('firebaseio.com') || url.hostname.includes('googleapis.com')) {
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/.netlify/') || url.hostname.includes('firebaseio.com') || url.hostname.includes('googleapis.com')) {
     return;
   }
 

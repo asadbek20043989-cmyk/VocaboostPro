@@ -1,0 +1,26 @@
+# Vercel Hobby rejasida cron faqat kuniga 1 marta ishlaydi, shuning uchun soatlik eslatmalarni GitHub Actions chaqiradi.
+# Sozlash: GitHub repo > Settings > Secrets and variables > Actions > Secrets:
+#   SITE_URL     = https://sizning-sayt.vercel.app
+#   CRON_SECRET  = Vercel'dagi CRON_SECRET bilan bir xil qiymat
+name: scheduled-bot-tasks
+on:
+  schedule:
+    - cron: '0 * * * *'            # kunlik eslatma (remind) — har soat
+    - cron: '10 5-7,14-17 * * *'   # streak ogohlantirish (streak-warn)
+  workflow_dispatch: {}
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Funksiyani chaqirish
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          [ -z "$SITE_URL" ] && { echo "SITE_URL secret yo'q"; exit 0; }
+          if [ "$SCHEDULE" = "10 5-7,14-17 * * *" ]; then
+            curl -fsS -m 55 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/fn/streak-warn" || true
+          else
+            curl -fsS -m 55 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/fn/remind" || true
+          fi

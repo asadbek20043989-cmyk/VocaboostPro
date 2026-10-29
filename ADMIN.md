@@ -226,3 +226,17 @@ Ilova endi `/.netlify/functions/tts` ni chaqirmaydi. Ketma-ketlik: inson yozuvi 
 
 ## v4.7.2 — sertifikat dizayni
 Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon rangi shablonga qarab (yashil / ko'k / binafsha / oltin-jigarrang), oltin «SERTIFIKAT», yaltiroq yulduzlar, daraja-so'z-streak muhrlari. Ikkala format (16:9 va 9:16) bir xil uslubda. Dizayn `src/services/certificate.ts` da; o'zgartirsangiz `public/cert-render.js` ni qayta yig'ing (yuqoridagi buyruq).
+
+
+---
+## v5.0 — Tanga, Do'kon, Do'st taklif qilish, yangi sertifikatlar
+
+**Tanga:** XP ning yarmi tanga bo'lib yig'iladi (admin: 🛒 Do'kon → «1 XP = necha tanga»), 7 va 30 kunlik streak bonusi, barcha kunlik missiyalar bonusi, yangi foydalanuvchiga boshlang'ich tanga (mavjud foydalanuvchilarga ham bir marta beriladi). XP, reyting va boshqa ma'lumotlarga TEGILMAYDI.
+
+**Do'kon:** pastki menyuda «Do'kon». Mahsulotlar sotib olinishi bilan shu zahoti beriladi. Admin panel → 🛒 Do'kon: narx/chegirma/nom/rasm/yoqish-o'chirish, yangi (qo'lda beriladigan) mahsulot qo'shish, premium so'zlar, TOP kitoblar, Lo-Fi musiqa havolalari, istalgan foydalanuvchiga (yoki hammaga / taklif qilganlarga) tanga, XP yoki mahsulot sovg'a qilish, buyurtmalar.
+
+**Taklif:** profilda shaxsiy havola `https://t.me/<bot>?start=ref_<ID>`. Do'st birinchi marta Start bosganda taklif qiluvchiga XP (admin belgilaydi, standart 50) beriladi va botdan xabar boradi. 📣 Taklif bo'limi: matnlar, shaxsiy tugmali ommaviy xabar, Targ'ibotchilar reytingi. Buning uchun bot webhook (tg-webhook) ulangan bo'lishi kerak.
+
+**Sertifikatlar:** 8 ta yangi dizayn (`public/certs/*.jpg`) + haftalik g'olibga avtomatik «N-HAFTA CHEMPIONI». `public/cert-render.js` qayta yig'ilgan.
+
+**Talaffuz:** sun'iy (robot) ovoz butunlay o'chirildi — faqat inson yozuvlari. `tts` funksiyasi olib tashlandi.

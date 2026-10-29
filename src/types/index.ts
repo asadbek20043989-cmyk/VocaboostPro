@@ -70,13 +70,8 @@ export interface LeaderboardUser {
   streak: number;
   level: EnglishLevel;
   isCurrentUser?: boolean;
-  coins?: number;
-  refCount?: number;
-  crown?: boolean;
-  glowingNick?: boolean;
-  vipCheck?: boolean;
-  titleBadge?: string;
-  frame?: string;
+  cos?: { fr?: string; nf?: string; nc?: string; ns?: string; ti?: string; vf?: boolean; rb?: string };
+  refs?: number;
 }
 
 export interface AchievementBadge {
@@ -89,13 +84,11 @@ export interface AchievementBadge {
   unlockedAt?: string;
 }
 
-export type TabId = 'home' | 'words' | 'shop' | 'games' | 'leaderboard';
-
 export interface Certificate {
   id: string; // VB-000001
   tpl: string; // andoza (bronze | silver | gold | platinum | champion | active | marathon | thanks)
   title: string; // Sarlavha («Yutuq yoki natija» qatori) — admin kiritadi
-  badgeText?: string; // nishon matni (masalan: "1-HAFTA CHEMPIONI")
+  label?: string; // lentadagi yozuv (masalan «1-HAFTA CHEMPIONI»); bo'sh bo'lsa andoza nomi
   reason?: string; // Izoh — admin kiritadi
   verified?: boolean; // serverda ro'yxatdan o'tgan (QR orqali tekshiriladi)
   name: string;
@@ -116,7 +109,6 @@ export interface UserProfile {
   wordsPerDay: number; // kuniga nechta yangi so'z (5 / 10 / 15 / 20)
   dailyGoalMinutes: DailyGoalMinutes;
   xp: number;
-  coins: number; // tangalar balansi (do'konda ishlatiladi)
   streak: number;
   lastReadDate?: string;
   reminderTime: string;
@@ -140,67 +132,22 @@ export interface UserProfile {
   adjApplied?: number; // admin tuzatishlarining shu hisobga qo'llangan umumiy yig'indisi
   updatedAt?: number; // sozlamalar (ism, daraja, ...) oxirgi o'zgargan vaqt — qurilmalar o'rtasida birlashtirish uchun
   customPacks?: CustomWordPack[]; // Foydalanuvchining shaxsiy lug'at to'plamlari
-  // --- Do'stlarni taklif qilish (Referral) va Do'kon tizimi ---
-  refCount?: number; // taklif qilingan do'stlar soni
-  refXpEarned?: number; // referallar orqali ishlangan jami XP
-  refCoinsEarned?: number; // referallar orqali ishlangan jami tangalar
-  inventory?: string[]; // sotib olingan mahsulotlar identifikatorlari
-  activeFrame?: string; // joriy tanlangan avatar ramkasi (gold | fire | crystal | neon | diamond | laurel)
-  activeTitle?: string; // joriy profil unvoni ("So'z ustasi", "Kitobxon", "Titan", h.k.)
-  activeTheme?: string; // joriy tanlangan tema ('dark' | 'indigo' | 'neon' | 'emerald')
-  hasCrown?: boolean; // avatar ustida toj
-  hasGlowingNick?: boolean; // reytingda yaltiroq/gradient ism
-  hasVipCheck?: boolean; // ko'k tasdiqlangan belgi (galochka)
-  hasLofiMusic?: boolean; // Lo-Fi musiqa pleyeri xarid qilingan / doimiy ochiq
-  doubleXpUntil?: number; // 2x XP tugash vaqti (ms)
-}
-
-export type ShopCategory = 'all' | 'boosters' | 'cosmetics' | 'titles_themes' | 'learning' | 'special';
-export type ShopItemType = 'consumable' | 'permanent' | 'duration';
-
-export interface ShopItem {
-  id: string;
-  title: string;
-  description: string;
-  category: ShopCategory;
-  priceCoins: number;
-  priceXp?: number;
-  discountPct?: number; // 0 - 90
-  itemType: ShopItemType;
-  durationHours?: number;
-  stockLimit?: number | null;
-  isActive: boolean;
-  image?: string;
-  icon?: string;
-  badge?: string;
-  neonColor?: string; // Neon kartochka va ramkaning RGB/HEX rangi
-  sortOrder?: number; // Ilovada do'konda ko'rinish tartibi
-}
-
-export interface TopBook {
-  id: string;
-  title: string;
-  author: string;
-  level: string;
-  desc: string;
-  coverImage: string;
-  downloadUrl?: string;
-  readUrl?: string;
-  content?: string;
-}
-
-export interface LofiTrack {
-  id: string;
-  title: string;
-  artist: string;
-  src: string;
-  duration?: string;
-}
-
-export interface ReferralConfig {
-  rewardXp: number;
-  rewardCoins: number;
-  inviteText: string;
+  // ---- Tanga va do'kon (v5) ----
+  coinsEarned?: number; // jami topilgan tanga (kasr bo'lishi mumkin)
+  coinsSpent?: number; // jami sarflangan tanga. Balans = floor(earned) - spent
+  coinInit?: boolean; // boshlang'ich tanga berilgan
+  coinDays?: string[]; // kunlik bir martalik tanga bonuslari (masalan `q:2026-10-29`, `s7:2026-10-29`)
+  own?: string[]; // sotib olingan mahsulotlar (ID)
+  buys?: Record<string, { n: number; d: string; dn: number }>; // mahsulot -> jami / kunlik sotib olish soni
+  boostUntil?: number; // 2x XP tugash vaqti (ms)
+  frame?: string; // tanlangan ramka (gold | fire | crystal)
+  nameFx?: string; // yaltiroq ism (gold | rainbow)
+  nameColor?: string; // nik rangi
+  nameSym?: string; // ism yonidagi belgi
+  title?: string; // profil unvoni
+  rankBadge?: string; // star | crown
+  skin?: string; // ilova mavzusi (neon | nature | royal)
+  lofiOn?: boolean; // musiqa yoqilganmi (faqat shu qurilmada ishlatiladi)
 }
 
 export interface WheelState {

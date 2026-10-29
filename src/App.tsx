@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Megaphone, ExternalLink, Music, Pause, Play, SkipForward, X } from 'lucide-react';
+import { Megaphone, ExternalLink } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Onboarding } from './components/Onboarding';
 import { BottomNav } from './components/BottomNav';
@@ -10,12 +10,12 @@ import { SurvivalRun } from './components/SurvivalRun';
 import { LearnSession } from './components/Learn';
 import { LeaderboardTab } from './components/LeaderboardTab';
 import { ShopTab } from './components/ShopTab';
+import { lofi } from './services/shop';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
 import { LuckyWheel } from './components/LuckyWheel';
 import { BrandMark, Logo, HeaderActions } from './components/Brand';
 import { installGlobalClickSound } from './services/sound';
-import { lofiPlayer } from './services/lofiPlayer';
 
 /** E'lon matnidagi havolalarni (http, https, t.me) avtomatik ko'k rangda bosiladigan qiluvchi komponent */
 const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
@@ -57,78 +57,22 @@ const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-/** Barcha sahifalarda ko'rinuvchi doimiy suzuvchi Lo-Fi mini-pleyer */
-const GlobalLofiBar: React.FC = () => {
-  const [playing, setPlaying] = useState(() => lofiPlayer.isPlaying());
-  const [visible, setVisible] = useState(() => lofiPlayer.isBarVisible() || lofiPlayer.isPlaying());
-
+/** Lo-Fi musiqa yoqilganda pastda kichik boshqaruv tugmasi */
+const LofiFloat: React.FC = () => {
+  const [on, setOn] = useState(lofi.on);
   useEffect(() => {
-    return lofiPlayer.subscribe(() => {
-      setPlaying(lofiPlayer.isPlaying());
-      setVisible(lofiPlayer.isBarVisible() || lofiPlayer.isPlaying());
-    });
+    const f = () => setOn(lofi.on);
+    lofi.listeners.add(f);
+    return () => { lofi.listeners.delete(f); };
   }, []);
-
-  if (!visible) return null;
-  const track = lofiPlayer.getCurrentTrack();
-
+  if (!on) return null;
   return (
-    <div className="fixed bottom-[74px] left-0 right-0 z-[85] px-3.5 pointer-events-none animate-in slide-in-from-bottom-2 fade-in">
-      <div className="max-w-md mx-auto pointer-events-auto rounded-2xl bg-[#111827]/95 backdrop-blur-md border border-amber-500/40 p-2.5 shadow-2xl flex items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/20 shrink-0">
-            <Music className="w-4 h-4 animate-pulse" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-black text-white truncate flex items-center gap-1.5">
-              <span>{track?.title || 'Lo-Fi Study Beats'}</span>
-              {playing && (
-                <span className="flex gap-0.5 items-end h-2.5 shrink-0">
-                  <span className="w-0.5 h-2.5 bg-amber-400 animate-bounce" />
-                  <span className="w-0.5 h-1.5 bg-amber-400 animate-bounce [animation-delay:0.2s]" />
-                  <span className="w-0.5 h-2 bg-amber-400 animate-bounce [animation-delay:0.4s]" />
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-slate-400 truncate">{track?.artist || 'VocaBoost Beats'}</div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => lofiPlayer.toggle()}
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-              playing ? 'bg-amber-400 text-slate-950 shadow-sm' : 'bg-slate-800 text-slate-200'
-            }`}
-            title={playing ? 'Pauza' : 'Ijro'}
-          >
-            {playing ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => lofiPlayer.next()}
-            className="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center active:scale-95 transition-all"
-            title="Keyingi musiqa"
-          >
-            <SkipForward className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => lofiPlayer.dismiss()}
-            className="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-200 flex items-center justify-center ml-0.5"
-            title="Yopish"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    </div>
+    <button type="button" data-nosfx onClick={() => lofi.stop()} className="fixed right-3 bottom-20 z-50 px-3 py-2 rounded-full bg-sky-500/90 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 active:scale-95">🎧 Lo-Fi <span className="opacity-80">· o'chirish</span></button>
   );
 };
 
 const MainScreen: React.FC = () => {
-  const { profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady, realtimeOn, totalSpinsLeft } = useApp();
+  const { profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady, realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf } = useApp();
   const [showWheelModal, setShowWheelModal] = useState(false);
 
   // Ilovadagi har bir tugmaga qisqa "ping" tovushi
@@ -152,19 +96,17 @@ const MainScreen: React.FC = () => {
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[120] px-4 py-2.5 rounded-xl bg-slate-800 border border-amber-500/40 text-xs font-medium text-white shadow-xl max-w-[92%] text-center">{notice}</div>
   ) : null;
 
-  const themeClass = profile.activeTheme ? `theme-${profile.activeTheme}` : '';
-  const hasLofi = !!profile.hasLofiMusic || (profile.inventory || []).includes('lofi_music') || (profile.inventory || []).includes('lofi_music_pass');
-
-  if (overlay?.type === 'learn') return <><LearnSession />{certificate}{toast}{hasLofi && <GlobalLofiBar />}</>;
-  if (overlay?.type === 'game') return <><GameScreen id={overlay.id} />{certificate}{toast}{hasLofi && <GlobalLofiBar />}</>;
-  if (overlay?.type === 'survival') return <><SurvivalRun id={overlay.id} />{certificate}{toast}{hasLofi && <GlobalLofiBar />}</>;
+  if (overlay?.type === 'learn') return <><LearnSession />{certificate}{toast}</>;
+  if (overlay?.type === 'game') return <><GameScreen id={overlay.id} />{certificate}{toast}</>;
+  if (overlay?.type === 'survival') return <><SurvivalRun id={overlay.id} />{certificate}{toast}</>;
 
   return (
-    <div className={`min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col justify-between selection:bg-amber-500/20 selection:text-amber-300 ${themeClass}`}>
+    <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col justify-between selection:bg-amber-500/20 selection:text-amber-300">
       <div className="flex-1 max-w-md w-full mx-auto px-4 pt-3 pb-24">
         {/* Yuqori panel: logotip (chapda) va tovush/sovg'a/tema tugmalari (o'ngda) */}
         <div className="flex items-center justify-between mb-3">
           <BrandMark />
+          <button type="button" data-nosfx onClick={() => setActiveTab('shop')} className="ml-auto mr-2 px-2.5 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-sm font-extrabold tabular-nums flex items-center gap-1 active:scale-95" title="Tangalar — do'kon">🪙 {coins.toLocaleString()}</button>
           <HeaderActions
             showGift={activeTab === 'home'}
             onGiftClick={() => setShowWheelModal(true)}
@@ -174,12 +116,12 @@ const MainScreen: React.FC = () => {
         {announcement && <AnnouncementBanner text={announcement.text} />}
         {activeTab === 'home' && <HomeTab />}
         {activeTab === 'words' && <WordsTab />}
-        {activeTab === 'shop' && <ShopTab />}
         {activeTab === 'games' && <GamesTab />}
         {activeTab === 'leaderboard' && <LeaderboardTab />}
+        {activeTab === 'shop' && <ShopTab />}
       </div>
-      {hasLofi && <GlobalLofiBar />}
       <BottomNav />
+      <LofiFloat />
       {certificate}
       {toast}
       {/* Tepa paneldagi sovg'acha bosilganda baraban ochiladi */}

@@ -98,18 +98,6 @@ export function mergeProfile(a: UserProfile, b: UserProfile): UserProfile {
   out.bonusDays = uniqSorted([...arr(a.bonusDays), ...arr(b.bonusDays)]).slice(-40);
   out.milestones = uniqSorted([...arr(a.milestones), ...arr(b.milestones)].map(Number));
   out.sentCerts = uniqSorted([...arr(a.sentCerts), ...arr(b.sentCerts)]).slice(-60);
-  out.coins = base.coins !== undefined ? base.coins : (other.coins ?? 0);
-  out.refCount = Math.max(a.refCount || 0, b.refCount || 0);
-  out.refXpEarned = Math.max(a.refXpEarned || 0, b.refXpEarned || 0);
-  out.refCoinsEarned = Math.max(a.refCoinsEarned || 0, b.refCoinsEarned || 0);
-  out.inventory = uniqSorted([...arr(a.inventory), ...arr(b.inventory)]) as string[];
-  out.activeFrame = base.activeFrame !== undefined ? base.activeFrame : (other.activeFrame || '');
-  out.activeTitle = base.activeTitle !== undefined ? base.activeTitle : (other.activeTitle || '');
-  out.activeTheme = base.activeTheme !== undefined ? base.activeTheme : (other.activeTheme || '');
-  out.hasCrown = base.hasCrown !== undefined ? !!base.hasCrown : !!other.hasCrown;
-  out.hasGlowingNick = base.hasGlowingNick !== undefined ? !!base.hasGlowingNick : !!other.hasGlowingNick;
-  out.hasVipCheck = base.hasVipCheck !== undefined ? !!base.hasVipCheck : !!other.hasVipCheck;
-  out.doubleXpUntil = Math.max(a.doubleXpUntil || 0, b.doubleXpUntil || 0);
   out.writingDays = uniqSorted([...arr(a.writingDays), ...arr(b.writingDays)]).slice(-12);
 
   const gx: Record<string, string> = { ...(a.gameXp || {}) };
@@ -126,6 +114,21 @@ export function mergeProfile(a: UserProfile, b: UserProfile): UserProfile {
   const bb = b.blitzUsage;
   if (ba && bb) out.blitzUsage = ba.day !== bb.day ? (ba.day > bb.day ? ba : bb) : { day: ba.day, count: Math.max(ba.count, bb.count) };
   else out.blitzUsage = ba || bb;
+
+  // ---- tanga va do'kon: hech qachon kamaymaydi / yo'qolmaydi ----
+  out.coinsEarned = Math.max(a.coinsEarned || 0, b.coinsEarned || 0) || undefined;
+  out.coinsSpent = Math.max(a.coinsSpent || 0, b.coinsSpent || 0) || undefined;
+  out.coinInit = !!(a.coinInit || b.coinInit) || undefined;
+  out.coinDays = uniqSorted([...arr(a.coinDays), ...arr(b.coinDays)]).slice(-30);
+  out.own = uniqSorted([...arr(a.own), ...arr(b.own)]);
+  out.boostUntil = Math.max(a.boostUntil || 0, b.boostUntil || 0) || undefined;
+  const bu: Record<string, { n: number; d: string; dn: number }> = { ...(a.buys || {}) };
+  Object.entries(b.buys || {}).forEach(([k, v]) => {
+    const o = bu[k];
+    if (!o) bu[k] = v;
+    else bu[k] = { n: Math.max(o.n || 0, v.n || 0), d: o.d >= v.d ? o.d : v.d, dn: o.d === v.d ? Math.max(o.dn || 0, v.dn || 0) : o.d > v.d ? o.dn : v.dn };
+  });
+  out.buys = bu;
 
   const ja = a.joinedAt || '';
   const jb = b.joinedAt || '';
@@ -223,6 +226,8 @@ export function normalizeCore(c: CoreState): CoreState {
       sentCerts: uniqSorted(arr(c.profile.sentCerts)).slice(-60),
       writingDays: uniqSorted(arr(c.profile.writingDays)).slice(-12),
       xpSets: uniqSorted(arr(c.profile.xpSets)).slice(-30),
+      coinDays: uniqSorted(arr(c.profile.coinDays)).slice(-30),
+      own: uniqSorted(arr(c.profile.own)),
     },
     badges: [...c.badges].sort((p, q) => (p.id < q.id ? -1 : 1)),
     localCerts: mergeCerts(c.localCerts, []),
@@ -272,12 +277,8 @@ export function parseRemoteCore(raw: any, initial: { profile: UserProfile; wheel
     sentCerts: arr(rp.sentCerts).map(String),
     writingDays: arr(rp.writingDays).map(String),
     xpSets: arr(rp.xpSets).map(String),
-    inventory: arr(rp.inventory).map(String),
-    coins: Number.isFinite(Number(rp.coins)) ? Number(rp.coins) : initial.profile.coins || 50,
-    refCount: Number(rp.refCount) || 0,
-    refXpEarned: Number(rp.refXpEarned) || 0,
-    refCoinsEarned: Number(rp.refCoinsEarned) || 0,
-    doubleXpUntil: Number(rp.doubleXpUntil) || 0,
+    coinDays: arr(rp.coinDays).map(String),
+    own: arr(rp.own).map(String),
     gameXp: rp.gameXp || {},
   };
   const badges = arr(raw.badges) as AchievementBadge[];
