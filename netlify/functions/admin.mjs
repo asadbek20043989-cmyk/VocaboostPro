@@ -164,7 +164,7 @@ export const handler = async event => {
         }
         if (body.rewardCert && ranked[0]) {
           await issueCertificate(call, {
-            userId: ranked[0].uid, tpl: 'weekly', label: `${week}-HAFTA CHEMPIONI`, title: `${week}-hafta ligasi g'olibi`, reason: `${ranked[0].xp} XP bilan haftaning eng kuchli o'quvchisi bo'ldi`,
+            userId: ranked[0].uid, tpl: 'champion', title: `${week}-hafta ligasi g'olibi`, reason: `${ranked[0].xp} XP bilan haftaning eng kuchli o'quvchisi bo'ldi`,
             name: top[0].name, fmt: body.certFmt === 'story' ? 'story' : 'wide', stats: statsFromLb(ranked[0].e),
           });
           rewarded++;
@@ -442,6 +442,8 @@ export const handler = async event => {
             photoUrl,
             buttons,
             customButtonsOnly: true,
+            includeRefButton: !!body.includeRefButton,
+            refBtnText: body.refBtnText || "👥 Do'stlarni taklif qilish (+50 XP)",
             kind: 'ad',
             parseMode: 'HTML',
           }),
@@ -528,100 +530,164 @@ export const handler = async event => {
         return json(200, { items });
       }
 
-      // ---------- Sovg'alar ----------
+      // ---------- Sovg'alar va Tangalar ----------
       case 'grant': {
-        // type: spins | vip | xp | coins | item.  Qabul qiluvchi: userId (bitta) yoki audience: 'all' | 'referrers' (minRefs)
-        const { userId, type, amount, note } = body;
+        const { userId, type, amount, note, toAllReferrers, itemId, itemName } = body;
         if (!['spins', 'vip', 'xp', 'coins', 'item'].includes(type)) return json(400, { error: 'Tur xato' });
-        const itemId = String(body.itemId || '').trim().slice(0, 64);
-        if (type === 'item' && !ID_RE.test(itemId)) return json(400, { error: 'Mahsulot ID xato' });
+        if (type === 'item' && !itemId) return json(400, { error: 'Mahsulot tanlanmagan' });
         const n = type === 'item' ? 1 : Math.round(Number(amount));
-        const cap = type === 'xp' ? 100000 : type === 'vip' ? 720 : type === 'coins' ? 100000000 : type === 'item' ? 1 : 50;
-        if (!(n > 0) || n > cap) return json(400, { error: 'Miqdor noto\'g\'ri' });
+        const maxAmount = type === 'coins' ? 500000 : type === 'xp' ? 50000 : type === 'vip' ? 720 : 100;
+        if (type !== 'item' && (!(n > 0) || n > maxAmount)) return json(400, { error: 'Miqdor noto\'g\'ri' });
         const validHours = type === 'spins' ? Math.max(0, Math.min(24 * 60, Math.round(Number(body.validHours ?? 24) || 0))) : 0;
-        let targets = [];
-        if (body.audience === 'all' || body.audience === 'referrers') {
+
+        // Agar "Barcha targ'ibotchilarga" (do'stini taklif qilganlarga) yuborish tanlangan bo'lsa
+        if (toAllReferrers || userId === 'all_referrers') {
           const lb = (await call('GET', 'leaderboard')) || {};
-          const minRefs = Math.max(1, Math.round(Number(body.minRefs) || 1));
-          targets = Object.entries(lb).filter(([, e]) => e && !e.deleted && e.ts && (body.audience === 'all' || (Number(e.refs) || 0) >= minRefs)).map(([id]) => id);
-          if (!targets.length) return json(400, { error: 'Mos foydalanuvchi topilmadi' });
-          if (targets.length > 5000) return json(400, { error: 'Juda ko\'p qabul qiluvchi (5000 tagacha)' });
-        } else {
-          if (!ID_RE.test(userId || '')) return json(400, { error: 'Foydalanuvchi ID xato' });
-          targets = [userId];
+          const referrers = Object.entries(lb).filter(([, u]) => u && Number(u.refCount) > 0 && !u.deleted);
+          let grantedCount = 0;
+          for (const [uid, u] of referrers) {
+            const gid = newGid();
+            await call('PUT', `grants/${uid}/${gid}`, {
+              type,
+              amount: n,
+              itemId: itemId || undefined,
+              itemName: itemName || undefined,
+              validHours,
+              note: String(note || "Targ'ibotchi uchun maxsus sovg'a").slice(0, 80),
+              ts: Date.now()
+            });
+            if (type === 'coins') {
+              await call('PATCH', `leaderboard/${uid}`, { coins: (Number(u.coins) || 0) + n });
+            }
+            await flagGrant(uid);
+            grantedCount++;
+            if (process.env.BOT_TOKEN && /^tg_\d+$/.test(uid)) {
+              try {
+                const label = type === 'item' ? `🎁 Mahsulot: ${itemName || itemId}` : type === 'coins' ? `${n} tanga` : type === 'xp' ? `${n} XP` : type === 'spins' ? `${n} ta baraban aylantirish` : `${n} soat VIP`;
+                await sendMessage(process.env.BOT_TOKEN, Number(uid.slice(3)), `🎁 <b>Admin sovg‘asi!</b>\n\nDo‘stlarni taklif qilganingiz uchun sizga <b>${label}</b> taqdim etildi!\n${note ? `\n<i>${note}</i>` : ''}`, openAppMarkup());
+              } catch {}
+            }
+          }
+          return json(200, { ok: true, grantedCount });
         }
-        const ts = Date.now();
-        // Bitta so'rovda ko'p yo'lni yangilash (Firebase multi-path update) — tez va arzon
-        for (let i = 0; i < targets.length; i += 200) {
-          const upd = {};
-          targets.slice(i, i + 200).forEach(uid => {
-            upd[`grants/${uid}/${newGid()}`] = { type, amount: n, validHours, ...(type === 'item' ? { itemId } : {}), note: String(note || '').slice(0, 80), ts };
-            upd[`leaderboard/${uid}/hasGrant`] = true;
-          });
-          if (targets.length === 1 && !(await call('GET', `leaderboard/${targets[0]}/ts`))) {
-            const only = Object.keys(upd).filter(k => k.startsWith('grants/'));
-            const u2 = {}; only.forEach(k => (u2[k] = upd[k]));
-            await call('PATCH', '', u2); // reyting yozuvi yo'q: bo'sh yozuv yaratilmaydi
-          } else await call('PATCH', '', upd);
-        }
-        return json(200, { ok: true, count: targets.length });
-      }
 
-      // ---------- Do'kon va taklif sozlamalari ----------
-      case 'setShop': {
-        const v = body.value;
-        if (!v || typeof v !== 'object' || JSON.stringify(v).length > 90000) return json(400, { error: "Qiymat noto'g'ri yoki juda katta" });
-        await call('PUT', 'config/shop', v);
+        if (!ID_RE.test(userId || '')) return json(400, { error: 'Foydalanuvchi ID xato' });
+        const gid = newGid();
+        await call('PUT', `grants/${userId}/${gid}`, {
+          type,
+          amount: n,
+          itemId: itemId || undefined,
+          itemName: itemName || undefined,
+          validHours,
+          note: String(note || '').slice(0, 80),
+          ts: Date.now()
+        });
+        if (type === 'coins') {
+          const curU = (await call('GET', `leaderboard/${userId}`)) || {};
+          await call('PATCH', `leaderboard/${userId}`, { coins: (Number(curU.coins) || 0) + n });
+        }
+        await flagGrant(userId);
+
+        if (process.env.BOT_TOKEN && /^tg_\d+$/.test(userId)) {
+          try {
+            const label = type === 'item' ? `🎁 Do'kon mahsuloti: ${itemName || itemId}` : type === 'coins' ? `+${n} tanga` : type === 'xp' ? `+${n} XP` : type === 'spins' ? `+${n} ta baraban aylantirish` : `+${n} soat VIP`;
+            await sendMessage(process.env.BOT_TOKEN, Number(userId.slice(3)), `🎁 <b>Admin sovg‘asi!</b>\n\nSizga <b>${label}</b> taqdim etildi!\n${note ? `\n<i>${note}</i>` : ''}`, openAppMarkup());
+          } catch {}
+        }
         return json(200, { ok: true });
       }
 
-      case 'setReferral': {
-        const v = body.value || {};
-        const out = {
-          enabled: v.enabled !== false,
-          xp: Math.max(0, Math.min(100000, Math.round(Number(v.xp)) || 0)),
-          botUsername: String(v.botUsername || '').replace(/^@/, '').trim().slice(0, 40),
-          shareText: String(v.shareText || '').trim().slice(0, 900),
-          notifyText: String(v.notifyText || '').trim().slice(0, 900),
-        };
-        await call('PUT', 'config/referral', out);
+      // ---------- Referral (Do'stlarni taklif qilish) sozlamalari ----------
+      case 'getReferralConfig': {
+        const cfg = (await call('GET', 'config/referral')) || {};
+        return json(200, {
+          rewardXp: Number.isFinite(Number(cfg.rewardXp)) ? Number(cfg.rewardXp) : 50,
+          rewardCoins: Number.isFinite(Number(cfg.rewardCoins)) ? Number(cfg.rewardCoins) : 30,
+          inviteText: cfg.inviteText || "🚀 VocaBoost — inglizcha so'zlarni tez va mustahkam yodlash ilovasi!\n\nMenga qo'shiling, so'zlarni o'rganing va har kuni sovrinlar yutib oling! Do'stlik linkim orqali kirsangiz, sizga ham bonus beriladi: 👇",
+        });
+      }
+
+      case 'setReferralConfig': {
+        const rewardXp = Math.max(0, Math.min(5000, Number(body.rewardXp) || 50));
+        const rewardCoins = Math.max(0, Math.min(5000, Number(body.rewardCoins) || 30));
+        const inviteText = String(body.inviteText || '').trim().slice(0, 1000);
+        await call('PUT', 'config/referral', { rewardXp, rewardCoins, inviteText, updatedAt: Date.now() });
         return json(200, { ok: true });
       }
 
-      case 'listReferrals': {
-        const r = (await call('GET', `referrals/${String(body.id || '').replace(/^tg_/, '')}`)) || {};
-        return json(200, { items: Object.entries(r).map(([id, x]) => ({ id, ...x })).sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 200) });
-      }
-
-      case 'listOrders': {
-        const o = (await call('GET', 'orders')) || {};
-        const items = Object.entries(o).map(([id, x]) => ({ id, ...x })).sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 300);
+      // ---------- Do'kon (Shop) boshqaruvi ----------
+      case 'getShopConfig': {
+        const items = (await call('GET', 'config/shop')) || null;
         return json(200, { items });
       }
 
-      case 'setOrder': {
-        if (!ID_RE.test(body.id || '')) return json(400, { error: 'ID xato' });
-        if (body.remove) await call('DELETE', `orders/${body.id}`);
-        else await call('PATCH', `orders/${body.id}`, { status: body.status === 'done' ? 'done' : 'new', doneAt: Date.now() });
-        if (body.notify && /^tg_\d+$/.test(body.uid || '') && process.env.BOT_TOKEN) {
-          await sendMessage(process.env.BOT_TOKEN, Number(body.uid.slice(3)), `🎁 Buyurtmangiz bajarildi: «${String(body.title || '').replace(/[<>&]/g, '')}»\n\nRahmat!`, openAppMarkup()).catch(() => {});
-        }
+      case 'saveShopItem': {
+        const item = body.item;
+        const title = item?.title || item?.name;
+        if (!item || !item.id || !title) return json(400, { error: "Mahsulot ma'lumotlari to'liq emas" });
+        await call('PUT', `config/shop/${item.id}`, {
+          ...item,
+          title,
+          description: item.description || item.desc || '',
+          priceCoins: Math.max(0, Number(item.priceCoins) || 0),
+          priceXp: Math.max(0, Number(item.priceXp) || 0),
+          discountPct: Math.min(90, Math.max(0, Number(item.discountPct ?? item.discount) || 0)),
+          isActive: item.isActive !== false && item.active !== false,
+          updatedAt: Date.now(),
+        });
         return json(200, { ok: true });
       }
 
-      // Shaxsiy taklif tugmali ommaviy xabar: har bir foydalanuvchiga UNING o'z havolasi bilan tugma qo'shiladi
-      case 'inviteBroadcast': {
-        const text = String(body.text || '').trim().slice(0, 1000);
-        if (!text) return json(400, { error: 'Xabar matnini yozing' });
-        if (!process.env.BOT_TOKEN) return json(400, { error: 'Netlify muhitida BOT_TOKEN kiritilmagan' });
-        const base = siteUrl();
-        if (!base) return json(400, { error: 'SITE_URL aniqlanmadi' });
-        const r = await fetch(`${base}/.netlify/functions/broadcast-background`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: ADMIN_CODE, text, kind: 'manual', invite: { label: String(body.label || '').slice(0, 40), mode: body.mode === 'link' ? 'link' : 'share' } }),
-        });
-        if (r.status !== 202 && !r.ok) return json(502, { error: `Yuborishni boshlab bo'lmadi (${r.status})` });
+      case 'deleteShopItem': {
+        if (!body.id) return json(400, { error: 'ID kerak' });
+        await call('DELETE', `config/shop/${body.id}`);
+        return json(200, { ok: true });
+      }
+
+      case 'saveAllShopItems': {
+        if (!Array.isArray(body.items)) return json(400, { error: 'Items array kerak' });
+        const obj = {};
+        for (const it of body.items) {
+          if (it && it.id) obj[it.id] = it;
+        }
+        await call('PUT', 'config/shop', obj);
+        return json(200, { ok: true });
+      }
+
+      // ---------- Kitoblar va Lo-Fi musiqa ----------
+      case 'getBooks': {
+        const books = (await call('GET', 'config/books')) || null;
+        return json(200, { books });
+      }
+
+      case 'saveBook': {
+        const b = body.book;
+        if (!b || !b.id || !b.title) return json(400, { error: "Kitob ma'lumotlari to'liq emas" });
+        await call('PUT', `config/books/${b.id}`, { ...b, updatedAt: Date.now() });
+        return json(200, { ok: true });
+      }
+
+      case 'deleteBook': {
+        if (!body.id) return json(400, { error: 'ID kerak' });
+        await call('DELETE', `config/books/${body.id}`);
+        return json(200, { ok: true });
+      }
+
+      case 'getLofi': {
+        const tracks = (await call('GET', 'config/lofi')) || null;
+        return json(200, { tracks });
+      }
+
+      case 'saveLofiTrack': {
+        const tr = body.track;
+        if (!tr || !tr.id || !tr.src) return json(400, { error: "Trek ma'lumotlari to'liq emas" });
+        await call('PUT', `config/lofi/${tr.id}`, { ...tr, updatedAt: Date.now() });
+        return json(200, { ok: true });
+      }
+
+      case 'deleteLofiTrack': {
+        if (!body.id) return json(400, { error: 'ID kerak' });
+        await call('DELETE', `config/lofi/${body.id}`);
         return json(200, { ok: true });
       }
 

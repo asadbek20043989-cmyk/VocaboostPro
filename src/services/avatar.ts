@@ -29,22 +29,11 @@ export const AVATAR_PRESETS: AvatarPreset[] = [
   { id: 'star', emoji: '🌟', from: '#A78BFA', to: '#DB2777' },
 ];
 
-/** Do'kon orqali olinadigan noyob avatarlar */
-export const LIMITED_AVATARS: AvatarPreset[] = [
-  { id: 'ltd_dragon', emoji: '🐉', from: '#FDE047', to: '#B91C1C' },
-  { id: 'ltd_phoenix', emoji: '🦅', from: '#FB923C', to: '#7F1D1D' },
-  { id: 'ltd_wizard', emoji: '🧙', from: '#818CF8', to: '#1E1B4B' },
-  { id: 'ltd_ninja', emoji: '🥷', from: '#475569', to: '#020617' },
-  { id: 'ltd_alien', emoji: '👽', from: '#86EFAC', to: '#065F46' },
-  { id: 'ltd_diamond', emoji: '💠', from: '#67E8F9', to: '#4338CA' },
-];
-
 export const PRESET_PREFIX = 'preset:';
 export const presetValue = (id: string) => PRESET_PREFIX + id;
 export const getPreset = (v: string | undefined | null): AvatarPreset | null => {
   if (!v || !v.startsWith(PRESET_PREFIX)) return null;
-  const id = v.slice(PRESET_PREFIX.length);
-  return AVATAR_PRESETS.find(p => p.id === id) || LIMITED_AVATARS.find(p => p.id === id) || null;
+  return AVATAR_PRESETS.find(p => p.id === v.slice(PRESET_PREFIX.length)) || null;
 };
 
 export const DEFAULT_AVATAR = presetValue('rocket');

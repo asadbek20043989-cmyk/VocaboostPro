@@ -21,11 +21,12 @@ export const handler = async event => {
       photoUrl: body.photoUrl ? String(body.photoUrl).trim() : null,
       buttons: Array.isArray(body.buttons) ? body.buttons : [],
       customButtonsOnly: !!body.customButtonsOnly,
+      includeRefButton: !!body.includeRefButton,
+      refBtnText: body.refBtnText,
       kind: body.kind === 'daily' ? 'daily' : body.kind === 'ad' ? 'ad' : 'manual',
       respectOptOut: body.kind === 'daily',
       skipActiveToday: !!body.skipActiveToday,
       parseMode: body.parseMode || 'HTML',
-      invite: body.invite && typeof body.invite === 'object' ? { label: String(body.invite.label || ''), mode: body.invite.mode === 'link' ? 'link' : 'share' } : null,
     });
   } catch {
     /* holat adminState/broadcast ga yozilgan */

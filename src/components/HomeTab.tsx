@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked } from 'lucide-react';
+import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked, Coins, UserPlus, ShoppingBag } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
@@ -58,21 +58,67 @@ export const HomeTab: React.FC = () => {
 
   return (
     <div className="space-y-5 pb-6">
-      {/* Header */}
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar src={profile.avatar} name={profile.name} className="w-11 h-11 border border-slate-700" />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white truncate">{profile.name}</h1>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">{profile.level}</span>
+      {/* Header - Tartibli va chiroyli 2 qatorli joylashuv */}
+      <header className="space-y-3 pt-1">
+        {/* 1-qator: Foydalanuvchi ma'lumotlari to'liq hajmda */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar
+              src={profile.avatar}
+              name={profile.name}
+              frame={profile.activeFrame}
+              crown={profile.hasCrown}
+              className="w-13 h-13 border-2 border-slate-700/80 shadow-md shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className={`text-base sm:text-lg font-black truncate max-w-[170px] sm:max-w-none ${profile.hasGlowingNick ? 'bg-gradient-to-r from-amber-300 via-rose-300 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]' : 'text-white'}`}>
+                  {profile.name}
+                </h1>
+                {profile.hasVipCheck && (
+                  <span className="w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] flex items-center justify-center font-black shrink-0 shadow-[0_0_8px_rgba(14,165,233,0.5)]" title="VIP foydalanuvchi">✓</span>
+                )}
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">{profile.level}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {profile.activeTitle && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-sky-500/20 border border-amber-400/40 text-amber-300 shadow-sm">
+                    {profile.activeTitle}
+                  </span>
+                )}
+                <p className="text-[11px] text-slate-400">Kuniga {profile.wordsPerDay} ta yangi so&apos;z</p>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400">Kuniga {profile.wordsPerDay} ta yangi so&apos;z</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('shop')}
+            className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 text-amber-400 hover:scale-105 active:scale-95 transition-all shadow-md shrink-0"
+            title="Do'konga o'tish"
+          >
+            <ShoppingBag className="w-5 h-5 text-amber-400" />
+          </button>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold tabular-nums"><Flame className="w-3.5 h-3.5" /> {profile.streak}</div>
-          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tabular-nums"><Diamond className="w-3.5 h-3.5" /> {profile.xp} XP</div>
+
+        {/* 2-qator: Streak, Tangalar va XP ko'rsatkichlari sig'adigan 3 ta teng karta */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-2xl bg-[#141B28]/90 border border-orange-500/30 text-orange-400 shadow-sm">
+            <Flame className="w-4 h-4 text-orange-400 shrink-0" />
+            <span className="text-xs font-black tabular-nums">{profile.streak} kun</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('shop')}
+            className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-2xl bg-[#141B28]/90 border border-yellow-500/30 text-yellow-300 hover:border-yellow-400/60 active:scale-95 transition-all shadow-sm"
+            title="Tangalar balansi"
+          >
+            <Coins className="w-4 h-4 text-yellow-400 shrink-0" />
+            <span className="text-xs font-black tabular-nums">{profile.coins ?? 50} tanga</span>
+          </button>
+          <div className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-2xl bg-[#141B28]/90 border border-sky-500/30 text-sky-400 shadow-sm">
+            <Diamond className="w-4 h-4 text-sky-400 shrink-0" />
+            <span className="text-xs font-black tabular-nums">{profile.xp} XP</span>
+          </div>
         </div>
       </header>
 
@@ -186,6 +232,40 @@ export const HomeTab: React.FC = () => {
           className="shrink-0 px-3.5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-extrabold active:scale-95 transition-all shadow-md shadow-amber-500/20"
         >
           O‘qish →
+        </button>
+      </div>
+
+      {/* Do'stlarni taklif qilish va do'kon tezkor bloki */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('selection');
+            try { sessionStorage.setItem('vb_liga_sub', 'referral'); } catch { /* ignore */ }
+            setActiveTab('leaderboard');
+          }}
+          className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 text-left hover:border-indigo-400/60 active:scale-[0.98] transition-all group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+            <UserPlus className="w-5 h-5" />
+          </div>
+          <div className="text-xs font-black text-white">Do‘stlarni taklif et</div>
+          <div className="text-[10px] text-indigo-300 font-bold mt-0.5">+50 XP & +30 Tanga</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('selection');
+            setActiveTab('shop');
+          }}
+          className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-900/40 to-yellow-900/40 border border-amber-500/30 text-left hover:border-amber-400/60 active:scale-[0.98] transition-all group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+            <ShoppingBag className="w-5 h-5" />
+          </div>
+          <div className="text-xs font-black text-white">VocaBoost Do‘koni</div>
+          <div className="text-[10px] text-amber-300 font-bold mt-0.5">2x XP, Kitoblar, Lo-Fi</div>
         </button>
       </div>
 

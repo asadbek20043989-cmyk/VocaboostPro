@@ -29,3 +29,7 @@ export const botSetRemind = (remind: boolean) => call<{ ok: boolean }>('setRemin
 /** Sertifikat rasmini foydalanuvchining Telegram chatiga yuboradi. kind: 'photo' (ko'rinish) yoki 'document' (fayl) */
 export const botSendCertificate = (c: { id: string; title: string; date: string; image: string; kind?: 'photo' | 'document' }) =>
   call<{ ok: boolean }>('sendCertificate', c);
+
+/** Do'stlik (referral) havolasi orqali kirganlikni tasdiqlash va sovg'alarni yozish */
+export const botProcessReferral = (startParam: string) =>
+  call<{ ok: boolean; rewardXp?: number; rewardCoins?: number }>('processReferral', { startParam });

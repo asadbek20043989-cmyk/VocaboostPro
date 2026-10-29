@@ -108,15 +108,11 @@ export const handler = async event => {
         }
       }
       // Admin XP tuzatishi (adj/adjV) faqat admin paneldan o'zgaradi — ilova yozolmaydi
-      if ('adj' in parsed || 'adjV' in parsed || 'hasGrant' in parsed || 'refs' in parsed) {
+      if ('adj' in parsed || 'adjV' in parsed || 'hasGrant' in parsed) {
         delete parsed.adj;
         delete parsed.adjV;
-        delete parsed.refs; // taklif qilingan do'stlar soni — faqat server yozadi
         delete parsed.hasGrant; // faqat server qo'yadi
         body = JSON.stringify(parsed);
-      }
-      for (const k of ['fr', 'nf', 'nc', 'ns', 'ti', 'rb']) {
-        if (k in parsed) { parsed[k] = String(parsed[k] ?? '').slice(0, 24); body = JSON.stringify(parsed); }
       }
       if (parsed.name && typeof parsed.name === 'string') {
         parsed.name = parsed.name.replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 60);

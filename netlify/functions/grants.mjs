@@ -29,7 +29,7 @@ export const handler = async event => {
       if (!claimed) continue; // boshqa qurilma oldin oldi
       const old = done.has(gid) || Date.now() - (Number(g.ts) || 0) > MAX_AGE;
       if (old) continue; // eski/qo'llangan sovg'a: faqat belgilanadi, qayta qo'llanmaydi
-      out.push({ id: gid, type: g.type, amount: Number(g.amount) || 0, validHours: Number(g.validHours) || 0, note: g.note || '', itemId: String(g.itemId || '').slice(0, 64) });
+      out.push({ id: gid, type: g.type, amount: Number(g.amount) || 0, coins: Number(g.coins) || 0, validHours: Number(g.validHours) || 0, note: g.note || '' });
     }
     out.sort((a, b) => (a.id < b.id ? -1 : 1));
     // Bayroqni o'chiramiz: ilova keyingi safar bu funksiyani chaqirmaydi (kredit tejash)

@@ -1,5 +1,5 @@
 // VocaBoost PWA Service Worker — Offline rejim va tezkor kesh
-const CACHE_NAME = 'vocaboost-v5.0.0';
+const CACHE_NAME = 'vocaboost-v4.6.0';
 const PRECACHE_URLS = [
   '/',
   '/index.html',

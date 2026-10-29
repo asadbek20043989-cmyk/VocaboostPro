@@ -162,18 +162,20 @@ export async function runBroadcast(opts) {
   const users = (await db('GET', 'tgusers')) || {};
   const lb = opts.skipActiveToday ? (await db('GET', 'leaderboard')) || {} : {};
   const dayStart = tashkentStartOfDayMs();
-  const markup = opts.customButtonsOnly ? makeCustomButtonsMarkup(opts.buttons) : (opts.buttons && opts.buttons.length ? makeCustomButtonsMarkup(opts.buttons) : openAppMarkup());
+  const defaultMarkup = opts.customButtonsOnly ? makeCustomButtonsMarkup(opts.buttons) : (opts.buttons && opts.buttons.length ? makeCustomButtonsMarkup(opts.buttons) : openAppMarkup());
   const parseMode = opts.parseMode || 'HTML';
   const photoUrl = opts.photoUrl ? String(opts.photoUrl).trim() : null;
 
-  // Shaxsiy taklif tugmasi: har bir foydalanuvchi uchun UNING o'z havolasi (t.me/Bot?start=ref_<ID>) bilan
-  let inviteBot = '';
-  let inviteText = DEFAULT_INVITE_TEXT;
-  if (opts.invite) {
-    const rcfg = (await db('GET', 'config/referral').catch(() => null)) || {};
-    inviteBot = await getBotUsername(rcfg, token);
-    inviteText = String(rcfg.shareText || DEFAULT_INVITE_TEXT);
+  let botUsername = '';
+  if (opts.includeRefButton) {
+    try {
+      const me = await tgApi(token, 'getMe', {});
+      botUsername = me?.username || '';
+    } catch {}
   }
+  const refCfg = opts.includeRefButton ? ((await db('GET', 'config/referral')) || {}) : {};
+  const inviteText = refCfg.inviteText || "🚀 VocaBoost — inglizcha so'zlarni tez va mustahkam yodlang! Menga qo'shiling: ";
+
   const targets = Object.entries(users).filter(([id, u]) => {
     if (!u || u.blocked) return false;
     if (opts.respectOptOut && u.remind === false) return false;
@@ -200,21 +202,34 @@ export async function runBroadcast(opts) {
   let n = 0;
   for (const [id, u] of targets) {
     const name = String(u.name || '').split(' ')[0] || "do'st";
-    const text = String(opts.text).replace(/\{name\}/gi, name);
-    let tries = 0;
-    let mk = markup;
-    if (opts.invite && inviteBot) {
-      const link = inviteLink(inviteBot, id);
-      const url = opts.invite.mode === 'link' ? link : shareUrl(link, inviteText);
-      const row = [{ text: String(opts.invite.label || '👥 Do\'stlarni taklif qilish').slice(0, 40), url }];
-      mk = { inline_keyboard: [row, ...((markup && markup.inline_keyboard) || [])] };
+    const personalRefLink = botUsername ? `https://t.me/${botUsername}?start=ref_${id}` : '';
+    let text = String(opts.text).replace(/\{name\}/gi, name).replace(/\{ref_link\}/gi, personalRefLink);
+
+    let markup = defaultMarkup;
+    if (opts.includeRefButton && botUsername) {
+      const shareLink = `https://t.me/share/url?url=${encodeURIComponent(personalRefLink)}&text=${encodeURIComponent(inviteText)}`;
+      const refBtnText = String(opts.refBtnText || "👥 Do'stlarni taklif qilish (+50 XP)").slice(0, 40);
+      const rows = [
+        [{ text: refBtnText, url: shareLink }]
+      ];
+      if (opts.buttons && opts.buttons.length) {
+        opts.buttons.slice(0, 2).forEach(b => {
+          if (b?.text && b?.url) rows.push([{ text: String(b.text).slice(0, 40), url: String(b.url).trim() }]);
+        });
+      } else {
+        const openBtn = openAppMarkup();
+        if (openBtn?.inline_keyboard?.[0]) rows.push(openBtn.inline_keyboard[0]);
+      }
+      markup = { inline_keyboard: rows };
     }
+
+    let tries = 0;
     for (;;) {
       try {
         if (photoUrl) {
-          await sendPhoto(token, Number(id), photoUrl, text, mk, parseMode);
+          await sendPhoto(token, Number(id), photoUrl, text, markup, parseMode);
         } else {
-          await sendMessage(token, Number(id), text, mk, parseMode);
+          await sendMessage(token, Number(id), text, markup, parseMode);
         }
         st.sent++;
         break;
@@ -263,7 +278,7 @@ export async function nextSeq(path = 'meta/certSeq') {
 export const certNumber = n => 'VB-' + String(n).padStart(6, '0');
 
 /** Barcha sertifikat dizaynlari (src/services/certificate.ts va admin.html bilan bir xil bo'lishi shart) */
-export const CERT_TPLS = ['bronze', 'silver', 'gold', 'platinum', 'champion', 'active', 'marathon', 'thanks', 'trust', 'growth', 'wisdom', 'speed', 'reviewer', 'expert', 'consistent', 'limitless', 'weekly'];
+export const CERT_TPLS = ['bronze', 'silver', 'gold', 'platinum', 'champion', 'active', 'marathon', 'thanks', 'trust', 'growth', 'wisdom', 'speed', 'reviewer', 'expert', 'consistent', 'limitless'];
 
 /** Reyting yozuvidan sertifikat «muhr»lari: daraja, yodlangan so'zlar, streak */
 export const statsFromLb = lb => {
@@ -277,14 +292,13 @@ export const statsFromLb = lb => {
 
 /** Sertifikatni bazaga yozadi (foydalanuvchi ostida + umumiy indeks) va raqamini qaytaradi.
  *  fmt: 'wide' (16:9) yoki 'story' (9:16). Berilmasa: «Minnatdorchilik» — avtomatik 9:16, qolganlari — 16:9 */
-export async function issueCertificate(db, { userId, tpl, title, reason, name, auto = false, milestone = 0, fmt, stats, label }) {
+export async function issueCertificate(db, { userId, tpl, title, reason, name, auto = false, milestone = 0, fmt, stats }) {
   const id = certNumber(await nextSeq());
   const date = tashkentDay();
   const useTpl = CERT_TPLS.includes(tpl) ? tpl : 'gold';
   const cert = {
     tpl: useTpl,
     title: String(title || '').slice(0, 100),
-    ...(label ? { label: String(label).slice(0, 28) } : {}),
     reason: String(reason || '').slice(0, 200),
     name: String(name || "O'quvchi").slice(0, 40),
     date,
@@ -320,73 +334,3 @@ export async function claimNode(path) {
 export const DEFAULT_START_BUTTON = '🚀 VocaBoostni ochish';
 export const DEFAULT_START_TEXT =
   "👋 Assalomu alaykum, {name}!\n\n🚀 VocaBoost'ga xush kelibsiz — inglizcha so'zlarni tez va uzoq yodlash ilovasi.\n\n✅ Har kuni atigi 10 ta yangi so'z\n🧠 Aqlli takrorlash — o'rgangan so'zlaringizni unutmaysiz\n🎮 O'yinlar, omadli baraban va raqiblar bilan bellashuv\n🎓 100 / 250 / 500 / 1000 ta so'zga sertifikat\n\nBoshlash uchun pastdagi tugmani bosing 👇";
-
-
-// ---------------------------------------------------------------------------------------------------------
-// DO'ST TAKLIF QILISH (referal). Havola: https://t.me/<bot>?start=ref_<taklif qiluvchining Telegram ID si>
-// ---------------------------------------------------------------------------------------------------------
-export const DEFAULT_INVITE_TEXT = "🚀 VocaBoost — inglizcha so'zlarni tez va uzoq yodlash ilovasi! Men har kuni mashq qilyapman. Sen ham qo'shil 👇";
-export const DEFAULT_REF_NOTIFY = '🎉 «{name}» ismli do\'stingiz siz yuborgan link orqali botimizga qo\'shildi, shuning uchun sizga {xp} XP berildi.\n\n👥 Taklif qilgan do\'stlaringiz soni: {count} ta';
-
-export const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-export const inviteLink = (bot, uid) => `https://t.me/${bot}?start=ref_${uid}`;
-export const shareUrl = (link, text) => `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(String(text || '').slice(0, 900))}`;
-
-let _botName = '';
-/** Bot username: admin paneldagi qiymat > BOT_USERNAME env > Telegram getMe (xotirada saqlanadi) */
-export async function getBotUsername(cfg, token) {
-  const fromCfg = String(cfg?.botUsername || process.env.BOT_USERNAME || '').replace(/^@/, '').trim();
-  if (fromCfg) return fromCfg;
-  if (_botName) return _botName;
-  try {
-    const me = await tgApi(token, 'getMe', {});
-    _botName = String(me?.username || '');
-  } catch {
-    /* ignore */
-  }
-  return _botName;
-}
-
-const clampInt = (v, lo, hi, d) => {
-  const n = Math.round(Number(v));
-  return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d;
-};
-
-/**
- * Do'st botga havola orqali BIRINCHI marta /start bosganda chaqiriladi.
- * 1) taklif qiluvchiga XP sovg'asi (grants) va hisoblagich (leaderboard/<uid>/refs) yoziladi — ilova shu zahoti oladi;
- * 2) taklif qiluvchining Telegramiga xabar yuboriladi.
- * Qaytarish: { count, xp } yoki null (hisobga olinmadi).
- */
-export async function processReferral(db, token, friend, refId) {
-  const fid = String(friend?.id || '');
-  if (!fid || !/^\d{3,15}$/.test(String(refId)) || fid === String(refId)) return null;
-  const cfg = (await db('GET', 'config/referral')) || {};
-  if (cfg.enabled === false) return null;
-  const refUid = `tg_${refId}`;
-  const lb = await db('GET', `leaderboard/${refUid}`);
-  if (!lb || lb.deleted) return null; // faqat ilovadan foydalanayotgan haqiqiy foydalanuvchi taklif qila oladi
-  if (await db('GET', `referrals/${refId}/${fid}`)) return null; // bu do'st oldin hisobga olingan
-  const xp = clampInt(cfg.xp, 0, 100000, 50);
-  const fname = firstNameOf(friend) || "do'st";
-  await db('PUT', `referrals/${refId}/${fid}`, { name: fname.slice(0, 40), ts: Date.now(), xp });
-  const all = (await db('GET', `referrals/${refId}`)) || {};
-  const count = Object.keys(all).length;
-  const upd = {};
-  if (xp > 0) {
-    const gid = 'r' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
-    upd[`grants/${refUid}/${gid}`] = { type: 'xp', amount: xp, validHours: 0, note: `Do'st taklif qilindi: ${fname}`.slice(0, 80), ts: Date.now() };
-    upd[`leaderboard/${refUid}/hasGrant`] = true;
-  }
-  upd[`leaderboard/${refUid}/refs`] = count;
-  await db('PATCH', '', upd);
-  db('PATCH', `tgusers/${fid}`, { ref: String(refId) }).catch(() => {});
-  const tpl = String(cfg.notifyText || DEFAULT_REF_NOTIFY);
-  const msg = tpl.replace(/\{name\}/gi, escHtml(fname)).replace(/\{xp\}/gi, String(xp)).replace(/\{count\}/gi, String(count));
-  try {
-    await sendMessage(token, Number(refId), msg, openAppMarkup('🚀 VocaBoostni ochish'));
-  } catch {
-    /* taklif qiluvchi botni bloklagan bo'lishi mumkin — XP baribir berilgan */
-  }
-  return { count, xp };
-}

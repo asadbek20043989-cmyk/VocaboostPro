@@ -35,6 +35,9 @@ export const GAME_DEFAULTS: GameDef[] = [
   { id: 'wordsearch', title: 'So\'z qidiruvi', desc: "Harflar to'ridan yashiringan so'z harflarini tartib bilan toping", icon: '🗺️', kind: 'vocab', enabled: true, order: 18, vip: true, xp: 20, settings: { rounds: 5, gridSize: 6 } },
   { id: 'blitz', title: 'Blitz Viktorina', desc: "60 soniya ichida eng ko'p to'g'ri so'z variantini belgilang", icon: '🎯', kind: 'vocab', enabled: true, order: 19, vip: false, xp: 20, settings: { seconds: 60, goal: 10 } },
   { id: 'pronounce', title: 'Talaffuz sinovi', desc: "So'zni tinglang va uni ovoz chiqarib takrorlang", icon: '🗣️', kind: 'vocab', enabled: true, order: 20, vip: true, xp: 20, settings: { rounds: 5 } },
+  // ---- 2D Grafik O'yinlar ----
+  { id: 'word_catcher_2d', title: "2D So'z Tutgich", desc: "Tushayotgan so'zlar orasidan to'g'ri tarjimani savat bilan tuting!", icon: '🧺', kind: 'vocab', enabled: true, order: 21, vip: false, xp: 20, settings: { rounds: 6, lives: 3 } },
+  { id: 'flappy_vocab_2d', title: "2D Flappy Vocab", desc: "Qanot qoqib, to'g'ri tarjima darvozalaridan o'ting va ball to'plang!", icon: '🕊️', kind: 'vocab', enabled: true, order: 22, vip: false, xp: 25, settings: { goal: 6, lives: 3 } },
 ];
 
 /** Admin sozlamalarini standart qiymatlar bilan birlashtirish */

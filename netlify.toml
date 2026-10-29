@@ -22,11 +22,6 @@
     Cache-Control = "no-store"
 
 [[headers]]
-  for = "/certs/*"
-  [headers.values]
-    Cache-Control = "public, max-age=2592000"
-
-[[headers]]
   for = "/icons/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
