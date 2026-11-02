@@ -70,7 +70,7 @@ export const handler = async event => {
       if (!c) return json(200, { found: false });
       return json(200, {
         found: true,
-        cert: { id, tpl: c.tpl, title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', special: !c.auto, fmt: c.fmt || (c.tpl === 'thanks' ? 'story' : 'wide'), stats: c.stats || null },
+        cert: { id, tpl: c.tpl, title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', special: !c.auto, fmt: c.fmt || 'wide', stats: c.stats || null },
       }, { 'Netlify-CDN-Cache-Control': 'public, s-maxage=120' });
     }
 
@@ -98,7 +98,7 @@ export const handler = async event => {
         const cfg = (await db('GET', 'config/thanksCert')) || {};
         const title = String(cfg.title || WELCOME_TITLE).trim();
         const reason = String(cfg.reason || WELCOME_REASON).trim();
-        const issued = await issueCertificate(db, { userId: wuid, tpl: 'thanks', title, reason, name: nm, auto: true, fmt: 'story', stats: statsFromLb(lbw) });
+        const issued = await issueCertificate(db, { userId: wuid, tpl: 'thanks', title, reason, name: nm, auto: true, fmt: 'wide' });
         await db('PUT', `welcomeIdx/${wuid}`, { id: issued.id, ts: Date.now() });
         return json(200, { ok: true, id: issued.id, date: issued.date });
       } catch (err) {

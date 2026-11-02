@@ -109,3 +109,30 @@ export function compressImage(file: File, size = 128, quality = 0.8, maxChars = 
     reader.readAsDataURL(file);
   });
 }
+
+/** Yuklangan rasmni reyting uchun kichik nusxaga aylantiradi (hamma foydalanuvchiga ko'rinishi uchun ~3–4 KB) */
+export function shrinkDataUrl(src: string, px = 72, quality = 0.7, maxChars = 5000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onerror = () => reject(new Error('Rasm ochilmadi'));
+    img.onload = () => {
+      let p = px;
+      let q = quality;
+      for (let i = 0; i < 8; i++) {
+        const c = document.createElement('canvas');
+        c.width = p;
+        c.height = p;
+        const ctx = c.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas yo‘q'));
+        const s = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, p, p);
+        const out = c.toDataURL('image/jpeg', q);
+        if (out.length <= maxChars || p <= 40) return resolve(out);
+        if (q > 0.5) q -= 0.1;
+        else p = Math.round(p * 0.85);
+      }
+      reject(new Error('Rasm juda katta'));
+    };
+    img.src = src;
+  });
+}

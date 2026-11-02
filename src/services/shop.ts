@@ -87,21 +87,37 @@ export const DEFAULT_SHARE_TEXT = "🚀 VocaBoost — inglizcha so'zlarni tez va
 // Lo-Fi pleer. Standart: brauzerning o'zida hosil qilinadigan sokin musiqa (fayl kerak emas, trafik yo'q).
 // Admin musiqa havolalari (mp3) qo'shsa — ular ketma-ket chaladi.
 // ---------------------------------------------------------------------------------------------------
-type Lofi = { on: boolean; start: (tracks?: { title: string; url: string }[]) => void; stop: () => void; listeners: Set<() => void> };
-const L: Lofi = { on: false, start: () => {}, stop: () => {}, listeners: new Set() };
+type Track = { title: string; url: string };
+type Lofi = {
+  on: boolean; paused: boolean; title: string;
+  start: (tracks?: Track[]) => void; stop: () => void; pause: () => void; resume: () => void; toggle: () => void; next: () => void;
+  listeners: Set<() => void>;
+};
+const L: Lofi = { on: false, paused: false, title: '', start: () => {}, stop: () => {}, pause: () => {}, resume: () => {}, toggle: () => {}, next: () => {}, listeners: new Set() };
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let audioEl: HTMLAudioElement | null = null;
+let list: Track[] = [];
+let idx = 0;
 let nextT = 0;
 let step = 0;
-const CHORDS = [[48, 55, 59, 64], [45, 52, 57, 60], [50, 57, 60, 65], [43, 50, 55, 59]];
+let mood = 0;
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
+// Sozlangan musiqa havolalari bo'lmasa, brauzerning o'zida hosil qilinadigan 4 xil sokin kayfiyat almashib turadi
+const MOODS: { name: string; bpm: number; chords: number[][]; wave: OscillatorType }[] = [
+  { name: 'Kechki yomg‘ir', bpm: 72, chords: [[48, 55, 59, 64], [45, 52, 57, 60], [50, 57, 60, 65], [43, 50, 55, 59]], wave: 'triangle' },
+  { name: 'Choyxona', bpm: 66, chords: [[45, 52, 57, 60], [41, 48, 53, 57], [48, 55, 60, 64], [43, 50, 55, 59]], wave: 'sine' },
+  { name: 'Tungi shahar', bpm: 78, chords: [[50, 57, 60, 65], [46, 53, 58, 62], [43, 50, 55, 58], [45, 52, 55, 60]], wave: 'triangle' },
+  { name: 'Tong shabadasi', bpm: 70, chords: [[53, 60, 64, 69], [50, 57, 62, 65], [48, 55, 59, 64], [55, 59, 62, 67]], wave: 'sine' },
+];
+const notify = () => L.listeners.forEach(f => f());
 
 function tick() {
   if (!ctx || !master) return;
-  const bpm = 72;
-  const beat = 60 / bpm;
+  const M = MOODS[mood];
+  const CHORDS = M.chords;
+  const beat = 60 / M.bpm;
   while (nextT < ctx.currentTime + 0.6) {
     const bar = Math.floor(step / 8) % 4;
     const s8 = step % 8; // 8 ta yarim zarb
@@ -112,7 +128,7 @@ function tick() {
           const o = ctx!.createOscillator();
           const g = ctx!.createGain();
           const f = ctx!.createBiquadFilter();
-          o.type = 'triangle'; o.frequency.value = mtof(m + 12); o.detune.value = det + i;
+          o.type = M.wave; o.frequency.value = mtof(m + 12); o.detune.value = det + i;
           f.type = 'lowpass'; f.frequency.value = 900;
           g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.5); g.gain.linearRampToValueAtTime(0, t + beat * 4.2);
           o.connect(f); f.connect(g); g.connect(master!); o.start(t); o.stop(t + beat * 4.4);
@@ -147,39 +163,72 @@ function tick() {
   }
 }
 
+function startSynth() {
+  const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+  if (!AC) { L.on = false; L.title = ''; return; }
+  ctx = new AC();
+  master = ctx!.createGain();
+  master.gain.value = 0.9;
+  master.connect(ctx!.destination);
+  // eski plastinka shitirlashi
+  const len = ctx!.sampleRate * 2;
+  const buf = ctx!.createBuffer(1, len, ctx!.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() < 0.002 ? (Math.random() * 2 - 1) * 0.6 : (Math.random() * 2 - 1) * 0.01;
+  const src = ctx!.createBufferSource(); const g = ctx!.createGain();
+  src.buffer = buf; src.loop = true; g.gain.value = 0.5; src.connect(g); g.connect(master); src.start();
+  nextT = ctx!.currentTime + 0.1; step = 0;
+  L.title = MOODS[mood].name;
+  timer = setInterval(tick, 200);
+}
+
+function playTrack(i: number) {
+  idx = i % list.length;
+  L.title = list[idx].title;
+  if (!audioEl) {
+    audioEl = new Audio();
+    audioEl.volume = 0.5;
+    audioEl.onended = () => { playTrack(idx + 1); notify(); };
+  }
+  audioEl.src = list[idx].url;
+  audioEl.play().catch(() => { L.stop(); });
+}
+
 L.start = (tracks = []) => {
   if (L.on) return;
-  L.on = true;
-  if (tracks.length) {
-    let i = 0;
-    audioEl = new Audio(tracks[0].url);
-    audioEl.volume = 0.5;
-    audioEl.onended = () => { i = (i + 1) % tracks.length; if (audioEl) { audioEl.src = tracks[i].url; audioEl.play().catch(() => {}); } };
-    audioEl.play().catch(() => { L.on = false; L.listeners.forEach(f => f()); });
-  } else {
-    const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!AC) { L.on = false; return; }
-    ctx = new AC();
-    master = ctx!.createGain();
-    master.gain.value = 0.9;
-    master.connect(ctx!.destination);
-    // eski plastinka shitirlashi
-    const len = ctx!.sampleRate * 2;
-    const buf = ctx!.createBuffer(1, len, ctx!.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() < 0.002 ? (Math.random() * 2 - 1) * 0.6 : (Math.random() * 2 - 1) * 0.01;
-    const src = ctx!.createBufferSource(); const g = ctx!.createGain();
-    src.buffer = buf; src.loop = true; g.gain.value = 0.5; src.connect(g); g.connect(master); src.start();
-    nextT = ctx!.currentTime + 0.1; step = 0;
-    timer = setInterval(tick, 200);
-  }
-  L.listeners.forEach(f => f());
+  L.on = true; L.paused = false;
+  list = tracks;
+  if (list.length) playTrack(Math.floor(Math.random() * list.length));
+  else { mood = Math.floor(Math.random() * MOODS.length); startSynth(); }
+  notify();
+};
+L.pause = () => {
+  if (!L.on || L.paused) return;
+  L.paused = true;
+  if (audioEl) audioEl.pause();
+  if (ctx) ctx.suspend().catch(() => {});
+  notify();
+};
+L.resume = () => {
+  if (!L.on || !L.paused) return;
+  L.paused = false;
+  if (audioEl) audioEl.play().catch(() => {});
+  if (ctx) ctx.resume().catch(() => {});
+  notify();
+};
+L.toggle = () => (L.paused ? L.resume() : L.pause());
+L.next = () => {
+  if (!L.on) return;
+  if (list.length) playTrack(idx + 1);
+  else if (ctx) { mood = (mood + 1) % MOODS.length; step = 0; nextT = ctx.currentTime + 0.1; L.title = MOODS[mood].name; }
+  if (L.paused) { L.paused = false; if (ctx) ctx.resume().catch(() => {}); }
+  notify();
 };
 L.stop = () => {
-  L.on = false;
+  L.on = false; L.paused = false; L.title = '';
   if (timer) { clearInterval(timer); timer = null; }
   if (ctx) { ctx.close().catch(() => {}); ctx = null; master = null; }
   if (audioEl) { audioEl.pause(); audioEl.src = ''; audioEl = null; }
-  L.listeners.forEach(f => f());
+  notify();
 };
 export const lofi = L;

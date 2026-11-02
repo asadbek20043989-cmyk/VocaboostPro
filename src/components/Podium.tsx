@@ -61,28 +61,84 @@ export interface PodiumUser {
   cos?: CosLike;
 }
 
-/** TOP-3 podiumi: 2-1-3 tartibida, pastida pog'onalar. `badges` — haftalik chempionlik soni (ixtiyoriy) */
-export const Podium: React.FC<{ users: PodiumUser[]; badges?: Record<string, { gold: number; top3: number }> }> = ({ users, badges }) => {
+// Konfetti va yulduzchalar (joylashuvi qat'iy — qayta chizilganda "sakramaydi")
+const CONFETTI = Array.from({ length: 22 }, (_, i) => ({
+  left: (i * 37 + 11) % 100,
+  delay: ((i * 53) % 90) / 10,
+  dur: 6 + ((i * 29) % 50) / 10,
+  color: ['#FDE047', '#F472B6', '#38BDF8', '#34D399', '#FB923C', '#C084FC'][i % 6],
+  w: 5 + (i % 3) * 2,
+  rot: (i * 47) % 360,
+}));
+const STARS = [
+  { l: '8%', t: '22%', d: 0 }, { l: '90%', t: '18%', d: 0.8 }, { l: '20%', t: '58%', d: 1.4 }, { l: '80%', t: '52%', d: 0.4 },
+  { l: '50%', t: '8%', d: 1.1 }, { l: '35%', t: '30%', d: 1.9 }, { l: '66%', t: '34%', d: 0.6 },
+];
+
+/** Podium bloki: old yuzasi, usti (3D) va yon tomoni; 1-o'rinda g'alaba zinapoyalari */
+const Block: React.FC<{ rank: Rank }> = ({ rank }) => {
+  const t = THEME[rank];
+  const h = rank === 1 ? 104 : rank === 2 ? 76 : 58;
+  return (
+    <div className={`pd-block ${t.cls}`} style={{ height: h + 14 }}>
+      <div className="pd-block-top" />
+      <div className="pd-block-front" style={{ height: h }}>
+        <span className="pd-block-num">{t.label}</span>
+        <span className="pd-block-shine" />
+      </div>
+      {rank === 1 && (
+        <div className="pd-stairs" aria-hidden>
+          <i style={{ width: '104%' }} /><i style={{ width: '112%' }} /><i style={{ width: '122%' }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** TOP-3 g'alaba maydoni: 2-1-3 tartibida 3D podium, neon halqali avatarlar, konfetti va yulduzchalar.
+ *  `chip` — chap yuqoridagi yozuv («2-hafta · 119 ta o'quvchi»), `live` — o'ng yuqoridagi holat */
+export const Podium: React.FC<{
+  users: PodiumUser[];
+  badges?: Record<string, { gold: number; top3: number }>;
+  chip?: React.ReactNode;
+  live?: { text: string; state: 'live' | 'loading' | 'off' };
+}> = ({ users, badges, chip, live }) => {
   const order: Rank[] = [2, 1, 3];
   return (
-    <div className="flex items-end justify-center gap-2 pt-2">
-      {order.map(rank => {
-        const u = users[rank - 1];
-        const t = THEME[rank];
-        if (!u) return <div key={rank} className="w-[30%]" />;
-        const b = badges?.[u.id];
-        return (
-          <div key={rank} className="flex flex-col items-center w-[31%] min-w-0">
-            <GlowAvatar rank={rank} src={u.avatar} name={u.name} />
-            <span className={`mt-2 text-xs font-extrabold text-white max-w-full flex justify-center ${rank === 1 ? 'text-sm' : ''}`}><CosName name={u.name} cos={u.cos} showTitle /></span>
-            {b && b.gold > 0 && <span className="text-[10px] font-bold text-amber-300">🏆 ×{b.gold} hafta chempioni</span>}
-            <span className={`text-[11px] font-mono font-extrabold tabular-nums ${t.text}`}>{u.xp.toLocaleString()} XP</span>
-            <div className={`pd-base mt-1.5 w-full rounded-t-xl bg-gradient-to-b ${t.bar} flex items-center justify-center shadow-lg`} style={{ height: t.h }}>
-              <span className="text-2xl font-black text-black/55 drop-shadow-sm">{t.label}</span>
+    <div className="pd-arena keep-dark">
+      <div className="pd-conf-layer" aria-hidden>
+        {CONFETTI.map((c, i) => (
+          <i key={i} className="pd-conf" style={{ left: `${c.left}%`, width: c.w, height: c.w * 1.7, background: c.color, animationDelay: `-${c.delay}s`, animationDuration: `${c.dur}s`, transform: `rotate(${c.rot}deg)` }} />
+        ))}
+        {STARS.map((st, i) => <span key={i} className="pd-star" style={{ left: st.l, top: st.t, animationDelay: `${st.d}s` }} />)}
+      </div>
+      <div className="pd-top">
+        <span className="pd-chip">{chip}</span>
+        {live && (
+          <span className="pd-live">
+            <span className={`pd-dot ${live.state}`} />
+            {live.text}
+          </span>
+        )}
+      </div>
+      <div className="pd-stage">
+        <div className="pd-spot" aria-hidden />
+        {order.map(rank => {
+          const u = users[rank - 1];
+          if (!u) return <div key={rank} className="pd-col" />;
+          const b = badges?.[u.id];
+          const t = THEME[rank];
+          return (
+            <div key={rank} className={`pd-col pd-r${rank}`}>
+              <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 84 : 64} />
+              <span className="pd-name"><CosName name={u.name} cos={u.cos} showTitle className="pd-nm" /></span>
+              {b && b.gold > 0 && <span className="pd-champ">🏆 ×{b.gold} hafta chempioni</span>}
+              <span className={`pd-xp ${t.cls}`}>{u.xp.toLocaleString()} XP</span>
+              <Block rank={rank} />
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

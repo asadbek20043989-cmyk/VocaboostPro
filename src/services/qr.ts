@@ -281,11 +281,16 @@ export function drawQr(
   const m = encodeQr(text, opts.ecc || 'M');
   const quiet = opts.quiet ?? 2;
   const n = m.length + quiet * 2;
-  const cell = size / n;
+  // Modul kengligi butun piksel bo'lishi uchun (ekran kattalashtirilgan bo'lsa ham) o'lcham «yaxlitlanadi» — skaner aniq o'qiydi
+  let sc = 1;
+  try { sc = ctx.getTransform().a || 1; } catch { /* eski brauzer */ }
+  const cell = Math.max(1, Math.floor((size * sc) / n)) / sc;
+  const real = cell * n;
+  const ox = x + (size - real) / 2, oy = y + (size - real) / 2;
   ctx.fillStyle = opts.light || '#FFFFFF';
   ctx.fillRect(x, y, size, size);
   ctx.fillStyle = opts.dark || '#000000';
   for (let r = 0; r < m.length; r++)
     for (let c = 0; c < m.length; c++)
-      if (m[r][c]) ctx.fillRect(Math.round(x + (c + quiet) * cell), Math.round(y + (r + quiet) * cell), Math.ceil(cell), Math.ceil(cell));
+      if (m[r][c]) ctx.fillRect(ox + (c + quiet) * cell, oy + (r + quiet) * cell, cell, cell);
 }

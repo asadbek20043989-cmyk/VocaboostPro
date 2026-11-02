@@ -827,7 +827,7 @@ export const handler = async event => {
         for (const [uid, x] of Object.entries(issued)) {
           const c = await call('GET', `certs/${uid}/${x.id}`);
           if (!c) continue;
-          items.push({ uid, id: x.id, tpl: c.tpl, title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', fmt: c.fmt || (c.tpl === 'thanks' ? 'story' : 'wide'), stats: c.stats || null, sent: !!c.sent, tg: /^tg_\d+$/.test(uid) });
+          items.push({ uid, id: x.id, tpl: c.tpl, title: c.title || '', reason: c.reason || '', name: c.name || '', date: c.date || '', fmt: c.fmt || 'wide', stats: c.stats || null, sent: !!c.sent, tg: /^tg_\d+$/.test(uid) });
         }
         items.sort((a, b) => (a.id < b.id ? -1 : 1));
         return json(200, { items });
@@ -886,9 +886,9 @@ export const handler = async event => {
         const str = (v, n) => String(v ?? '').trim().slice(0, n);
         const title = str(body.title, 80);
         if (!title) return json(400, { error: "To'plam nomini kiriting" });
-        const kind = body.kind === 'daily' ? 'daily' : 'open';
+        const kind = body.kind === 'daily' ? 'daily' : body.kind === 'topic' ? 'topic' : 'open';
         const date = str(body.date, 10);
-        if (kind === 'daily' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(400, { error: 'Kunlik to\'plam uchun sanani tanlang' });
+        if (kind !== 'open' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(400, { error: 'Kunlik to\'plam / maxsus mavzu uchun sanani tanlang' });
         const packId = ID_RE.test(body.id || '') ? body.id : 'k' + Date.now().toString(36);
         const list = Array.isArray(body.words) ? body.words.slice(0, 500) : [];
         const slug = t => String(t).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
@@ -908,7 +908,7 @@ export const handler = async event => {
         });
         const prev = await call('GET', `packs/${packId}/createdAt`);
         const meta = {
-          title, desc: str(body.desc, 240), kind, date: kind === 'daily' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace',
+          title, desc: str(body.desc, 240), kind, date: kind !== 'open' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace',
           order: Number.isFinite(Number(body.order)) ? Number(body.order) : 0, published: body.published !== false, createdAt: prev || Date.now(),
         };
         if (list.length) {

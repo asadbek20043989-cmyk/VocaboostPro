@@ -38,7 +38,11 @@ export const ShopTab: React.FC = () => {
   const [confirm, setConfirm] = useState<ShopItem | null>(null);
   const [result, setResult] = useState<{ it: ShopItem; reveal?: string } | null>(null);
   const [err, setErr] = useState('');
-  const [equipOpen, setEquipOpen] = useState(false);
+  // Bosh menyudagi «Jihozlarim» belgisidan kelinsa, oyna darhol ochiladi
+  const [equipOpen, setEquipOpen] = useState(() => {
+    try { if (sessionStorage.getItem('vb_open_equip')) { sessionStorage.removeItem('vb_open_equip'); return true; } } catch { /* ignore */ }
+    return false;
+  });
   const [booksOpen, setBooksOpen] = useState(false);
   const [lofiOn, setLofiOn] = useState(lofi.on);
   const [, setTick] = useState(0);
@@ -73,24 +77,21 @@ export const ShopTab: React.FC = () => {
   };
   const ownedLabel = (it: ShopItem) => it.kind === 'books' ? 'Ochish' : it.kind === 'lofi' ? (lofiOn ? "O'chirish" : 'Yoqish') : it.kind === 'pack' ? "O'rganish" : it.kind === 'verified' ? 'Faol ✓' : 'Jihozlash';
 
-  const hasEquip = ['frame_gold', 'frame_fire', 'frame_crystal', 'skin_neon', 'skin_nature', 'skin_royal', 'titles', 'nickcolor', 'glow', 'rankbadge', 'avatars'].some(owns) || (profile.own || []).some(x => x.startsWith('av:'));
 
   return (
     <div className="space-y-4 pb-8">
       {/* Balans */}
-      <div className="rounded-3xl p-4 bg-gradient-to-br from-amber-500/25 via-orange-500/10 to-rose-500/15 border border-amber-500/40 keep-dark">
+      <div className="vb-coin-card rounded-3xl p-4 bg-gradient-to-br from-amber-500/25 via-orange-500/10 to-rose-500/15 border border-amber-500/40">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-amber-200/90">Mening tangalarim</div>
             <div className="text-3xl font-black text-amber-300 tabular-nums flex items-center gap-2">🪙 {coins.toLocaleString()}</div>
           </div>
-          {hasEquip && (
-            <button type="button" onClick={() => setEquipOpen(true)} className="px-3 py-2 rounded-xl bg-slate-900/60 border border-amber-500/40 text-xs font-bold text-amber-200 flex items-center gap-1.5 active:scale-95">
-              <Sparkles className="w-4 h-4" /> Jihozlarim
-            </button>
-          )}
+          <button type="button" onClick={() => setEquipOpen(true)} className="vb-equip-btn px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-amber-500/30 active:scale-95">
+            <Sparkles className="w-4 h-4" /> Jihozlarim
+          </button>
         </div>
-        <p className="text-[11px] text-slate-300/80 mt-2 leading-snug">XP yig'ib, vazifalarni bajarib, streakni saqlab tanga toping. Har {Math.round(1 / Math.max(0.01, shopConf.coinPerXp))} XP ga ≈ 1 tanga.</p>
+        <p className="text-[11px] text-slate-300 mt-2 leading-snug">XP yig'ib, vazifalarni bajarib, streakni saqlab tanga toping. Har {Math.round(1 / Math.max(0.01, shopConf.coinPerXp))} XP ga ≈ 1 tanga.</p>
         {boostActive && <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-200 text-[11px] font-bold"><Zap className="w-3.5 h-3.5" /> 2x XP faol · {fmtLeft(boostLeft)} qoldi</div>}
       </div>
 
@@ -199,7 +200,10 @@ export const ShopTab: React.FC = () => {
               <CosName name={profile.name} showTitle className="text-sm font-extrabold text-white" cos={{ nf: profile.nameFx, nc: profile.nameColor, ns: profile.nameSym, ti: profile.title, vf: owns('verified'), rb: profile.rankBadge }} />
             </div>
           </div>
-          <EquipSection title="Ramka" show={['gold', 'fire', 'crystal'].some(f => owns(`frame_${f}`))}>
+          {!(Object.keys(FRAMES).some(f => owns(`frame_${f}`)) || Object.keys(SKINS).some(k => owns(`skin_${k}`)) || ['titles', 'nickcolor', 'glow', 'rankbadge', 'avatars', 'lofi'].some(owns) || (profile.own || []).some(x => x.startsWith('av:'))) && (
+            <div className="text-center py-6 text-sm text-slate-400">Hozircha jihozingiz yo&apos;q.<br />Do&apos;kondan ramka, mavzu yoki unvon xarid qiling 🛍️</div>
+          )}
+          <EquipSection title="Ramka" show={Object.keys(FRAMES).some(f => owns(`frame_${f}`))}>
             <Chip on={!profile.frame} onClick={() => equip('frame', '')}>Yo'q</Chip>
             {Object.entries(FRAMES).filter(([k]) => owns(`frame_${k}`)).map(([k, f]) => <Chip key={k} on={profile.frame === k} onClick={() => equip('frame', k)}>{f.label}</Chip>)}
           </EquipSection>

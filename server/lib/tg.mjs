@@ -279,7 +279,7 @@ export const statsFromLb = lb => {
 };
 
 /** Sertifikatni bazaga yozadi (foydalanuvchi ostida + umumiy indeks) va raqamini qaytaradi.
- *  fmt: 'wide' (16:9) yoki 'story' (9:16). Berilmasa: «Minnatdorchilik» — avtomatik 9:16, qolganlari — 16:9 */
+ *  fmt: 'wide' (16:9) yoki 'story' (9:16). Berilmasa — 16:9 */
 export async function issueCertificate(db, { userId, tpl, title, reason, name, auto = false, milestone = 0, fmt, stats, label }) {
   const id = certNumber(await nextSeq());
   const date = tashkentDay();
@@ -293,7 +293,7 @@ export async function issueCertificate(db, { userId, tpl, title, reason, name, a
     date,
     ts: Date.now(),
     auto: !!auto,
-    fmt: fmt === 'story' || fmt === 'wide' ? fmt : useTpl === 'thanks' ? 'story' : 'wide',
+    fmt: fmt === 'story' || fmt === 'wide' ? fmt : 'wide',
     ...(milestone ? { milestone } : {}),
     ...(stats ? { stats } : {}),
   };

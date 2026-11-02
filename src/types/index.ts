@@ -195,7 +195,7 @@ export interface WordPack {
   id: string;
   title: string;
   desc: string;
-  kind: 'daily' | 'open'; // daily — aniq kun uchun; open — istalgan vaqtda o'rganiladi
+  kind: 'daily' | 'open' | 'topic'; // daily — aniq kun uchun; open — istalgan vaqtda; topic — «Maxsus mavzular» (kunlik TOP 20)
   date: string; // YYYY-MM-DD (faqat daily uchun)
   mode: 'replace' | 'extra'; // daily: odatdagi kunlik so'zlar o'rniga yoki ustiga
   order: number;

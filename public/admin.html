@@ -149,14 +149,14 @@
     <section id="t-packs" class="hide">
       <div class="card">
         <h2>📅 Bugungi mashqlar — lug'at to'plamlari <span class="small" id="pkCount"></span></h2>
-        <p class="small">Alohida lug'at (so'zlar ro'yxati) yuklang. <b>Kunlik</b> to'plam tanlangan sanada ilovaning «Bugungi mashq» bo'limida paydo bo'ladi (odatdagi kunlik so'zlar <i>o'rniga</i> yoki <i>ustiga</i>). <b>Doim ochiq</b> to'plam esa bosh sahifada «Lug'at to'plamlari» ro'yxatida turadi va foydalanuvchi istalgan vaqtda o'rganadi. Qayta deploy kerak emas.</p>
+        <p class="small">Alohida lug'at (so'zlar ro'yxati) yuklang. <b>Kunlik</b> to'plam tanlangan sanada ilovaning «Bugungi mashq» bo'limida paydo bo'ladi (odatdagi kunlik so'zlar <i>o'rniga</i> yoki <i>ustiga</i>). <b>⭐ Maxsus mavzu</b> — ilovadagi «Maxsus mavzular» bo'limida tanlangan sanada ko'rinadi: har kuni bitta mavzu (masalan «Home and Furniture») bo'yicha eng ko'p uchraydigan 20 ta so'z; o'tgan mavzular ham ro'yxatda qoladi va «Bugungi mashq»ga aralashmaydi. <b>Doim ochiq</b> to'plam esa bosh sahifada «Lug'at to'plamlari» ro'yxatida turadi va foydalanuvchi istalgan vaqtda o'rganadi. Qayta deploy kerak emas.</p>
         <div class="scroll"><table><thead><tr><th>Nomi</th><th>Turi</th><th>So'zlar</th><th>Holat</th><th></th></tr></thead><tbody id="pkBody"></tbody></table></div>
       </div>
       <div class="card">
         <h2 id="pkEdTitle">Yangi to'plam</h2>
         <div class="f3">
           <div><label>Nomi *</label><input id="pk_title" placeholder="Masalan: Sayohat so'zlari" /></div>
-          <div><label>Turi</label><select id="pk_kind"><option value="daily">Kunlik (aniq sana uchun)</option><option value="open">Doim ochiq</option></select></div>
+          <div><label>Turi</label><select id="pk_kind"><option value="daily">Kunlik (aniq sana uchun)</option><option value="topic">⭐ Maxsus mavzu — kunlik TOP 20</option><option value="open">Doim ochiq</option></select></div>
           <div id="pk_dateBox"><label>Sana *</label><input id="pk_date" type="date" /></div>
           <div id="pk_modeBox"><label>Qanday qo'shiladi</label><select id="pk_mode"><option value="replace">Odatdagi kunlik so'zlar o'rniga</option><option value="extra">Odatdagi kunlik so'zlar ustiga</option></select></div>
           <div><label>Tartib raqami</label><input id="pk_order" type="number" value="0" /></div>
@@ -433,6 +433,12 @@
 
     <section id="t-shop" class="hide">
       <div class="card">
+        <h2>🏆 Tanga ro'yxati — kim qancha tanga yig'gan <span class="small" id="coinCount"></span></h2>
+        <p class="small">Foydalanuvchilarning hozirgi tanga balansi (yig'gani − sarflagani). Ro'yxat foydalanuvchi ilovani ochganda yangilanadi. Ism, @username yoki ID bo'yicha qidiring.</p>
+        <div class="row"><input id="coinQ" placeholder="Qidirish…" style="max-width:260px" /><button class="sec" id="coinCsv">CSV yuklab olish</button><span class="small" id="coinSum"></span></div>
+        <div class="scroll" style="max-height:420px;margin-top:8px"><table><thead><tr><th>#</th><th>Foydalanuvchi</th><th>Tanga</th><th>XP</th><th>Daraja</th><th>Streak</th></tr></thead><tbody id="coinBody"></tbody></table></div>
+      </div>
+      <div class="card">
         <h2>🪙 Tanga sozlamalari</h2>
         <div class="grid">
           <div><label>Do'kon</label><select id="sh_on"><option value="1">Yoqilgan</option><option value="0">O'chirilgan</option></select></div>
@@ -586,7 +592,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderRefs(); loadOrders(); }
+function renderAll() { loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -1058,19 +1064,19 @@ function pkRefresh() {
   try {
     pkWords = parseWords($('pk_text').value);
     const bad = pkWords.filter(w => !w.en || !w.uz).length;
-    $('pk_info').textContent = pkWords.length ? `${pkWords.length} ta so'z` + (bad ? ` · ${bad} tasida inglizcha yoki o'zbekcha yo'q (o'tkazib yuboriladi)` : '') : '';
+    $('pk_info').textContent = pkWords.length ? `${pkWords.length} ta so'z` + ($('pk_kind').value === 'topic' && pkWords.length !== 20 ? ` · diqqat: maxsus mavzu uchun 20 ta so'z tavsiya etiladi` : '') + (bad ? ` · ${bad} tasida inglizcha yoki o'zbekcha yo'q (o'tkazib yuboriladi)` : '') : '';
     $('pk_prev').innerHTML = pkWords.slice(0, 200).map((w, i) => `<tr><td>${i+1}</td><td>${esc(w.en)}</td><td>${esc(w.uz)}</td><td class="small">${esc([w.pos, w.ex].filter(Boolean).join(' · ')).slice(0, 90)}</td></tr>`).join('');
   } catch (e) { pkWords = []; $('pk_info').textContent = e.message; $('pk_prev').innerHTML = ''; }
 }
 $('pk_text').oninput = pkRefresh;
 $('pk_file').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('pk_text').value = await f.text(); pkRefresh(); e.target.value = ''; };
-function pkKindUi() { const d = $('pk_kind').value === 'daily'; $('pk_dateBox').classList.toggle('hide', !d); $('pk_modeBox').classList.toggle('hide', !d); }
+function pkKindUi() { const k = $('pk_kind').value; $('pk_dateBox').classList.toggle('hide', k === 'open'); $('pk_modeBox').classList.toggle('hide', k !== 'daily'); if (k === 'topic') $('pk_title').placeholder = 'Masalan: Home and Furniture'; else $('pk_title').placeholder = "Masalan: Sayohat so'zlari"; }
 $('pk_kind').onchange = pkKindUi;
 function pkReset() { pkEditId = null; $('pkEdTitle').textContent = "Yangi to'plam"; ['pk_title','pk_desc','pk_text'].forEach(i => $(i).value = ''); $('pk_date').value = todayStr(); $('pk_kind').value = 'daily'; $('pk_mode').value = 'replace'; $('pk_order').value = 0; $('pk_pub').checked = true; pkKindUi(); pkRefresh(); }
 $('pkNew').onclick = pkReset;
 function renderPacks() {
   $('pkCount').textContent = `(${packs.length})`;
-  $('pkBody').innerHTML = packs.map(p => `<tr><td><b>${esc(p.title)}</b><br><span class="small">${esc(p.desc||'')}</span></td><td>${p.kind === 'daily' ? '📅 ' + esc(p.date) + (p.mode === 'extra' ? ' (ustiga)' : ' (o\'rniga)') : '📚 Doim ochiq'}</td><td>${p.count}</td><td><span class="tag ${p.published ? 'h' : ''}">${p.published ? "e'lon qilingan" : 'yashirin'}</span></td><td><div class="acts"><button class="sec" data-pa="edit" data-id="${esc(p.id)}">Tahrirlash</button><button class="sec" data-pa="pub" data-id="${esc(p.id)}">${p.published ? 'Yashirish' : "E'lon qilish"}</button><button class="bad" data-pa="del" data-id="${esc(p.id)}">O'chirish</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="small">Hali to\'plam yo\'q</td></tr>';
+  $('pkBody').innerHTML = packs.map(p => `<tr><td><b>${esc(p.title)}</b><br><span class="small">${esc(p.desc||'')}</span></td><td>${p.kind === 'topic' ? '⭐ Maxsus mavzu · ' + esc(p.date) : p.kind === 'daily' ? '📅 ' + esc(p.date) + (p.mode === 'extra' ? ' (ustiga)' : ' (o\'rniga)') : '📚 Doim ochiq'}</td><td>${p.count}</td><td><span class="tag ${p.published ? 'h' : ''}">${p.published ? "e'lon qilingan" : 'yashirin'}</span></td><td><div class="acts"><button class="sec" data-pa="edit" data-id="${esc(p.id)}">Tahrirlash</button><button class="sec" data-pa="pub" data-id="${esc(p.id)}">${p.published ? 'Yashirish' : "E'lon qilish"}</button><button class="bad" data-pa="del" data-id="${esc(p.id)}">O'chirish</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="small">Hali to\'plam yo\'q</td></tr>';
   $('pkBody').querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
     const id = b.dataset.id, p = packs.find(x => x.id === id), a = b.dataset.pa;
     if (a === 'pub') { await api('setPackPublished', { id, published: !p.published }); flash('Bajarildi ✅'); await load(); }
@@ -1087,7 +1093,7 @@ function renderPacks() {
 $('pkSave').onclick = guard(async () => {
   pkRefresh();
   const title = $('pk_title').value.trim(); if (!title) return flash("To'plam nomini kiriting", false);
-  const kind = $('pk_kind').value; if (kind === 'daily' && !$('pk_date').value) return flash('Sanani tanlang', false);
+  const kind = $('pk_kind').value; if (kind !== 'open' && !$('pk_date').value) return flash('Sanani tanlang', false);
   if (!pkWords.length && !pkEditId) return flash("So'zlar ro'yxatini kiriting", false);
   const r = await api('savePack', { id: pkEditId, title, desc: $('pk_desc').value, kind, date: $('pk_date').value, mode: $('pk_mode').value, order: +$('pk_order').value || 0, published: $('pk_pub').checked, words: pkWords });
   flash(`Saqlandi ✅ ${r.saved} ta so'z` + (r.errors && r.errors.length ? ` (${r.errors.length} ta qator o'tkazib yuborildi)` : ''));
@@ -1280,13 +1286,28 @@ $('gSend').onclick = guard(async () => { await api('grant', { userId: $('gUser')
 
 /* ---------- 🛒 Do'kon ---------- */
 const SHOP_DEF = [
-  ['boost_1h','2x XP (1 soat)',40],['boost_24h','2x XP (24 soat)',150],['streak_saver','Streak himoyasi',80],['spin_1','Baraban aylantirish',60],['mystery','Sirli quti',120],
+  ['boost_1h','2x XP (1 soat)',40],['boost_24h','2x XP (24 soat)',150],['boost_72h','2x XP (3 kun)',380],['streak_saver','Streak himoyasi',80],['streak_saver3','Streak himoyasi ×3',200],['spin_1','Baraban aylantirish',60],['spin_5','Baraban ×5',250],['frame_emerald','Zumrad ramka',400],['skin_sunset','Quyosh botishi mavzusi',320],['mystery','Sirli quti',120],
   ['frame_gold','Oltin ramka',250],['frame_fire','Olov ramka',350],['frame_crystal','Kristall ramka',450],['avatars',"Noyob avatarlar to'plami",400],['nickcolor','Nik rangi va belgi',200],
   ['glow','Yaltiroq ism',500],['skin_neon','Neon mavzusi',300],['skin_nature','Tabiat mavzusi',300],['skin_royal','Qirollik mavzusi',350],['titles','Maxsus unvon',250],
   ['rankbadge','Reytingda maxsus belgi',350],['verified','VIP maqomi (galochka)',1500],['premium_words',"Premium so'zlar to'plami",600],['top_books','Inglizcha TOP kitoblar',700],['lofi','Lo-Fi musiqa',300],['tg_stars','Telegram Premium / Stars',5000],
 ];
 let shItems = {}; // id -> {title,price,discount,active,img,dayLimit,desc?,custom?,icon?}
 const toLines = a => arr(a).map(x => x.title + ' | ' + x.url).join('\n');
+function renderCoins() {
+  const q = ($('coinQ').value || '').trim().toLowerCase();
+  const all = userRows().map(u => { const lb = (data.leaderboard || {})[u.id] || {}; return { ...u, co: Math.max(0, Math.round(+lb.co || 0)), streak: +lb.streak || 0 }; }).sort((a, b) => b.co - a.co || b.xp - a.xp);
+  const sum = all.reduce((t, u) => t + u.co, 0);
+  const list = all.filter(u => !q || (u.name + ' ' + u.un + ' ' + u.id).toLowerCase().includes(q));
+  $('coinCount').textContent = `(${all.length})`;
+  $('coinSum').textContent = `Jami tanga: ${sum.toLocaleString()} · tanga yig'gan: ${all.filter(u => u.co > 0).length} ta foydalanuvchi`;
+  $('coinBody').innerHTML = list.slice(0, 500).map((u, i) => `<tr><td>${i + 1}</td><td><b>${esc(u.name)}</b>${u.un ? ' <span class="small">@' + esc(u.un) + '</span>' : ''}<br><span class="small">${esc(u.id)}</span></td><td><b>🪙 ${u.co.toLocaleString()}</b></td><td>${u.xp.toLocaleString()}</td><td>${esc(u.level || '—')}</td><td>${u.streak}</td></tr>`).join('') || '<tr><td colspan="6" class="small">Ma\'lumot yo\'q</td></tr>';
+}
+$('coinQ').oninput = renderCoins;
+$('coinCsv').onclick = () => {
+  const rows = userRows().map(u => { const lb = (data.leaderboard || {})[u.id] || {}; return [u.id, u.name, u.un, Math.max(0, Math.round(+lb.co || 0)), u.xp, u.level]; }).sort((a, b) => b[3] - a[3]);
+  const csv = ['id,ism,username,tanga,xp,daraja'].concat(rows.map(r => r.map(x => '"' + String(x ?? '').replace(/"/g, '""') + '"').join(','))).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'tanga-royxati.csv'; a.click();
+};
 function renderShop() {
   const c = data.config.shop || {};
   const ae = document.activeElement && document.activeElement.id;

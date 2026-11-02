@@ -43,17 +43,22 @@ const I = (id: string, title: string, desc: string, cat: ShopCat, icon: string, 
 export const DEFAULT_ITEMS: ShopItem[] = [
   I('boost_1h', '2x XP (1 soat)', "Bir soat davomida olingan XP ikki baravar.", 'boosters', '⚡', '#F59E0B', '#EA580C', 40, 'boost', '1', true),
   I('boost_24h', '2x XP (24 soat)', "Bir kunlik kuchaytirgich: butun kun XP ikki baravar.", 'boosters', '🚀', '#F97316', '#DC2626', 150, 'boost', '24', true),
+  I('boost_72h', '2x XP (3 kun)', "Uch kun davomida olingan XP ikki baravar — haftalik reytingda oldinga chiqish uchun.", 'boosters', '🔥', '#FB923C', '#B91C1C', 380, 'boost', '72', true),
   I('streak_saver', 'Streak himoyasi', "Bir kun mashq qilmasangiz ham streak saqlanadi.", 'boosters', '🛡️', '#38BDF8', '#2563EB', 80, 'saver', '1', true),
+  I('streak_saver3', 'Streak himoyasi ×3', "Uch marta himoya: dam olish yoki kasallik kunlarida ham streak yonib turadi. Alohida olgandan arzonroq.", 'boosters', '🧊', '#67E8F9', '#1D4ED8', 200, 'saver', '3', true),
+  I('spin_5', 'Baraban ×5', "Omadli barabanda 5 ta qo'shimcha aylantirish — katta yutuqqa ko'proq imkoniyat.", 'rewards', '🎰', '#C084FC', '#6D28D9', 250, 'spin', '5', true),
   I('spin_1', 'Baraban aylantirish', "Omadli barabanda qo'shimcha 1 ta aylantirish.", 'rewards', '🎡', '#A78BFA', '#7C3AED', 60, 'spin', '1', true),
   I('mystery', 'Sirli quti', "Tasodifiy sovrin: XP, kuchaytirgich yoki noyob avatar.", 'rewards', '🎁', '#F472B6', '#9333EA', 120, 'mystery', '', true),
   I('frame_gold', 'Oltin ramka', "Avatar atrofida yaltiroq oltin ramka.", 'cosmetics', '🥇', '#FDE047', '#CA8A04', 250, 'frame', 'gold'),
   I('frame_fire', 'Olov ramka', "Avatar atrofida lovullab turgan olov.", 'cosmetics', '🔥', '#FB923C', '#B91C1C', 350, 'frame', 'fire'),
   I('frame_crystal', 'Kristall ramka', "Avatar atrofida nur sochuvchi kristall.", 'cosmetics', '💎', '#67E8F9', '#6366F1', 450, 'frame', 'crystal'),
+  I('frame_emerald', 'Zumrad ramka', "Avatar atrofida yashil-zumrad nur sochuvchi ramka.", 'cosmetics', '💚', '#6EE7B7', '#047857', 400, 'frame', 'emerald'),
   I('avatars', "Noyob avatarlar to'plami", "Faqat do'kon orqali olinadigan 6 ta maxsus avatar.", 'cosmetics', '🐉', '#34D399', '#047857', 400, 'avatars'),
   I('nickcolor', 'Nik rangi va belgi', "Reytingda ismingiz o'zingiz tanlagan rangda va belgi bilan ko'rinadi.", 'cosmetics', '🎨', '#FB7185', '#E11D48', 200, 'nickcolor'),
   I('glow', 'Yaltiroq ism', "Reytingda ismingiz oltin yoki kamalak rangda yaltirab turadi.", 'cosmetics', '✨', '#FACC15', '#EC4899', 500, 'glow'),
   I('skin_neon', 'Neon mavzusi', "Ilovaning neon rang sxemasi.", 'cosmetics', '🌃', '#22D3EE', '#D946EF', 300, 'skin', 'neon'),
   I('skin_nature', 'Tabiat mavzusi', "Ko'zni charchatmaydigan yashil rang sxemasi.", 'cosmetics', '🌿', '#4ADE80', '#15803D', 300, 'skin', 'nature'),
+  I('skin_sunset', 'Quyosh botishi mavzusi', "Iliq to'q-qizil va mis ranglar — kechki o'qish uchun qulay.", 'cosmetics', '🌇', '#FB923C', '#BE185D', 320, 'skin', 'sunset'),
   I('skin_royal', 'Qirollik mavzusi', "Chuqur indigo va oltin ranglar.", 'cosmetics', '👑', '#6366F1', '#CA8A04', 350, 'skin', 'royal'),
   I('titles', 'Maxsus unvon', "Profilda ismingiz ostida unvon: «So'z ustasi», «Kitobxon» va boshqalar.", 'social', '🏷️', '#FBBF24', '#B45309', 250, 'titles'),
   I('rankbadge', 'Reytingda maxsus belgi', "Haftalik jadvalda ismingizga yulduzcha, avatar ustiga toj.", 'social', '👑', '#FDE047', '#F59E0B', 350, 'rankbadge'),
@@ -68,12 +73,13 @@ export const DEFAULT_ITEMS: ShopItem[] = [
 export const FRAMES: Record<string, { label: string; ring: string; glow: string }> = {
   gold: { label: 'Oltin', ring: 'conic-gradient(#FDE047,#F59E0B,#FFF7C2,#F59E0B,#FDE047)', glow: 'rgba(250,204,21,.55)' },
   fire: { label: 'Olov', ring: 'conic-gradient(#FEF08A,#F97316,#DC2626,#F97316,#FEF08A)', glow: 'rgba(249,115,22,.6)' },
+  emerald: { label: 'Zumrad', ring: 'conic-gradient(#A7F3D0,#10B981,#ECFDF5,#059669,#A7F3D0)', glow: 'rgba(16,185,129,.55)' },
   crystal: { label: 'Kristall', ring: 'conic-gradient(#CFFAFE,#67E8F9,#A5B4FC,#E0E7FF,#CFFAFE)', glow: 'rgba(103,232,249,.55)' },
 };
 export const NICK_COLORS = ['#FBBF24', '#F87171', '#34D399', '#38BDF8', '#C084FC', '#F472B6', '#FB923C', '#A3E635'];
 export const NAME_SYMS = ['', '⭐', '🔥', '💎', '⚡', '🌙', '🚀', '🦋'];
 export const TITLES = ["So'z ustasi", 'Kitobxon', 'Vocab Legend', 'Word Hunter', 'IELTS Master', 'Lingvist'];
-export const SKINS: Record<string, string> = { neon: 'Neon', nature: 'Tabiat', royal: 'Qirollik' };
+export const SKINS: Record<string, string> = { neon: 'Neon', nature: 'Tabiat', royal: 'Qirollik', sunset: 'Quyosh botishi' };
 
 export const LTD_AVATARS = [
   { id: 'ltd_dragon', emoji: '🐉', from: '#FDE047', to: '#B91C1C' },

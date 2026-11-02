@@ -10,7 +10,7 @@ import { SurvivalRun } from './components/SurvivalRun';
 import { LearnSession } from './components/Learn';
 import { LeaderboardTab } from './components/LeaderboardTab';
 import { ShopTab } from './components/ShopTab';
-import { lofi } from './services/shop';
+import { LofiMini } from './components/LofiPlayer';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
 import { LuckyWheel } from './components/LuckyWheel';
@@ -54,20 +54,6 @@ const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
         {renderFormatted(text)}
       </div>
     </div>
-  );
-};
-
-/** Lo-Fi musiqa yoqilganda pastda kichik boshqaruv tugmasi */
-const LofiFloat: React.FC = () => {
-  const [on, setOn] = useState(lofi.on);
-  useEffect(() => {
-    const f = () => setOn(lofi.on);
-    lofi.listeners.add(f);
-    return () => { lofi.listeners.delete(f); };
-  }, []);
-  if (!on) return null;
-  return (
-    <button type="button" data-nosfx onClick={() => lofi.stop()} className="fixed right-3 bottom-20 z-50 px-3 py-2 rounded-full bg-sky-500/90 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 active:scale-95">🎧 Lo-Fi <span className="opacity-80">· o'chirish</span></button>
   );
 };
 
@@ -121,7 +107,7 @@ const MainScreen: React.FC = () => {
         {activeTab === 'shop' && <ShopTab />}
       </div>
       <BottomNav />
-      <LofiFloat />
+      {activeTab !== 'home' && <LofiMini />}
       {certificate}
       {toast}
       {/* Tepa paneldagi sovg'acha bosilganda baraban ochiladi */}

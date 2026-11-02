@@ -4,7 +4,7 @@ import {
   Certificate, LeaderboardUser, BankWord, SrsEntry, WordPack, CustomWordPack, Duel, DuelMetric, DuelPlayer, Challenge,
 } from '../types';
 import { getTelegramUserData, getTelegramUserId, getStartParam, initTelegramApp, triggerHaptic, askBotWriteAccess, configureBackButton, getTelegramWebApp } from '../services/telegram';
-import { DEFAULT_AVATAR, telegramPhotoProxy } from '../services/avatar';
+import { DEFAULT_AVATAR, telegramPhotoProxy, shrinkDataUrl } from '../services/avatar';
 import { sfx } from '../services/sound';
 import { botRegister, botSendCertificate, canUseBot } from '../services/bot';
 import { certificateBase64 } from '../services/certificate';
@@ -462,7 +462,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           words.sort((a, b) => a.order - b.order);
           if (!words.length) return;
           list.push({
-            id, title: String(p.title || 'Lug\'at'), desc: String(p.desc || ''), kind: p.kind === 'daily' ? 'daily' : 'open',
+            id, title: String(p.title || 'Lug\'at'), desc: String(p.desc || ''), kind: p.kind === 'daily' ? 'daily' : p.kind === 'topic' ? 'topic' : 'open',
             date: String(p.date || ''), mode: p.mode === 'extra' ? 'extra' : 'replace', order: Number(p.order) || 0, words,
           });
         });
@@ -1274,6 +1274,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const t = setTimeout(() => setLbGate(true), 10000);
     return () => clearTimeout(t);
   }, []);
+  // Reytingdagi profil rasmi: yuklangan rasm ham hamma foydalanuvchiga ko'rinishi uchun kichik nusxasi bazaga yoziladi
+  const [lbAvatar, setLbAvatar] = useState<string>(() => (profile.avatar.startsWith('data:') && profile.avatar.length > 2500 ? '' : profile.avatar));
+  useEffect(() => {
+    const a = profile.avatar || '';
+    if (!a.startsWith('data:') || a.length <= 2500) { setLbAvatar(a); return; }
+    let dead = false;
+    shrinkDataUrl(a).then(x => { if (!dead) setLbAvatar(x); }).catch(() => { if (!dead) setLbAvatar(''); });
+    return () => { dead = true; };
+  }, [profile.avatar]);
   useEffect(() => {
     if (!realtimeEnabled || !profile.hasCompletedOnboarding || !syncReady || !grantsReady || !lbGate) return;
     // Admin XP tuzatishi hali qo'llanmagan bo'lsa, eski XP ni yubormaymiz (yuqoridagi effekt avval qo'llaydi)
@@ -1281,7 +1290,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (selfLb && (Number(selfLb.adjV) || 0) > (profile.adjV || 0)) return;
     lbPayload.current = {
       name: profile.name,
-      avatar: profile.avatar.startsWith('data:') && profile.avatar.length > 1500 ? '' : profile.avatar,
+      avatar: lbAvatar,
       xp: profile.xp,
       xpOffset: 0,
       streak: profile.streak,
@@ -1299,7 +1308,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ts: 0,
     };
     if (!lbTimer.current) lbTimer.current = setTimeout(() => flushLb(), lbLastSig.current ? LB_THROTTLE_MS : 2000);
-  }, [profile.xp, profile.name, profile.avatar, profile.streak, profile.level, profile.wordsPerDay, profile.username, profile.joinedAt, profile.lastReadDate, wheel.streakSavers, profile.hasCompletedOnboarding, savedWords.length, masteredCount, syncReady, grantsReady, lbGate, leagueRaw, profile.adjV, coins, profile.frame, profile.nameFx, profile.nameColor, profile.nameSym, profile.title, profile.own, profile.rankBadge]);
+  }, [profile.xp, profile.name, profile.avatar, profile.streak, profile.level, profile.wordsPerDay, profile.username, profile.joinedAt, profile.lastReadDate, wheel.streakSavers, profile.hasCompletedOnboarding, savedWords.length, masteredCount, syncReady, grantsReady, lbGate, leagueRaw, profile.adjV, coins, lbAvatar, profile.frame, profile.nameFx, profile.nameColor, profile.nameSym, profile.title, profile.own, profile.rankBadge]);
   useEffect(() => {
     const onHide = () => document.visibilityState === 'hidden' && flushLb(true);
     const onPageHide = () => flushLb(true);
@@ -1464,7 +1473,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Ilovaga kirgandan 3 daqiqa o'tgach har bir foydalanuvchiga bir martalik «Minnatdorchilik» sertifikati beriladi.
   // Sarlavha va izoh serverda qat'iy; faqat ism va QR kod (sertifikat raqami) har safar boshqacha. Server bitta foydalanuvchiga faqat bitta beradi.
-  const mountedAt = useRef(Date.now());
+  // Birinchi kirish vaqti qurilmada saqlanadi: ilova yopilib qayta ochilsa ham 3 daqiqa «birinchi kirish»dan hisoblanadi
+  const mountedAt = useRef((() => {
+    const saved = Number(lsGet('lx_first_open_v1'));
+    if (saved > 0) return saved;
+    const now = Date.now();
+    lsSet('lx_first_open_v1', String(now));
+    return now;
+  })());
   useEffect(() => {
     if (!syncReady || !profile.hasCompletedOnboarding || !realtimeEnabled) return;
     if (lsGet('lx_welcome_cert_v1')) return;

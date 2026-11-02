@@ -251,23 +251,12 @@ export const LeaderboardTab: React.FC = () => {
           )}
           {leagueMode === 'xp' && (<>
           {/* Top 3 Podium Box */}
-          <div className="p-4 rounded-3xl bg-gradient-to-br from-[#151C28] via-[#1B2433] to-[#121822] border border-slate-800 shadow-xl">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-semibold mb-3">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-200 font-semibold text-[11px] shadow-sm">
-                <Users className="w-3.5 h-3.5 text-amber-400" />
-                <span>{leagueWeek ? `${leagueWeek.week}-hafta · ` : ''}{leaderboardList.length > 0 ? `${leaderboardList.length.toLocaleString()} ta o'quvchi` : 'O\'quvchilar...'}</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  {realtimeOn && leagueLive && <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />}
-                  <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${realtimeOn && leagueLive ? 'bg-emerald-400' : realtimeOn ? 'bg-amber-400 animate-pulse' : 'bg-slate-500'}`} />
-                </span>
-                {!realtimeOn ? 'Oflayn rejim' : leagueLive ? 'Jonli reyting' : 'Reyting yuklanmoqda…'}
-              </span>
-            </div>
-
-            <Podium users={leaderboardList.slice(0, 3).map(u => ({ id: u.id, name: u.name, avatar: u.avatar, xp: u.xp, cos: u.cos }))} badges={champs} />
-          </div>
+          <Podium
+            users={leaderboardList.slice(0, 3).map(u => ({ id: u.id, name: u.name, avatar: u.avatar, xp: u.xp, cos: u.cos }))}
+            badges={champs}
+            chip={<><Users className="w-3.5 h-3.5" /><span>{leagueWeek ? `${leagueWeek.week}-hafta · ` : ''}{leaderboardList.length > 0 ? `${leaderboardList.length.toLocaleString()} ta o'quvchi` : "O'quvchilar..."}</span></>}
+            live={{ text: !realtimeOn ? 'Oflayn rejim' : leagueLive ? 'Jonli reyting' : 'Reyting yuklanmoqda…', state: !realtimeOn ? 'off' : leagueLive ? 'live' : 'loading' }}
+          />
 
           {/* Raqobat: kimgacha necha XP qolgan + Tarix zali */}
           {rivalLine && (

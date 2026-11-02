@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked } from 'lucide-react';
+import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked, Target, ChevronRight, Star } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { CosAvatar } from './Cosmetics';
+import { LofiPlayer } from './LofiPlayer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { LuckyWheel } from './LuckyWheel';
@@ -44,6 +46,12 @@ export const HomeTab: React.FC = () => {
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
+  // Maxsus mavzular: har kuni bitta mavzu bo'yicha TOP 20 lug'at (admin yuklaydi). Kelajak sanalilar ko'rinmaydi.
+  const todayK = todayKey();
+  const topics = packs.filter(p => p.kind === 'topic' && p.date && p.date <= todayK).sort((a, b) => b.date.localeCompare(a.date));
+  const topicToday = topics.find(p => p.date === todayK);
+  const topicPast = topics.filter(p => p !== topicToday).slice(0, 6);
+  const openEquip = () => { triggerHaptic('selection'); try { sessionStorage.setItem('vb_open_equip', '1'); } catch { /* ignore */ } setActiveTab('shop'); };
   const activeDuels = duels.filter(d => d.endsAt > nowMs()).length;
   const [showWheel, setShowWheel] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -76,11 +84,30 @@ export const HomeTab: React.FC = () => {
         </div>
       </header>
 
+      {/* Jihozlarim: bir bosishda ramka, mavzu, unvon va boshqa bezaklar */}
+      <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl p-3 flex items-center gap-3 bg-gradient-to-r from-violet-500/15 via-fuchsia-500/10 to-amber-500/15 border border-violet-400/40 active:scale-[0.98] transition-all">
+        <CosAvatar src={profile.avatar} name={profile.name} size={40} cos={{ fr: profile.frame, rb: profile.rankBadge }} />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-extrabold text-white flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-amber-400" /> Jihozlarim</div>
+          <div className="text-[11px] text-slate-400 truncate">Ramka, ilova mavzusi, unvon va nik rangi{(profile.own || []).length ? ` · ${(profile.own || []).filter(x => !x.startsWith('av:')).length} ta mahsulot` : ''}</div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-violet-400 shrink-0" />
+      </button>
+
       {/* Bugungi mashq */}
       <section className="rounded-3xl bg-gradient-to-br from-[#1B2433] to-[#121822] border border-slate-800 p-5 space-y-4 shadow-xl shadow-black/20">
-        <div className="text-center">
-          <h2 className="text-2xl font-extrabold tracking-tight text-amber-400">Bugungi mashq</h2>
-          <div className="text-xs text-slate-400 mt-1">Bugun o&apos;rganildi: <b className="text-slate-200">{introducedToday}</b></div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="keep-dark w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 flex items-center justify-center shadow-md shadow-amber-500/30 shrink-0"><Target className="w-5 h-5" /></span>
+            <div className="min-w-0">
+              <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-amber-400">Kunlik reja · {profile.level}</div>
+              <h2 className="text-lg font-extrabold leading-tight text-white">Bugungi mashq</h2>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-xl font-black text-white tabular-nums leading-none">{introducedToday}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">bugun o&apos;rganildi</div>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-[#0E1524] border border-slate-800 p-3">
@@ -107,6 +134,58 @@ export const HomeTab: React.FC = () => {
           </div>
         )}
         {allDone && <p className="text-[11px] text-slate-400 text-center">Ajoyib! O&apos;yinlar bo&apos;limida so&apos;zlarni mustahkamlang yoki ertaga qayting.</p>}
+      </section>
+
+      <LofiPlayer />
+
+      {/* Maxsus mavzular: kunlik TOP 20 lug'at */}
+      <section className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Maxsus mavzular</h3>
+          <span className="text-[11px] text-slate-400">Har kuni yangi mavzu</span>
+        </div>
+        {topicToday ? (() => {
+          const pr = packProgress(topicToday);
+          const done = pr.learned >= pr.total;
+          return (
+            <div className="keep-dark relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-[#0F766E] via-[#0E7490] to-[#4338CA] border border-cyan-300/30 shadow-xl shadow-cyan-950/30">
+              <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10 blur-xl" />
+              <div className="relative">
+                <span className="inline-block text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full bg-amber-300 text-slate-950">Bugungi mavzu · TOP {topicToday.words.length}</span>
+                <h4 className="mt-2 text-xl font-extrabold text-white leading-tight">{topicToday.title}</h4>
+                {topicToday.desc && <p className="text-xs text-cyan-50/85 mt-1">{topicToday.desc}</p>}
+                <div className="mt-3 h-2 rounded-full bg-black/25 overflow-hidden"><div className="h-full bg-amber-300" style={{ width: `${Math.round((pr.learned / Math.max(1, pr.total)) * 100)}%` }} /></div>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-cyan-50/90">{pr.learned} / {pr.total} so&apos;z o&apos;rganildi</span>
+                  <button type="button" onClick={() => { triggerHaptic('medium'); openLearn(topicToday.id); }} className="px-4 py-2 rounded-xl bg-amber-300 hover:bg-amber-200 text-slate-950 text-xs font-extrabold active:scale-95 transition-all flex items-center gap-1.5">
+                    <Play className="w-3.5 h-3.5 fill-slate-950" /> {done ? 'Takrorlash' : pr.learned > 0 ? 'Davom etish' : "O'rganish"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })() : (
+          <div className="rounded-2xl bg-[#151C28] border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">Bugungi maxsus mavzu tez orada e&apos;lon qilinadi ✨</div>
+        )}
+        {topicPast.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Oldingi mavzular</div>
+            {topicPast.map(p => {
+              const pr = packProgress(p);
+              return (
+                <button key={p.id} type="button" onClick={() => { triggerHaptic('selection'); openLearn(p.id); }} className="w-full text-left flex items-center gap-3 p-3 rounded-2xl bg-[#151C28] border border-slate-800 active:scale-[0.98] transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0"><BookMarked className="w-5 h-5" /></div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-white truncate">{p.title}</div>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-800 overflow-hidden"><div className="h-full bg-cyan-400" style={{ width: `${Math.round((pr.learned / Math.max(1, pr.total)) * 100)}%` }} /></div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{p.date.split('-').reverse().join('.')} · {pr.learned} / {pr.total} so&apos;z</div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Qo'shimcha lug'at to'plamlari (admin yuklagan) */}

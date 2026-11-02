@@ -346,46 +346,65 @@ function statPills(ctx: CanvasRenderingContext2D, t: Tpl, cx: number, y: number,
 
 
 // =====================================================================================================
-// YANGI DIZAYNLAR (v5): tayyor badiiy fon rasmlari (/certs/bg_*.jpg) ustiga faqat o'zgaruvchan matnlar chiziladi.
-// 8 ta dizayn: bronze, silver, gold, marathon, thanks, growth (Yuksalish), wisdom (Bilim donosi), consistent (Barqaror)
-// + weekly (Hafta chempioni — oltin dizayn, lentada «N-HAFTA CHEMPIONI»). Boshqa eski nomlar avvalgi usulda chiziladi.
+// YANGI DIZAYNLAR (v6): tayyor badiiy fon rasmlari (/certs/bg_*.jpg) ustiga faqat o'zgaruvchan matnlar chiziladi.
+// Fonlar TOZALANGAN (eski matndan qolgan xira dog'lar va pishiq plitalar olib tashlangan). Matn joylashuvi «o'lchab»
+// bajariladi: sarlavha va izoh mavjud joyga sig'maguncha shrift kichraytiriladi, shuning uchun hech narsa ustma-ust tushmaydi.
+// Barcha eski nomlar (platina, chempion, tezkor...) ham shu chiroyli dizaynlardan birida chiziladi.
+// Chizish aniqligi uchun rasm 2x (3200x1800) hajmda chiziladi. Format qat'iy 16:9.
 // =====================================================================================================
+const IMG_V = '6'; // fon rasmi yangilanganda o'zgartiriladi (brauzer keshini yangilaydi)
 const IMG_BG: Record<string, string> = {
   bronze: 'bg_bronze', silver: 'bg_silver', gold: 'bg_gold', marathon: 'bg_marathon', thanks: 'bg_thanks',
   growth: 'bg_growth', wisdom: 'bg_wisdom', consistent: 'bg_consistent', weekly: 'bg_gold',
+  platinum: 'bg_silver', champion: 'bg_gold', active: 'bg_consistent', trust: 'bg_silver',
+  speed: 'bg_marathon', reviewer: 'bg_gold', expert: 'bg_growth', limitless: 'bg_marathon',
 };
 const IMG_LABEL: Record<string, string> = {
   bronze: 'BRONZA', silver: 'KUMUSH', gold: 'OLTIN', marathon: 'MARAFON', thanks: 'MINNATDORCHILIK',
   growth: 'YUKSALISH', wisdom: 'BILIM DONOSI', consistent: 'BARQAROR', weekly: 'HAFTA CHEMPIONI',
+  platinum: 'PLATINA', champion: 'CHEMPION', active: 'ENG FAOL', trust: 'ISHONCH', speed: 'TEZKOR',
+  reviewer: 'TOP REVIEWER', expert: 'MUTAXASSIS', limitless: 'CHEKSIZ',
 };
 const IMG_INK: Record<string, string> = {
   bronze: '#FFD3A8', silver: '#EEF5FC', gold: '#FFE48A', marathon: '#D6FFDC', thanks: '#FFE9A8',
   growth: '#FFE48A', wisdom: '#2B1608', consistent: '#C9FFE8', weekly: '#FFE48A',
+  platinum: '#EAF7FF', champion: '#FFE48A', active: '#C9FFE8', trust: '#EAF7FF', speed: '#D6FFDC',
+  reviewer: '#FFE48A', expert: '#FFE48A', limitless: '#D6FFDC',
+};
+/** Plitalar (daraja / so'zlar / streak) hoshiyasi rangi — fon rangiga mos */
+const IMG_EDGE: Record<string, string> = {
+  bg_bronze: '#F2A767', bg_silver: '#CFE3F5', bg_gold: '#F5C95A', bg_marathon: '#86F0A4', bg_thanks: '#F5C95A',
+  bg_growth: '#F5C95A', bg_wisdom: '#E9B24A', bg_consistent: '#5EEAD4',
 };
 export const hasImageTemplate = (tpl: string): boolean => !!IMG_BG[tpl];
 
+/** Rasm shablon koordinatalari: 1600x900 (16:9) ichida */
 interface Lay {
-  ribbon: [number, number, number]; // markaz x, y, eng katta kenglik
-  name: [number, number, number]; // markaz x, y, shrift
-  line: number; // chiziq y (0 — chizilmaydi)
-  title: number;
-  reason: number;
-  plates: [number, number, number, number]; // 3 ta markaz x + (yo'q) y quyida
-  plateY: number;
+  ribbon: [number, number, number]; // lenta markazi x, y; yozuv uchun eng katta kenglik
+  nameY: number; // ism «baseline»i
+  divY: number; // ism ostidagi chiziq
+  zTop: number; // sarlavha+izoh joyining tepasi
+  frames: boolean; // fonda tayyor plita ramkalari bor (faqat «Bilim donosi»)
+  plateTop: number;
+  plateH: number;
   plateW: number;
-  inline: boolean; // "DARAJA / B1" bir qatorda
-  date: [number, number, number, number]; // x, sana y, raqam y (0 — sana yonida bir qatorda), shrift
-  qr: [number, number, number]; // markaz x, y, o'lcham
-  plateInk: string;
+  plateGap: number;
+  plateCx?: [number, number, number]; // tayyor ramkalar markazlari
+  qr: [number, number, number]; // markaz x, y, QR o'lchami
+  date: [number, number, number, number]; // x, 1-qator y, 2-qator y (0 — bir qatorda), shrift
 }
-const LAY_A: Lay = {
-  ribbon: [800, 394, 340], name: [800, 530, 74], line: 577, title: 604, reason: 634,
-  plates: [534, 801, 1069, 0], plateY: 689, plateW: 220, inline: false, date: [96, 806, 0, 28], qr: [1444, 760, 104], plateInk: '#FFFFFF',
+const LAY_STAR: Lay = {
+  ribbon: [800, 394, 330], nameY: 542, divY: 560, zTop: 574, frames: false,
+  plateTop: 692, plateH: 56, plateW: 268, plateGap: 18, qr: [1444, 757, 118], date: [96, 806, 0, 28],
 };
 const LAY: Record<string, Lay> = {
-  bronze: { ...LAY_A, ribbon: [802, 389, 330], name: [802, 531, 72], line: 0, title: 596, reason: 628, plates: [531, 802, 1070, 0], date: [97, 806, 0, 27], qr: [1450, 758, 100] },
-  wisdom: { ...LAY_A, ribbon: [800, 391, 330], name: [790, 529, 72], line: 0, title: 596, reason: 636, plates: [465, 792, 1126, 0], plateY: 714, plateW: 300, inline: true, date: [104, 802, 830, 27], qr: [1435, 781, 112], plateInk: '#F5D58A' },
+  bg_bronze: { ...LAY_STAR, ribbon: [802, 389, 330], qr: [1445, 757, 118] },
+  bg_wisdom: {
+    ...LAY_STAR, ribbon: [800, 391, 330], nameY: 540, divY: 556, zTop: 570, frames: true,
+    plateTop: 668, plateH: 92, plateW: 296, plateGap: 0, plateCx: [468, 792, 1126], qr: [1435, 777, 116], date: [104, 802, 830, 27],
+  },
 };
+
 const loadImg = (src: string): Promise<HTMLImageElement | null> =>
   new Promise(res => {
     const im = new Image();
@@ -404,115 +423,249 @@ function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.closePath();
 }
 
+function spacedWidth(ctx: CanvasRenderingContext2D, text: string, gap: number): number {
+  const chars = Array.from(text);
+  return chars.reduce((a, ch) => a + ctx.measureText(ch).width, 0) + gap * Math.max(0, chars.length - 1);
+}
+
+/** Harflar orasi ochiq matn, chapdan boshlab */
+function spacedLeft(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, gap: number) {
+  const prev = ctx.textAlign;
+  ctx.textAlign = 'left';
+  let cx = x;
+  Array.from(text).forEach(ch => {
+    ctx.fillText(ch, cx, y);
+    cx += ctx.measureText(ch).width + gap;
+  });
+  ctx.textAlign = prev;
+}
+
+/** Matnni maxW ga sig'adigan qatorlarga bo'ladi; juda uzun bitta so'z ham qirqiladi */
+function wrapFit(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const out: string[] = [];
+  wrap(ctx, text, maxW).forEach(l => {
+    let s = l;
+    while (ctx.measureText(s).width > maxW && s.length > 1) s = s.slice(0, -1);
+    out.push(s === l ? l : s.replace(/\s+$/, '') + '…');
+  });
+  return out;
+}
+
+/** Oxirgi qatorga «…» qo'shib, qatorlar sonini n ga tushiradi */
+function clampLines(ctx: CanvasRenderingContext2D, lines: string[], n: number, maxW: number): string[] {
+  if (lines.length <= n) return lines;
+  const keep = lines.slice(0, n);
+  let last = keep[n - 1];
+  while (ctx.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1);
+  keep[n - 1] = last.replace(/[\s,.;:!-]+$/, '') + '…';
+  return keep;
+}
+
+interface Block { ts: number; rs: number; tl: string[]; rl: string[]; h: number }
+/** Sarlavha va izohni berilgan balandlikka SIG'DIRADI: avval shrift kattaligini kamaytiradi, oxirgi chora — qirqadi */
+function fitBlock(ctx: CanvasRenderingContext2D, title: string, reason: string, zoneH: number, maxW: number): Block {
+  const TS = [32, 30, 28, 26, 24, 22];
+  const RS = [23, 22, 21, 20, 19, 18];
+  const measure = (ts: number, rs: number, maxT: number, maxR: number): Block => {
+    ctx.font = `800 ${ts}px ${SANS}`;
+    const tl = clampLines(ctx, wrapFit(ctx, title, maxW), maxT, maxW);
+    ctx.font = `500 ${rs}px ${SANS}`;
+    const rl = reason ? clampLines(ctx, wrapFit(ctx, reason, maxW + 40), maxR, maxW + 40) : [];
+    return { ts, rs, tl, rl, h: tl.length * ts * 1.2 + (rl.length ? 10 + rl.length * rs * 1.32 : 0) };
+  };
+  for (const ts of TS) {
+    for (const rs of RS) {
+      if (rs > ts - 4) continue;
+      ctx.font = `800 ${ts}px ${SANS}`;
+      const tl = wrapFit(ctx, title, maxW);
+      if (tl.length > 2) continue;
+      ctx.font = `500 ${rs}px ${SANS}`;
+      const rl = reason ? wrapFit(ctx, reason, maxW + 40) : [];
+      if (rl.length > 2) continue;
+      const b = measure(ts, rs, 2, 2);
+      if (b.h <= zoneH) return b;
+    }
+  }
+  // eng kichik shriftda ham sig'masa: qatorlar sonini kamaytirib sig'diramiz
+  for (const [mt, mr] of [[2, 1], [1, 1], [1, 0]]) {
+    const b = measure(22, 18, mt, mr);
+    if (b.h <= zoneH || (mt === 1 && mr === 0)) return b;
+  }
+  return measure(22, 18, 1, 0);
+}
+
+/** Statistika plitasi (daraja / so'zlar / streak). frames=true — fonda tayyor ramka bor (faqat ichiga yoziladi) */
+function statPlate(ctx: CanvasRenderingContext2D, cx: number, top: number, w: number, h: number, label: string, value: string, edge: string, frames: boolean) {
+  const x = cx - w / 2;
+  ctx.save();
+  if (!frames) {
+    rrect(ctx, x, top, w, h, 15);
+    const g = ctx.createLinearGradient(0, top, 0, top + h);
+    g.addColorStop(0, 'rgba(14,18,38,0.86)');
+    g.addColorStop(1, 'rgba(4,7,18,0.86)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.shadowColor = edge;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    rrect(ctx, x + 5, top + 5, w - 10, h - 10, 11);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+    ctx.stroke();
+  } else {
+    rrect(ctx, x + 8, top + 8, w - 16, h - 16, 10);
+    ctx.fillStyle = 'rgba(3,6,14,0.72)';
+    ctx.fill();
+  }
+  ctx.textAlign = 'left';
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 5;
+  if (frames) {
+    // ikki qator: tepada yorliq, pastda katta qiymat
+    ctx.font = `800 20px ${SANS}`;
+    ctx.fillStyle = edge;
+    const lw = spacedWidth(ctx, label, 2);
+    spacedLeft(ctx, label, cx - lw / 2, top + h / 2 - 12, 2);
+    let vs = 42;
+    ctx.font = `800 ${vs}px ${SERIF}`;
+    while (ctx.measureText(value).width > w - 56 && vs > 22) { vs -= 2; ctx.font = `800 ${vs}px ${SERIF}`; }
+    ctx.fillStyle = '#FFF4D6';
+    ctx.textAlign = 'center';
+    ctx.fillText(value, cx, top + h / 2 + 26);
+  } else {
+    // bir qatorda: «DARAJA  B1»
+    const lf = 17, gap = 14;
+    ctx.font = `800 ${lf}px ${SANS}`;
+    const lw = spacedWidth(ctx, label, 1.6);
+    let vs = 33;
+    ctx.font = `800 ${vs}px ${SANS}`;
+    while (lw + gap + ctx.measureText(value).width > w - 34 && vs > 18) { vs -= 2; ctx.font = `800 ${vs}px ${SANS}`; }
+    const vw = ctx.measureText(value).width;
+    const x0 = cx - (lw + gap + vw) / 2;
+    const base = top + h / 2 + vs * 0.36;
+    ctx.font = `800 ${lf}px ${SANS}`;
+    ctx.fillStyle = edge;
+    spacedLeft(ctx, label, x0, base, 1.6);
+    ctx.font = `800 ${vs}px ${SANS}`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'left';
+    ctx.fillText(value, x0 + lw + gap, base);
+  }
+  ctx.restore();
+}
+
 /** Yangi dizayn (16:9). Muvaffaqiyatsiz bo'lsa (rasm yuklanmasa) false qaytaradi — eski usul ishlatiladi */
-async function drawImageWide(canvas: HTMLCanvasElement, c: Certificate): Promise<boolean> {
+async function drawImageWide(canvas: HTMLCanvasElement, c: Certificate, scale = 2): Promise<boolean> {
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
-  const bg = await loadImg(`/certs/${IMG_BG[c.tpl]}.jpg`);
+  const bgKey = IMG_BG[c.tpl];
+  const bg = await loadImg(`/certs/${bgKey}.jpg?v=${IMG_V}`);
   if (!bg) return false;
   const k = c.tpl;
-  const L = LAY[k] || LAY_A;
-  canvas.width = 1600;
-  canvas.height = Math.round((1600 * bg.naturalHeight) / bg.naturalWidth);
-  const CW = canvas.width;
-  ctx.drawImage(bg, 0, 0, CW, canvas.height);
+  const L = LAY[bgKey] || LAY_STAR;
+  const S = scale;
+  const CW = 1600, CH = 900; // qat'iy 16:9
+  canvas.width = Math.round(CW * S);
+  canvas.height = Math.round(CH * S);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
+  const cxm = L.ribbon[0];
+  const dark = bgKey === 'bg_wisdom';
+  const edge = IMG_EDGE[bgKey] || '#F5C95A';
+  const showStats = k !== 'thanks'; // «Minnatdorchilik»da daraja / so'zlar / streak YOZILMAYDI
 
-  // Lenta yozuvi (tur nomi yoki «N-HAFTA CHEMPIONI»)
+  // 1) Lenta yozuvi (tur nomi yoki «N-HAFTA CHEMPIONI»). Pastdagi xira dog'ni to'liq yopadigan kenglikda
   const label = String(c.label || IMG_LABEL[k] || '').toUpperCase().slice(0, 28);
-  const dark = k === 'wisdom';
   let fs = 28;
   ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
-  const maxLabel = L.ribbon[2];
+  const maxLabel = dark ? L.ribbon[2] + 60 : 520;
   while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) { fs -= 1; ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`; }
   const lw = spacedWidth(ctx, label, 2.5);
   if (!dark) {
-    const pw = lw + 46, ph = fs + 18;
+    const pw = Math.max(lw + 60, 390), ph = 52;
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8;
-    rrect(ctx, L.ribbon[0] - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 7);
+    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 10;
+    rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
     const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
-    pg.addColorStop(0, 'rgba(14,22,44,0.92)'); pg.addColorStop(1, 'rgba(6,10,24,0.92)');
+    pg.addColorStop(0, 'rgb(16,22,44)'); pg.addColorStop(1, 'rgb(6,10,24)');
     ctx.fillStyle = pg; ctx.fill();
     ctx.restore();
-    ctx.lineWidth = 2; ctx.strokeStyle = '#E7BE62'; rrect(ctx, L.ribbon[0] - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 7); ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#E7BE62'; rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9); ctx.stroke();
   }
-  spaced(ctx, label, L.ribbon[0], L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || '#FFE48A');
-
-  // Ism (katta, oltin-oq gradient, nur bilan)
-  let ns = L.name[2];
-  const nm = c.name || 'F.I.SH.';
-  ctx.font = `italic 700 ${ns}px ${SERIF}`;
-  while (ctx.measureText(nm).width > 760 && ns > 36) { ns -= 4; ctx.font = `italic 700 ${ns}px ${SERIF}`; }
   ctx.save();
-  const rg = ctx.createRadialGradient(L.name[0], L.name[1] - ns * 0.3, 10, L.name[0], L.name[1] - ns * 0.3, 360);
-  rg.addColorStop(0, 'rgba(4,8,20,0.55)'); rg.addColorStop(1, 'rgba(4,8,20,0)');
-  ctx.fillStyle = rg; ctx.fillRect(L.name[0] - 380, L.name[1] - ns * 1.2, 760, ns * 1.8);
-  ctx.shadowColor = dark ? 'rgba(255,190,70,0.65)' : 'rgba(255,214,120,0.7)';
-  ctx.shadowBlur = 24;
-  ctx.fillStyle = vGrad(ctx, L.name[1] - ns * 0.8, L.name[1] + 8, '#FFFFFF', dark ? '#E9B24A' : '#F2CB74');
-  ctx.fillText(nm, L.name[0], L.name[1]);
+  if (!dark) { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4; }
+  spaced(ctx, label, cxm, L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || '#FFE48A');
   ctx.restore();
 
-  // chiziq (faqat kerak bo'lsa)
-  if (L.line) {
-    const lg = ctx.createLinearGradient(L.name[0] - 340, 0, L.name[0] + 340, 0);
+  // 2) Ism: katta, oltin-oq gradient. Ism uzun bo'lsa shrift avtomatik kichrayadi
+  let ns = 66;
+  const nm = c.name || 'F.I.SH.';
+  ctx.font = `italic 700 ${ns}px ${SERIF}`;
+  while (ctx.measureText(nm).width > 800 && ns > 34) { ns -= 2; ctx.font = `italic 700 ${ns}px ${SERIF}`; }
+  ctx.save();
+  const rg = ctx.createRadialGradient(cxm, L.nameY - ns * 0.3, 10, cxm, L.nameY - ns * 0.3, 420);
+  rg.addColorStop(0, 'rgba(4,8,20,0.5)'); rg.addColorStop(1, 'rgba(4,8,20,0)');
+  ctx.fillStyle = rg; ctx.fillRect(cxm - 440, L.nameY - ns * 1.2, 880, ns * 1.7);
+  ctx.shadowColor = 'rgba(0,0,0,0.65)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3; // o'qilishi uchun qora soya
+  ctx.fillStyle = vGrad(ctx, L.nameY - ns * 0.8, L.nameY + 8, '#FFFFFF', dark ? '#E9B24A' : '#F2CB74');
+  ctx.fillText(nm, cxm, L.nameY);
+  ctx.shadowColor = dark ? 'rgba(255,190,70,0.55)' : 'rgba(255,214,120,0.6)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 0;
+  ctx.fillText(nm, cxm, L.nameY);
+  ctx.restore();
+
+  // 3) Ism ostidagi nozik chiziq + olmos
+  {
+    const lg = ctx.createLinearGradient(cxm - 300, 0, cxm + 300, 0);
     lg.addColorStop(0, 'rgba(240,196,99,0)'); lg.addColorStop(0.2, 'rgba(240,196,99,0.95)'); lg.addColorStop(0.8, 'rgba(240,196,99,0.95)'); lg.addColorStop(1, 'rgba(240,196,99,0)');
-    ctx.strokeStyle = lg; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(L.name[0] - 340, L.line); ctx.lineTo(L.name[0] + 340, L.line); ctx.stroke();
+    ctx.strokeStyle = lg; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(cxm - 300, L.divY); ctx.lineTo(cxm - 14, L.divY); ctx.moveTo(cxm + 14, L.divY); ctx.lineTo(cxm + 300, L.divY); ctx.stroke();
+    ctx.fillStyle = '#F2CB74';
+    ctx.beginPath(); ctx.moveTo(cxm, L.divY - 6); ctx.lineTo(cxm + 6, L.divY); ctx.lineTo(cxm, L.divY + 6); ctx.lineTo(cxm - 6, L.divY); ctx.closePath(); ctx.fill();
   }
 
-  // Sarlavha va izoh
-  let ty = L.title;
-  ctx.fillStyle = dark ? '#F4DFA3' : '#FFF3C6';
-  ctx.font = `800 31px ${SANS}`;
-  const tl = wrap(ctx, c.title || '', 760).slice(0, 2);
-  tl.forEach((l, i) => ctx.fillText(l, L.name[0], ty + i * 36));
-  ty += Math.max(0, tl.length - 1) * 36;
-  if (c.reason) {
-    ctx.fillStyle = dark ? '#E4D2A4' : '#DCE3F0';
-    ctx.font = `500 22px ${SANS}`;
-    wrap(ctx, c.reason, 820).slice(0, 2).forEach((l, i) => ctx.fillText(l, L.name[0], ty + 32 + i * 28));
+  // 4) Sarlavha va izoh: mavjud joyga o'lchab sig'diriladi (ustma-ust tushishi mumkin emas)
+  const zBottom = showStats ? L.plateTop - 14 : 742;
+  const zoneH = zBottom - L.zTop;
+  const blk = fitBlock(ctx, c.title || '', c.reason || '', zoneH, 900);
+  let y = L.zTop + (zoneH - blk.h) / 2;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1.5;
+  ctx.font = `800 ${blk.ts}px ${SANS}`;
+  ctx.fillStyle = dark ? '#F8E6B0' : '#FFF3C6';
+  blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.2));
+  y += blk.tl.length * blk.ts * 1.2 + 10;
+  ctx.font = `500 ${blk.rs}px ${SANS}`;
+  ctx.fillStyle = dark ? '#EBDDB5' : '#E4EAF6';
+  blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.32));
+  ctx.restore();
+
+  // 5) Plitalar: daraja / so'zlar / streak (Minnatdorchilikda yo'q)
+  if (showStats) {
+    const st = c.stats || {};
+    const vals: [string, string][] = [
+      ['DARAJA', st.lvl || '—'],
+      ["SO'ZLAR", st.words !== undefined ? String(st.words) : '—'],
+      ['STREAK', st.streak !== undefined ? `${st.streak} kun` : '—'],
+    ];
+    vals.forEach(([lab, val], i) => {
+      const cx = L.plateCx ? L.plateCx[i] : cxm + (i - 1) * (L.plateW + L.plateGap);
+      statPlate(ctx, cx, L.plateTop, L.plateW, L.plateH, lab, val, edge, L.frames);
+    });
   }
 
-  // Muhrlar: daraja / so'zlar / streak
-  const st = c.stats || {};
-  const vals: [string, string][] = [
-    ['DARAJA', st.lvl || '—'],
-    ["SO'ZLAR", st.words !== undefined ? String(st.words) : '—'],
-    ['STREAK', st.streak !== undefined ? `${st.streak} kun` : '—'],
-  ];
-  vals.forEach(([lab, val], i) => {
-    const cx = L.plates[i];
-    ctx.fillStyle = L.plateInk;
-    if (L.inline) {
-      ctx.font = `700 29px ${SERIF}`;
-      const full = `${lab} / `;
-      const w1 = ctx.measureText(full).width, w2 = ctx.measureText(val).width;
-      const x0 = cx - (w1 + w2) / 2;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#F2E2B8'; ctx.fillText(full, x0, L.plateY);
-      ctx.fillStyle = '#E9B24A'; ctx.fillText(val, x0 + w1, L.plateY);
-      ctx.textAlign = 'center';
-    } else {
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 6;
-      ctx.font = `800 25px ${SANS}`;
-      ctx.fillText(lab, cx, L.plateY - 17);
-      let vs = 46;
-      ctx.font = `800 ${vs}px ${SANS}`;
-      while (ctx.measureText(val).width > L.plateW - 40 && vs > 22) { vs -= 2; ctx.font = `800 ${vs}px ${SANS}`; }
-      ctx.fillText(val, cx, L.plateY + 24);
-      ctx.restore();
-    }
-  });
-
-  // Sana va raqam
+  // 6) Sana va raqam
   ctx.save();
   ctx.textAlign = 'left';
-  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 6;
-  ctx.fillStyle = dark ? '#D9A94F' : '#FFF1C2';
+  ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 6;
+  ctx.fillStyle = dark ? '#E2B867' : '#FFF1C2';
   ctx.font = `600 ${L.date[3]}px ${SANS}`;
   if (L.date[2]) {
     ctx.fillText(`Sana: ${fmtDate(c.date)}`, L.date[0], L.date[1]);
@@ -522,33 +675,29 @@ async function drawImageWide(canvas: HTMLCanvasElement, c: Certificate): Promise
   }
   ctx.restore();
 
-  // QR (oq fon ustida — skaner uchun ishonchli)
+  // 7) QR (oq fonda — skaner uchun ishonchli)
   const qs = L.qr[2];
   const qx = L.qr[0] - qs / 2, qy = L.qr[1] - qs / 2;
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
   ctx.fillStyle = '#FFFFFF';
-  rrect(ctx, qx - 9, qy - 9, qs + 18, qs + 18, 8); ctx.fill();
+  rrect(ctx, qx - 8, qy - 8, qs + 16, qs + 16, 8); ctx.fill();
   ctx.restore();
-  if (c.verified !== false) drawQr(ctx, certUrl(c.id), qx, qy, qs, { dark: '#0A1220', light: '#FFFFFF', quiet: 1, ecc: 'M' });
+  if (c.verified !== false) drawQr(ctx, certUrl(c.id), qx, qy, qs, { dark: '#0A1220', light: '#FFFFFF', quiet: 0, ecc: 'M' });
   else {
     ctx.fillStyle = '#64748B'; ctx.font = `600 15px ${SANS}`; ctx.textAlign = 'center';
     ctx.fillText('Mahalliy nusxa', L.qr[0], L.qr[1] + 5);
   }
   ctx.textAlign = 'center';
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   return true;
 }
 
-function spacedWidth(ctx: CanvasRenderingContext2D, text: string, gap: number): number {
-  const chars = Array.from(text);
-  return chars.reduce((a, ch) => a + ctx.measureText(ch).width, 0) + gap * Math.max(0, chars.length - 1);
-}
-
 /** Yangi dizaynni 16:9 yoki 9:16 (Stories) formatda chizadi */
-async function drawImageCertificate(canvas: HTMLCanvasElement, c: Certificate): Promise<boolean> {
-  if (c.fmt !== 'story') return drawImageWide(canvas, c);
+async function drawImageCertificate(canvas: HTMLCanvasElement, c: Certificate, scale = 2): Promise<boolean> {
+  if (c.fmt !== 'story') return drawImageWide(canvas, c, scale);
   const off = document.createElement('canvas');
-  if (!(await drawImageWide(off, c))) return false;
+  if (!(await drawImageWide(off, c, 1.35))) return false;
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
   canvas.width = CERT_STORY_W;
@@ -571,16 +720,17 @@ async function drawImageCertificate(canvas: HTMLCanvasElement, c: Certificate): 
 }
 
 /** Sertifikatni canvas'ga chizadi: 16:9 (albom) yoki 9:16 (tik, Stories) format, QR bilan */
-export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate): Promise<void> {
+export async function drawCertificate(canvas: HTMLCanvasElement, c: Certificate, opts: { scale?: number } = {}): Promise<void> {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   try {
-    await (document as any).fonts?.load?.(`700 40px 'Plus Jakarta Sans'`);
+    // ishlatiladigan barcha qalinliklar oldindan yuklanadi (aks holda birinchi chizishda zaxira shrift chiqib qoladi)
+    await Promise.all([500, 600, 700, 800].map(w => (document as any).fonts?.load?.(`${w} 28px 'Plus Jakarta Sans'`)));
   } catch {
     /* shrift yuklanmasa, zaxira shrift ishlatiladi */
   }
   // Yangi (rasmli) dizayn: muvaffaqiyatli chizilsa, shu bilan tugaydi
-  if (hasImageTemplate(c.tpl) && (await drawImageCertificate(canvas, c))) return;
+  if (hasImageTemplate(c.tpl) && (await drawImageCertificate(canvas, c, opts.scale ?? 2))) return;
   const logo = await loadLogo();
   const t = TEMPLATES[c.tpl] || TEMPLATES.gold;
   const story = c.fmt === 'story';
@@ -751,7 +901,7 @@ export const certFileName = (c: Certificate, ext = 'png') => `VocaBoost-${c.id}.
 /** Sertifikatni rasm (JPEG) qilib, base64 (prefikssiz) ko'rinishida qaytaradi — botga yuborish uchun. */
 export async function certificateBase64(c: Certificate): Promise<string> {
   const canvas = document.createElement('canvas');
-  await drawCertificate(canvas, c);
-  const url = canvas.toDataURL('image/jpeg', 0.92);
+  await drawCertificate(canvas, c, { scale: 1.5 }); // 2400x1350: aniq va botga yuborish uchun yetarlicha yengil
+  const url = canvas.toDataURL('image/jpeg', 0.9);
   return url.slice(url.indexOf(',') + 1);
 }
