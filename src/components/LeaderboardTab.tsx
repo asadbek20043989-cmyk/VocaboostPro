@@ -323,7 +323,7 @@ export const LeaderboardTab: React.FC = () => {
                     <span className="font-bold text-xs text-slate-400 w-5 text-center tabular-nums">
                       {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                     </span>
-                    {rank <= 3 ? <GlowAvatar rank={rank as 1 | 2 | 3} src={user.avatar} name={user.name} size={36} /> : <CosAvatar src={user.avatar} name={user.name} size={32} cos={user.cos} />}
+                    {rank <= 3 ? <GlowAvatar rank={rank as 1 | 2 | 3} src={user.avatar} name={user.name} size={36} au={user.cos?.au} /> : <CosAvatar src={user.avatar} name={user.name} size={32} cos={user.cos} />}
                     <div className="truncate max-w-[170px]">
                       <div className="font-semibold text-xs text-white truncate">
                         <CosName name={user.name} cos={user.cos} showTitle />

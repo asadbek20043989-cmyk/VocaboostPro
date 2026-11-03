@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked, Target, ChevronRight, Star } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { CosAvatar } from './Cosmetics';
+import { CosAvatar, CosName } from './Cosmetics';
+import { BANNERS } from '../data/shopDefaults';
 import { LofiPlayer } from './LofiPlayer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
@@ -64,21 +65,24 @@ export const HomeTab: React.FC = () => {
   const allDone = todayWork === 0;
   const claimable = dailyQuests.filter(q => q.completed && !q.claimed).length;
 
+  const hasBanner = (profile.own || []).includes('banner') && !!profile.banner && !!BANNERS[profile.banner as string];
+
   return (
     <div className="space-y-5 pb-6">
       {/* Header */}
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar src={profile.avatar} name={profile.name} className="w-11 h-11 border border-slate-700" />
+      <header className={`relative overflow-hidden flex items-center justify-between gap-3 ${hasBanner ? 'rounded-2xl p-3' : ''}`}>
+        {hasBanner && <><div className="vb-banner absolute inset-0" style={{ background: BANNERS[profile.banner as string].bg }} aria-hidden /><div className="absolute inset-0 bg-black/35" aria-hidden /></>}
+        <div className="relative flex items-center gap-3 min-w-0">
+          <CosAvatar src={profile.avatar} name={profile.name} size={44} cos={{ fr: profile.frame, rb: profile.rankBadge, au: (profile.own || []).includes('aura') ? profile.aura : '' }} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white truncate">{profile.name}</h1>
+              <h1 className="text-base font-bold text-white truncate min-w-0"><CosName name={profile.name} cos={{ nf: profile.nameFx, nc: profile.nameColor, ns: profile.nameSym, rb: profile.rankBadge, vf: (profile.own || []).includes('verified'), na: (profile.own || []).includes('nameanim') ? profile.nameAnim : '' }} /></h1>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">{profile.level}</span>
             </div>
             <p className="text-[11px] text-slate-400">Kuniga {profile.wordsPerDay} ta yangi so&apos;z</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="relative flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold tabular-nums"><Flame className="w-3.5 h-3.5" /> {profile.streak}</div>
           <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tabular-nums"><Diamond className="w-3.5 h-3.5" /> {profile.xp} XP</div>
         </div>

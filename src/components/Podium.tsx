@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar } from './Avatar';
 import { CosName, CosLike } from './Cosmetics';
 import { champLabel } from '../services/hall';
+import { AURAS } from '../data/shopDefaults';
 
 type Rank = 1 | 2 | 3;
 const THEME: Record<Rank, { cls: string; label: string; text: string; bar: string; h: number; size: number }> = {
@@ -32,11 +33,13 @@ const Crown: React.FC<{ w: number }> = ({ w }) => (
 );
 
 /** Porlab turuvchi avatar: har bir o'rin o'z rangida. 1-o'rinda toj, hammasida aylanuvchi halqa va yulduzchalar */
-export const GlowAvatar: React.FC<{ rank: Rank; src?: string; name: string; size?: number }> = ({ rank, src, name, size }) => {
+export const GlowAvatar: React.FC<{ rank: Rank; src?: string; name: string; size?: number; au?: string }> = ({ rank, src, name, size, au }) => {
+  const aura = au ? AURAS[au] : null;
   const t = THEME[rank];
   const px = size || t.size;
   return (
     <div className={`pd-wrap ${t.cls}`} style={{ width: px, height: px, marginTop: rank === 1 ? 18 : 0 }}>
+      {aura && <span className="absolute -inset-[9px] rounded-full vb-aura pointer-events-none" style={{ ['--au' as any]: aura.color }} />}
       <span className="pd-halo" />
       <span className="pd-ring" />
       {rank === 1 && (
@@ -131,7 +134,7 @@ export const Podium: React.FC<{
           const t = THEME[rank];
           return (
             <div key={rank} className={`pd-col pd-r${rank}`}>
-              <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 84 : 64} />
+              <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 84 : 64} au={u.cos?.au} />
               <span className="pd-name"><CosName name={u.name} cos={u.cos} showTitle className="pd-nm" /></span>
               {b && b.gold > 0 && <span className="pd-champ">🏆 {champLabel(b)}</span>}
               <span className={`pd-xp ${t.cls}`}>{u.xp.toLocaleString()} XP</span>

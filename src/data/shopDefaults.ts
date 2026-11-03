@@ -94,10 +94,10 @@ export const FRAMES: Record<string, { label: string; ring: string; glow: string;
   crystal: { label: 'Kristall', ring: 'conic-gradient(#CFFAFE,#67E8F9,#A5B4FC,#E0E7FF,#CFFAFE)', glow: 'rgba(103,232,249,.55)' },
 };
 export const AURAS: Record<string, { label: string; color: string }> = {
-  gold: { label: 'Oltin', color: '250,204,21' },
-  ice: { label: 'Muz', color: '103,232,249' },
-  fire: { label: 'Olov', color: '249,115,22' },
-  violet: { label: 'Binafsha', color: '192,132,252' },
+  gold: { label: 'Oltin', color: '250 204 21' },
+  ice: { label: 'Muz', color: '103 232 249' },
+  fire: { label: 'Olov', color: '249 115 22' },
+  violet: { label: 'Binafsha', color: '192 132 252' },
 };
 export const NAME_ANIMS: Record<string, string> = { typing: 'Yozilish', underline: 'Chiziq', gradient: 'Gradient', pulse: 'Nur urishi' };
 export const BANNERS: Record<string, { label: string; bg: string }> = {
