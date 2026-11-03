@@ -338,7 +338,7 @@ html[data-skin="sunset"]:not(.light) .bg-amber-500 { background-color: #F97316; 
 .pd-name { margin-top: 8px; max-width: 100%; display: flex; justify-content: center; font-size: 12px; font-weight: 800; text-align: center; text-shadow: 0 1px 6px rgb(0 0 0 / .85); }
 .pd-r1 .pd-name { font-size: 14px; }
 .pd-nm { color: #FFFFFF; }
-.pd-champ { font-size: 10px; font-weight: 800; color: #FDE68A; text-shadow: 0 1px 4px rgb(0 0 0 / .8); }
+.pd-champ { text-align: center; line-height: 1.2; max-width: 120px; font-size: 10px; font-weight: 800; color: #FDE68A; text-shadow: 0 1px 4px rgb(0 0 0 / .8); }
 .pd-xp { margin: 4px 0 8px; padding: 2px 9px; border-radius: 9999px; font-size: 12px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .02em; background: rgb(2 6 23 / .55); border: 1px solid var(--c2); color: var(--c1); text-shadow: 0 0 8px var(--c2); }
 .pd-r1 .pd-xp { font-size: 13px; }
 /* Ramka rangi o'zgaruvchilari (avatar halqasi bilan bir xil) */
@@ -362,3 +362,50 @@ html[data-skin="sunset"]:not(.light) .bg-amber-500 { background-color: #F97316; 
 .pd-star { position: absolute; width: 9px; height: 9px; background: #FFF7C2; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: pd-twinkle 2.4s ease-in-out infinite; filter: drop-shadow(0 0 4px #FDE047); }
 @media (prefers-reduced-motion: reduce) { .pd-conf, .pd-star, .pd-dot, .pd-wrap::after, .pd-crown, .pd-block-shine { animation: none !important; } }
 .pd-arena { --pd-inner: #0B1630; }
+
+
+/* Mavzu: Yomg'ir (yog'ayotgan yomg'ir WeatherFx komponentida chiziladi) */
+html[data-skin="rain"]:not(.light) body { background-color: #0A1220; background-image: linear-gradient(180deg, #0B1626 0%, #0A1220 60%, #08101C 100%); background-attachment: fixed; }
+html[data-skin="rain"]:not(.light) [class*="bg-[#0B0F17]"] { background-color: transparent; }
+html[data-skin="rain"]:not(.light) [class*="bg-[#151C28]"] { background-color: rgb(16 30 50 / .88); border-color: rgb(96 165 250 / .25); }
+html[data-skin="rain"]:not(.light) [class*="bg-[#0E1524]"] { background-color: rgb(12 24 42 / .92); }
+html[data-skin="rain"]:not(.light) [class*="bg-[#1B2433"], html[data-skin="rain"]:not(.light) [class*="bg-[#1B2333"] { background-color: rgb(22 40 66 / .9); }
+html[data-skin="rain"]:not(.light) .text-amber-400 { color: #7DD3FC; }
+html[data-skin="rain"]:not(.light) .bg-amber-500 { background-color: #3B82F6; }
+html[data-skin="rain"]:not(.light) nav { border-top-color: rgb(96 165 250 / .4); }
+
+/* Mavzu: Qor */
+html[data-skin="snow"]:not(.light) body { background-color: #0C1424; background-image: linear-gradient(180deg, #111C33 0%, #0C1424 55%, #0A1120 100%); background-attachment: fixed; }
+html[data-skin="snow"]:not(.light) [class*="bg-[#0B0F17]"] { background-color: transparent; }
+html[data-skin="snow"]:not(.light) [class*="bg-[#151C28]"] { background-color: rgb(24 36 62 / .88); border-color: rgb(186 230 253 / .28); }
+html[data-skin="snow"]:not(.light) [class*="bg-[#0E1524]"] { background-color: rgb(16 26 46 / .92); }
+html[data-skin="snow"]:not(.light) [class*="bg-[#1B2433"], html[data-skin="snow"]:not(.light) [class*="bg-[#1B2333"] { background-color: rgb(32 48 80 / .9); }
+html[data-skin="snow"]:not(.light) .text-amber-400 { color: #BAE6FD; }
+html[data-skin="snow"]:not(.light) .bg-amber-500 { background-color: #818CF8; }
+html[data-skin="snow"]:not(.light) nav { border-top-color: rgb(186 230 253 / .45); }
+
+/* Sinab ko'rish paneli */
+@keyframes vb-slide-up { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.vb-preview-bar { animation: vb-slide-up .3s ease-out both; }
+
+
+/* Aura, zarrachali ramkalar, animatsion nik, spotlight, banner */
+@keyframes vb-aura-pulse { 0%,100% { box-shadow: 0 0 10px 2px rgb(var(--au) / .45), 0 0 22px 6px rgb(var(--au) / .22); opacity: .85 } 50% { box-shadow: 0 0 16px 5px rgb(var(--au) / .75), 0 0 34px 12px rgb(var(--au) / .35); opacity: 1 } }
+.vb-aura { animation: vb-aura-pulse 2.6s ease-in-out infinite; }
+@keyframes vb-spark-up { 0% { transform: translateY(0) scale(1); opacity: 0 } 15% { opacity: 1 } 100% { transform: translateY(-170%) scale(.3); opacity: 0 } }
+.vb-spark { position: absolute; bottom: 8%; border-radius: 9999px; background: radial-gradient(circle,#FEF08A,#F97316); box-shadow: 0 0 6px 1px rgba(249,115,22,.9); animation: vb-spark-up 1.6s ease-out infinite; opacity: 0; }
+@keyframes vb-twinkle { 0%,100% { opacity: .2; transform: translate(-50%,-50%) scale(.6) } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) } }
+.vb-twinkle { position: absolute; color: #FDE68A; text-shadow: 0 0 6px #A78BFA; font-style: normal; line-height: 1; animation: vb-twinkle 1.8s ease-in-out infinite; transform: translate(-50%,-50%); }
+@keyframes vb-type { 0% { clip-path: inset(0 100% 0 0) } 55%,88% { clip-path: inset(0 0 0 0) } 100% { clip-path: inset(0 100% 0 0) } }
+.vb-na-typing { animation: vb-type 4.5s steps(var(--n, 8), end) infinite; }
+@keyframes vb-underline-move { to { background-position: 200% 0 } }
+.vb-na-underline { background-image: linear-gradient(90deg,#38bdf8,#c084fc,#f472b6,#38bdf8); background-size: 200% 2px; background-repeat: repeat-x; background-position: 0 100%; padding-bottom: 2px; animation: vb-underline-move 2.5s linear infinite; }
+.vb-na-gradient { background: linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6,#22d3ee); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; animation: vb-rainbow 2.8s linear infinite; }
+@keyframes vb-name-pulse { 0%,100% { text-shadow: 0 0 2px rgba(255,255,255,.15) } 50% { text-shadow: 0 0 10px rgba(125,211,252,.95), 0 0 18px rgba(167,139,250,.6) } }
+.vb-na-pulse { animation: vb-name-pulse 2s ease-in-out infinite; }
+@keyframes vb-spot-glow { 0%,100% { box-shadow: 0 0 0 1px rgba(253,224,71,.55), 0 0 12px rgba(253,224,71,.25) } 50% { box-shadow: 0 0 0 1px rgba(253,224,71,.95), 0 0 26px rgba(253,224,71,.55) } }
+.vb-spot-row { background-image: linear-gradient(90deg, rgba(253,224,71,.14), rgba(253,224,71,0) 70%) !important; animation: vb-spot-glow 2.2s ease-in-out infinite; }
+.vb-spot-name { text-shadow: 0 0 8px rgba(253,224,71,.8); }
+@keyframes vb-banner-move { to { background-position: 200% 0 } }
+.vb-banner { background-size: 200% 100%; animation: vb-banner-move 12s linear infinite; opacity: .92; }
+@media (prefers-reduced-motion: reduce) { .vb-aura, .vb-spark, .vb-twinkle, .vb-na-typing, .vb-na-underline, .vb-na-gradient, .vb-na-pulse, .vb-spot-row, .vb-banner { animation: none !important; } .vb-spark { opacity: 0; } .vb-twinkle { opacity: .8; } }

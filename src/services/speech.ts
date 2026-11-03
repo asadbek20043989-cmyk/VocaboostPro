@@ -257,8 +257,77 @@ const wikiUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FileP
 // Google Translate TTS (audio elementiga to'g'ridan-to'g'ri; Netlify ishtirok etmaydi)
 const gttsUrl = (t: string) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=${encodeURIComponent(t.slice(0, 190))}`;
 
-/** Talaffuz: FAQAT haqiqiy INSON ovozi yozuvlari (sun'iy/robot ovozi umuman ishlatilmaydi).
- *  Yakka so'z — to'liq yozuv; ibora/gap — so'zlar ketma-ket (har biri inson yozuvida). Yozuv topilmasa jim qoladi va xabar chiqadi. */
+
+// ---------- Gaplar va iboralar: BITTA ravon ovoz (so'zma-so'z emas) ----------
+// Eski usul har bir so'zni alohida yozuvdan ketma-ket chalardi — shuning uchun gap "uzuq-uzuq" eshitilardi.
+// Endi gap/ibora butunligicha bitta audio sifatida o'qiladi (intonatsiya va bog'lanish saqlanadi).
+// Birinchi manba — Google TTS (brauzerdan to'g'ridan-to'g'ri, serverga kredit ketmaydi); ishlamasa — qurilmaning eng yaxshi ovozi.
+function splitChunks(text: string, max = 170): string[] {
+  const sentences = text.match(/[^.!?;:]+[.!?;:]*/g) || [text];
+  const out: string[] = [];
+  let cur = '';
+  for (const raw of sentences) {
+    const s = raw.trim();
+    if (!s) continue;
+    if ((cur + ' ' + s).trim().length <= max) cur = (cur + ' ' + s).trim();
+    else {
+      if (cur) out.push(cur);
+      if (s.length <= max) cur = s;
+      else {
+        // juda uzun bo'lak: vergul/bo'sh joy bo'yicha bo'linadi
+        let rest = s;
+        while (rest.length > max) {
+          let cut = rest.lastIndexOf(',', max);
+          if (cut < 40) cut = rest.lastIndexOf(' ', max);
+          if (cut < 1) cut = max;
+          out.push(rest.slice(0, cut + 1).trim());
+          rest = rest.slice(cut + 1).trim();
+        }
+        cur = rest;
+      }
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+function waitAudioEnd(a: HTMLAudioElement | null, my: number): Promise<void> {
+  return new Promise(res => {
+    if (!a) return res();
+    let done = false;
+    const fin = () => {
+      if (done) return;
+      done = true;
+      clearInterval(poll);
+      clearTimeout(cap);
+      a.removeEventListener('ended', fin);
+      a.removeEventListener('error', fin);
+      res();
+    };
+    a.addEventListener('ended', fin);
+    a.addEventListener('error', fin);
+    const poll = setInterval(() => { if (my !== reqId) fin(); }, 200);
+    const cap = setTimeout(fin, 20000);
+  });
+}
+
+async function speakFluent(clean: string, rate: number, my: number): Promise<void> {
+  const chunks = splitChunks(clean);
+  for (let i = 0; i < chunks.length; i++) {
+    if (my !== reqId) return;
+    const ok = await playUrl(gttsUrl(chunks[i]), rate, my, GTTS_TIMEOUT_MS);
+    if (my !== reqId) return;
+    if (!ok) {
+      // Google ovozi ishlamadi — qolgan qismi qurilmaning o'z ovozi bilan, lekin baribir BIR GAP sifatida
+      browserSpeak(chunks.slice(i).join(' '), rate, my);
+      return;
+    }
+    await waitAudioEnd(currentAudio, my);
+  }
+}
+
+/** Talaffuz: yakka so'z — haqiqiy INSON yozuvi; ibora/gap — bitta ravon audio (intonatsiya bilan).
+ *  Hech bir manba ishlamasa — qurilma ovozi, u ham bo'lmasa xabar chiqadi. */
 export function speakEnglish(text: string, rate: number = 0.9): void {
   const clean = text.replace(/[*_#`~]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!clean) return;
@@ -266,6 +335,14 @@ export function speakEnglish(text: string, rate: number = 0.9): void {
   const my = reqId;
   const words = (clean.match(/[A-Za-z][A-Za-z'’-]*/g) || []).slice(0, 12).map(w => w.toLowerCase());
   if (!words.length) return;
+
+  // Ibora yoki gap (2 va undan ko'p so'z): bitta ravon audio
+  if (words.length > 1) {
+    speakFluent(clean, rate, my).catch(() => {
+      if (my === reqId) browserSpeak(clean, rate, my);
+    });
+    return;
+  }
 
   const playWord = async (key: string): Promise<boolean> => {
     const url = await getHumanAudio(key);

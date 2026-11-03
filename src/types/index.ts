@@ -70,7 +70,7 @@ export interface LeaderboardUser {
   streak: number;
   level: EnglishLevel;
   isCurrentUser?: boolean;
-  cos?: { fr?: string; nf?: string; nc?: string; ns?: string; ti?: string; vf?: boolean; rb?: string };
+  cos?: { fr?: string; nf?: string; nc?: string; ns?: string; ti?: string; vf?: boolean; rb?: string; au?: string; na?: string; sp?: number };
   refs?: number;
 }
 
@@ -147,6 +147,10 @@ export interface UserProfile {
   title?: string; // profil unvoni
   rankBadge?: string; // star | crown
   skin?: string; // ilova mavzusi (neon | nature | royal)
+  aura?: string; // avatar atrofidagi nur (gold | ice | fire | violet)
+  nameAnim?: string; // animatsion nik (typing | underline | gradient | pulse)
+  banner?: string; // profil banneri
+  spotUntil?: number; // reytingdagi «spotlight» tugash vaqti (ms)
   lofiOn?: boolean; // musiqa yoqilganmi (faqat shu qurilmada ishlatiladi)
 }
 

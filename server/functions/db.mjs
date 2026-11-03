@@ -115,7 +115,7 @@ export const handler = async event => {
         delete parsed.hasGrant; // faqat server qo'yadi
         body = JSON.stringify(parsed);
       }
-      for (const k of ['fr', 'nf', 'nc', 'ns', 'ti', 'rb']) {
+      for (const k of ['fr', 'nf', 'nc', 'ns', 'ti', 'rb', 'au', 'na', 'sp']) {
         if (k in parsed) { parsed[k] = String(parsed[k] ?? '').slice(0, 24); body = JSON.stringify(parsed); }
       }
       if (parsed.name && typeof parsed.name === 'string') {

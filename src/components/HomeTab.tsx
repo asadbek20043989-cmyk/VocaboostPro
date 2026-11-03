@@ -86,7 +86,7 @@ export const HomeTab: React.FC = () => {
 
       {/* Jihozlarim: bir bosishda ramka, mavzu, unvon va boshqa bezaklar */}
       <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl p-3 flex items-center gap-3 bg-gradient-to-r from-violet-500/15 via-fuchsia-500/10 to-amber-500/15 border border-violet-400/40 active:scale-[0.98] transition-all">
-        <CosAvatar src={profile.avatar} name={profile.name} size={40} cos={{ fr: profile.frame, rb: profile.rankBadge }} />
+        <CosAvatar src={profile.avatar} name={profile.name} size={40} cos={{ fr: profile.frame, rb: profile.rankBadge, au: (profile.own || []).includes('aura') ? profile.aura : '' }} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-extrabold text-white flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-amber-400" /> Jihozlarim</div>
           <div className="text-[11px] text-slate-400 truncate">Ramka, ilova mavzusi, unvon va nik rangi{(profile.own || []).length ? ` · ${(profile.own || []).filter(x => !x.startsWith('av:')).length} ta mahsulot` : ''}</div>

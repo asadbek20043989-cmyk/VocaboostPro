@@ -59,15 +59,24 @@ export function loadHall(force = false): Promise<HallWeek[]> {
 }
 
 /** Foydalanuvchi bo'yicha haftalik g'alabalar: { uid: { gold, top3 } } */
-export function championCounts(weeks: HallWeek[]): Record<string, { gold: number; top3: number }> {
-  const m: Record<string, { gold: number; top3: number }> = {};
+export function championCounts(weeks: HallWeek[]): Record<string, { gold: number; top3: number; weeks: number[] }> {
+  const m: Record<string, { gold: number; top3: number; weeks: number[] }> = {};
   weeks.forEach(w =>
     w.top.forEach(t => {
       if (t.place > 3 || !t.uid) return;
-      const c = (m[t.uid] = m[t.uid] || { gold: 0, top3: 0 });
+      const c = (m[t.uid] = m[t.uid] || { gold: 0, top3: 0, weeks: [] });
       c.top3++;
-      if (t.place === 1) c.gold++;
+      if (t.place === 1) { c.gold++; if (w.week > 0 && !c.weeks.includes(w.week)) c.weeks.push(w.week); }
     })
   );
   return m;
+}
+
+/** Chempion yozuvi: qaysi hafta(lar) chempioni ekani — «3-hafta chempioni», «1, 4, 7-hafta chempioni». Hafta raqami noma'lum bo'lsa — «hafta chempioni». */
+export function champLabel(c?: { gold: number; weeks?: number[] }): string {
+  if (!c || !c.gold) return '';
+  const w = (c.weeks || []).slice().sort((a, b) => a - b);
+  if (!w.length) return 'Hafta chempioni';
+  const shown = w.length > 4 ? w.slice(-4) : w;
+  return `${w.length > 4 ? '… ' : ''}${shown.join(', ')}-hafta chempioni`;
 }

@@ -30,7 +30,9 @@ import { DuelTab } from './DuelTab';
 import { ChallengesTab } from './ChallengesTab';
 import { Podium, GlowAvatar } from './Podium';
 import { HallOfHistory } from './HallOfHistory';
-import { loadHall, championCounts } from '../services/hall';
+import { loadHall, championCounts, champLabel } from '../services/hall';
+import { BANNERS } from '../data/shopDefaults';
+import { nowMs } from '../services/time';
 import { sendAdminMessage, MsgKind } from '../services/inbox';
 
 export const LeaderboardTab: React.FC = () => {
@@ -54,7 +56,7 @@ export const LeaderboardTab: React.FC = () => {
   const [displayLimit, setDisplayLimit] = useState(50);
 
   // Haftalik chempionlar (Tarix zalidan): podium va ro'yxatda 🏆 belgisi uchun. Ma'lumot o'zgarmaydi, bir marta yuklanadi.
-  const [champs, setChamps] = useState<Record<string, { gold: number; top3: number }>>({});
+  const [champs, setChamps] = useState<Record<string, { gold: number; top3: number; weeks: number[] }>>({});
   useEffect(() => {
     let dead = false;
     loadHall()
@@ -315,20 +317,21 @@ export const LeaderboardTab: React.FC = () => {
                     isMe
                       ? 'bg-amber-500/15 border-amber-500/60'
                       : 'bg-[#151C28] border-slate-800/80 hover:bg-[#1B2333]'
-                  } ${rank === 1 ? 'row-gold' : rank === 2 ? 'row-silver' : rank === 3 ? 'row-bronze' : ''}`}
+                  } ${rank === 1 ? 'row-gold' : rank === 2 ? 'row-silver' : rank === 3 ? 'row-bronze' : ''} ${(user.cos?.sp || 0) > nowMs() ? 'vb-spot-row' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-xs text-slate-400 w-5 text-center tabular-nums">
                       {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                     </span>
                     {rank <= 3 ? <GlowAvatar rank={rank as 1 | 2 | 3} src={user.avatar} name={user.name} size={36} /> : <CosAvatar src={user.avatar} name={user.name} size={32} cos={user.cos} />}
-                    <div className="truncate max-w-[150px]">
+                    <div className="truncate max-w-[170px]">
                       <div className="font-semibold text-xs text-white truncate">
-                        <CosName name={`${user.name}${champs[user.id]?.gold ? ` 🏆×${champs[user.id].gold}` : ''}`} cos={user.cos} showTitle />
+                        <CosName name={user.name} cos={user.cos} showTitle />
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {user.level} · {user.streak} kun streak
                       </div>
+                      {champs[user.id]?.gold ? <div className="text-[10px] font-bold text-amber-300/90 truncate">🏆 {champLabel(champs[user.id])}</div> : null}
                     </div>
                   </div>
 
@@ -360,8 +363,9 @@ export const LeaderboardTab: React.FC = () => {
       {activeSubTab === 'profile' && (
         <div className="space-y-4">
           {/* Profile Overview Card */}
-          <div className="p-4 rounded-3xl bg-[#151C28] border border-slate-800 text-center space-y-3">
-            <div className="flex justify-center"><CosAvatar src={profile.avatar} name={profile.name} size={80} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} /></div>
+          <div className="relative overflow-hidden p-4 rounded-3xl bg-[#151C28] border border-slate-800 text-center space-y-3">
+            {owns('banner') && profile.banner && BANNERS[profile.banner] && <div className="vb-banner absolute inset-x-0 top-0 h-24" style={{ background: BANNERS[profile.banner].bg }} aria-hidden />}
+            <div className={`relative flex justify-center ${owns('banner') && profile.banner && BANNERS[profile.banner] ? 'pt-8' : ''}`}><CosAvatar src={profile.avatar} name={profile.name} size={80} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} /></div>
             <div>
               <h3 className="text-lg font-bold text-white flex justify-center"><CosName name={profile.name} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} showTitle /></h3>
               <p className="text-xs text-slate-400 mt-0.5">

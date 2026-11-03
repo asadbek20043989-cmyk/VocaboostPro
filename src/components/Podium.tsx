@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar } from './Avatar';
 import { CosName, CosLike } from './Cosmetics';
+import { champLabel } from '../services/hall';
 
 type Rank = 1 | 2 | 3;
 const THEME: Record<Rank, { cls: string; label: string; text: string; bar: string; h: number; size: number }> = {
@@ -99,7 +100,7 @@ const Block: React.FC<{ rank: Rank }> = ({ rank }) => {
  *  `chip` — chap yuqoridagi yozuv («2-hafta · 119 ta o'quvchi»), `live` — o'ng yuqoridagi holat */
 export const Podium: React.FC<{
   users: PodiumUser[];
-  badges?: Record<string, { gold: number; top3: number }>;
+  badges?: Record<string, { gold: number; top3: number; weeks?: number[] }>;
   chip?: React.ReactNode;
   live?: { text: string; state: 'live' | 'loading' | 'off' };
 }> = ({ users, badges, chip, live }) => {
@@ -132,7 +133,7 @@ export const Podium: React.FC<{
             <div key={rank} className={`pd-col pd-r${rank}`}>
               <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 84 : 64} />
               <span className="pd-name"><CosName name={u.name} cos={u.cos} showTitle className="pd-nm" /></span>
-              {b && b.gold > 0 && <span className="pd-champ">🏆 ×{b.gold} hafta chempioni</span>}
+              {b && b.gold > 0 && <span className="pd-champ">🏆 {champLabel(b)}</span>}
               <span className={`pd-xp ${t.cls}`}>{u.xp.toLocaleString()} XP</span>
               <Block rank={rank} />
             </div>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { BadgeCheck, Star } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { FRAMES } from '../data/shopDefaults';
+import { FRAMES, AURAS } from '../data/shopDefaults';
+import { nowMs } from '../services/time';
 
-export interface CosLike { fr?: string; nf?: string; nc?: string; ns?: string; ti?: string; vf?: boolean; rb?: string }
+export interface CosLike { fr?: string; nf?: string; nc?: string; ns?: string; ti?: string; vf?: boolean; rb?: string; au?: string; na?: string; sp?: number }
 
 /** Toj (reytingda maxsus belgi) */
 const MiniCrown: React.FC<{ w: number }> = ({ w }) => (
@@ -18,10 +19,14 @@ const MiniCrown: React.FC<{ w: number }> = ({ w }) => (
 export const CosAvatar: React.FC<{ src?: string; name?: string; cos?: CosLike; size?: number; className?: string }> = ({ src, name, cos, size = 40, className = '' }) => {
   const fr = cos?.fr ? FRAMES[cos.fr] : null;
   const crown = cos?.rb === 'crown';
-  if (!fr && !crown) return <Avatar src={src} name={name} className={className || 'w-10 h-10'} />;
+  const au = cos?.au ? AURAS[cos.au] : null;
+  if (!fr && !crown && !au) return <Avatar src={src} name={name} className={className || 'w-10 h-10'} />;
   const pad = fr ? Math.max(3, Math.round(size * 0.08)) : 0;
   return (
     <span className="relative inline-flex shrink-0" style={{ width: size, height: size, marginTop: crown ? Math.round(size * 0.22) : 0 }}>
+      {au && <span className="absolute -inset-[7px] rounded-full vb-aura pointer-events-none" style={{ ['--au' as any]: au.color }} />}
+      {fr?.fx === 'sparks' && <span className="absolute inset-0 pointer-events-none" aria-hidden>{[8, 24, 42, 58, 76, 90].map((l, i) => <i key={i} className="vb-spark" style={{ left: `${l}%`, animationDelay: `${(i * 0.37) % 1.6}s`, width: Math.max(3, size * 0.07), height: Math.max(3, size * 0.07) }} />)}</span>}
+      {fr?.fx === 'stars' && <span className="absolute inset-0 pointer-events-none" aria-hidden>{[[50, -6], [102, 30], [86, 96], [14, 96], [-2, 30], [78, 2]].map(([x, y], i) => <i key={i} className="vb-twinkle" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s`, fontSize: Math.max(8, size * 0.24) }}>✦</i>)}</span>}
       {fr && <span className="absolute -inset-[3px] rounded-full vb-frame" style={{ background: fr.ring, boxShadow: `0 0 12px ${fr.glow}` }} />}
       <span className="relative rounded-full overflow-hidden bg-[#0B0F17]" style={{ width: size, height: size, padding: pad }}>
         <Avatar src={src} name={name} className="w-full h-full" />
@@ -37,7 +42,14 @@ export const CosName: React.FC<{ name: string; cos?: CosLike; className?: string
   let cls = className;
   if (cos?.nf === 'rainbow') cls += ' vb-fx-rainbow';
   else if (cos?.nf === 'gold') cls += ' vb-fx-gold';
-  else if (cos?.nc) style.color = cos.nc;
+  else {
+    if (cos?.nc) style.color = cos.nc;
+    if (cos?.na) {
+      cls += ` vb-na-${cos.na}`;
+      if (cos.na === 'typing') (style as any)['--n'] = Math.max(2, name.length);
+    }
+  }
+  if ((cos?.sp || 0) > nowMs()) cls += ' vb-spot-name';
   return (
     <span className="inline-flex flex-col min-w-0 max-w-full">
       <span className="inline-flex items-center gap-1 min-w-0">

@@ -16,6 +16,7 @@ import { StreakPopup } from './components/StreakPopup';
 import { LuckyWheel } from './components/LuckyWheel';
 import { BrandMark, Logo, HeaderActions } from './components/Brand';
 import { installGlobalClickSound } from './services/sound';
+import { WeatherFx } from './components/WeatherFx';
 
 /** E'lon matnidagi havolalarni (http, https, t.me) avtomatik ko'k rangda bosiladigan qiluvchi komponent */
 const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
@@ -122,6 +123,7 @@ export default function App() {
   return (
     <AppProvider>
       <MainScreen />
+      <WeatherFx />
     </AppProvider>
   );
 }

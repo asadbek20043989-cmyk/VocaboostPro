@@ -5,7 +5,7 @@ import type { BankWord } from '../types';
 export type ShopCat = 'boosters' | 'cosmetics' | 'learning' | 'social' | 'vip' | 'rewards';
 export type ShopKind =
   | 'boost' | 'saver' | 'spin' | 'frame' | 'avatars' | 'nickcolor' | 'glow' | 'skin' | 'titles' | 'pack'
-  | 'rankbadge' | 'mystery' | 'manual' | 'verified' | 'books' | 'lofi';
+  | 'rankbadge' | 'mystery' | 'manual' | 'verified' | 'books' | 'lofi' | 'spotlight' | 'aura' | 'nameanim' | 'banner' | 'grammar';
 
 export interface ShopItem {
   id: string;
@@ -60,26 +60,57 @@ export const DEFAULT_ITEMS: ShopItem[] = [
   I('skin_nature', 'Tabiat mavzusi', "Ko'zni charchatmaydigan yashil rang sxemasi.", 'cosmetics', '🌿', '#4ADE80', '#15803D', 300, 'skin', 'nature'),
   I('skin_sunset', 'Quyosh botishi mavzusi', "Iliq to'q-qizil va mis ranglar — kechki o'qish uchun qulay.", 'cosmetics', '🌇', '#FB923C', '#BE185D', 320, 'skin', 'sunset'),
   I('skin_royal', 'Qirollik mavzusi', "Chuqur indigo va oltin ranglar.", 'cosmetics', '👑', '#6366F1', '#CA8A04', 350, 'skin', 'royal'),
+  I('skin_rain', 'Yomg‘ir mavzusi 🌧️', "Ilova bo'ylab tinimsiz yomg'ir yog'adi: tomchilar, yumshoq shovqinsiz muhit va salqin ko'k ranglar.", 'cosmetics', '🌧️', '#60A5FA', '#1E3A8A', 450, 'skin', 'rain'),
+  I('skin_snow', 'Qor mavzusi ❄️', "Ilova bo'ylab mayin qor parchalari yog'ib turadi — muzdek, toza va sokin ranglar.", 'cosmetics', '❄️', '#BAE6FD', '#6366F1', 450, 'skin', 'snow'),
+  I('frame_rainbow', 'Kamalak ramka', "Avatar atrofida ranglari tinmay almashib turuvchi kamalak ramka.", 'cosmetics', '🌈', '#F472B6', '#38BDF8', 500, 'frame', 'rainbow'),
+  I('frame_galaxy', 'Galaktika ramka', "Avatar atrofida yulduzlar charaqlagan binafsha-ko'k galaktika.", 'cosmetics', '🌌', '#6366F1', '#0F172A', 550, 'frame', 'galaxy'),
+  I('frame_sparks', 'Uchqun ramka 🔥', "Avatar atrofida olov uchqunlari uchib turadigan zarrachali ramka.", 'cosmetics', '🔥', '#FDBA74', '#B91C1C', 600, 'frame', 'sparks'),
+  I('frame_stars', 'Yulduz ramka ✨', "Avatar atrofida charaqlab yonib-o'chadigan yulduzchalar ramkasi.", 'cosmetics', '✨', '#FDE68A', '#7C3AED', 600, 'frame', 'stars'),
+  I('aura', 'Aura effekti', "Avatar atrofida yumshoq nur: oltin, muz, olov yoki binafsha. Reytingda hamma ko'radi.", 'cosmetics', '🔆', '#FDE047', '#F97316', 380, 'aura'),
+  I('nameanim', 'Animatsion nik', "Ismingiz yonida jonli effekt: yozilish, chiziq, gradient yoki nur urishi. Hammaga ko'rinadi.", 'cosmetics', '🪄', '#C084FC', '#EC4899', 450, 'nameanim'),
+  I('banner', 'Profil banneri', "Profilingizning yuqori qismida maxsus fon: tong shafaqi, okean, galaktika va boshqalar.", 'cosmetics', '🖼️', '#38BDF8', '#7C3AED', 400, 'banner'),
+  I('spotlight', 'Reyting spotlighti (24 soat)', "24 soat davomida reytingda ismingiz alohida nur bilan ajralib turadi.", 'social', '🔦', '#FDE047', '#F59E0B', 120, 'spotlight', '24', true),
   I('titles', 'Maxsus unvon', "Profilda ismingiz ostida unvon: «So'z ustasi», «Kitobxon» va boshqalar.", 'social', '🏷️', '#FBBF24', '#B45309', 250, 'titles'),
   I('rankbadge', 'Reytingda maxsus belgi', "Haftalik jadvalda ismingizga yulduzcha, avatar ustiga toj.", 'social', '👑', '#FDE047', '#F59E0B', 350, 'rankbadge'),
   I('verified', 'VIP maqomi (galochka)', "Ismingiz yonida ko'k galochka — VIP foydalanuvchi belgisi.", 'vip', '✅', '#38BDF8', '#0EA5E9', 1500, 'verified'),
   I('premium_words', "Premium so'zlar to'plami", "Yuqori darajadagi tanlangan so'zlar — o'rganish uchun alohida to'plam.", 'learning', '🧠', '#A78BFA', '#4F46E5', 600, 'pack', 'premium_words'),
   I('top_books', 'Inglizcha TOP kitoblar', "Ingliz tilini o'rganuvchilar uchun eng yaxshi kitoblar ro'yxati.", 'learning', '📚', '#FBBF24', '#92400E', 700, 'books'),
+  I('phrasal_pack', 'Phrasal Verbs to\'plami', "200 ta eng kerakli phrasal verb: ma'nosi va misol bilan. O'rganish bo'limida alohida to'plam bo'ladi.", 'learning', '🧩', '#34D399', '#0F766E', 550, 'pack', 'phrasal_pack'),
+  I('idioms_pack', "Idioms to'plami", "150 ta mashhur inglizcha idiom: ma'nosi va misollar bilan. Nutqingizni tabiiy qiladi.", 'learning', '💬', '#FB923C', '#C2410C', 450, 'pack', 'idioms_pack'),
+  I('grammar_pack', 'Grammar Master', "Murakkab grammatika: formulalar, tushuntirishlar va misollar (zamonlar, shartli gaplar, modal fe'llar va boshqalar).", 'learning', '🎓', '#818CF8', '#312E81', 500, 'grammar'),
   I('lofi', 'Lo-Fi musiqa', "Dars paytida yoqib qo'yadigan sokin musiqa. Xohlagan payt o'chirasiz.", 'learning', '🎧', '#60A5FA', '#7C3AED', 300, 'lofi'),
   I('tg_stars', 'Telegram Premium / Stars', "Eng qimmatli, kamdan-kam beriladigan sovrin. Admin buyurtmangizni qo'lda bajaradi.", 'rewards', '⭐', '#FDE047', '#F97316', 5000, 'manual'),
 ];
 
 // ---------- Cosmetika ----------
-export const FRAMES: Record<string, { label: string; ring: string; glow: string }> = {
+export const FRAMES: Record<string, { label: string; ring: string; glow: string; fx?: 'sparks' | 'stars' }> = {
   gold: { label: 'Oltin', ring: 'conic-gradient(#FDE047,#F59E0B,#FFF7C2,#F59E0B,#FDE047)', glow: 'rgba(250,204,21,.55)' },
   fire: { label: 'Olov', ring: 'conic-gradient(#FEF08A,#F97316,#DC2626,#F97316,#FEF08A)', glow: 'rgba(249,115,22,.6)' },
   emerald: { label: 'Zumrad', ring: 'conic-gradient(#A7F3D0,#10B981,#ECFDF5,#059669,#A7F3D0)', glow: 'rgba(16,185,129,.55)' },
+  rainbow: { label: 'Kamalak', ring: 'conic-gradient(#F87171,#FBBF24,#34D399,#38BDF8,#C084FC,#F87171)', glow: 'rgba(192,132,252,.55)' },
+  galaxy: { label: 'Galaktika', ring: 'conic-gradient(#1E1B4B,#6366F1,#E0E7FF,#A855F7,#1E1B4B)', glow: 'rgba(129,140,248,.6)' },
+  sparks: { label: 'Uchqun', ring: 'conic-gradient(#FEF08A,#F97316,#DC2626,#F97316,#FEF08A)', glow: 'rgba(249,115,22,.55)', fx: 'sparks' },
+  stars: { label: 'Yulduz', ring: 'conic-gradient(#FDE68A,#A78BFA,#F0ABFC,#A78BFA,#FDE68A)', glow: 'rgba(167,139,250,.55)', fx: 'stars' },
   crystal: { label: 'Kristall', ring: 'conic-gradient(#CFFAFE,#67E8F9,#A5B4FC,#E0E7FF,#CFFAFE)', glow: 'rgba(103,232,249,.55)' },
+};
+export const AURAS: Record<string, { label: string; color: string }> = {
+  gold: { label: 'Oltin', color: '250,204,21' },
+  ice: { label: 'Muz', color: '103,232,249' },
+  fire: { label: 'Olov', color: '249,115,22' },
+  violet: { label: 'Binafsha', color: '192,132,252' },
+};
+export const NAME_ANIMS: Record<string, string> = { typing: 'Yozilish', underline: 'Chiziq', gradient: 'Gradient', pulse: 'Nur urishi' };
+export const BANNERS: Record<string, { label: string; bg: string }> = {
+  aurora: { label: 'Shimol nuri', bg: 'linear-gradient(120deg,#0f766e,#6366f1,#a855f7,#0f766e)' },
+  sunset: { label: 'Tong shafaqi', bg: 'linear-gradient(120deg,#f97316,#ec4899,#7c3aed,#f97316)' },
+  ocean: { label: 'Okean', bg: 'linear-gradient(120deg,#0ea5e9,#1d4ed8,#0e7490,#0ea5e9)' },
+  galaxy: { label: 'Galaktika', bg: 'linear-gradient(120deg,#1e1b4b,#4c1d95,#be185d,#1e1b4b)' },
+  forest: { label: "O'rmon", bg: 'linear-gradient(120deg,#14532d,#16a34a,#65a30d,#14532d)' },
 };
 export const NICK_COLORS = ['#FBBF24', '#F87171', '#34D399', '#38BDF8', '#C084FC', '#F472B6', '#FB923C', '#A3E635'];
 export const NAME_SYMS = ['', '⭐', '🔥', '💎', '⚡', '🌙', '🚀', '🦋'];
 export const TITLES = ["So'z ustasi", 'Kitobxon', 'Vocab Legend', 'Word Hunter', 'IELTS Master', 'Lingvist'];
-export const SKINS: Record<string, string> = { neon: 'Neon', nature: 'Tabiat', royal: 'Qirollik', sunset: 'Quyosh botishi' };
+export const SKINS: Record<string, string> = { neon: 'Neon', nature: 'Tabiat', royal: 'Qirollik', sunset: 'Quyosh botishi', rain: 'Yomg‘ir 🌧️', snow: 'Qor ❄️' };
 
 export const LTD_AVATARS = [
   { id: 'ltd_dragon', emoji: '🐉', from: '#FDE047', to: '#B91C1C' },

@@ -25,6 +25,7 @@ import { nowMs, todayKey, dayDiff, syncClock } from '../services/time';
 import { claimCertificate, claimWelcomeCertificate, claimAward } from '../services/certApi';
 import { ACCOUNT_ID, lsGet, lsSet, lsDel } from '../services/account';
 import { shopCfg, buildCatalog, priceOf, balanceOf, inviteLinkFor, botNameFrom, ShopCfg } from '../services/shop';
+import { parseWordPack, PHRASAL_TEXT, IDIOMS_TEXT } from '../data/packs';
 import { ShopItem, parsePremium, DEFAULT_PREMIUM_TEXT, LTD_AVATARS, NICK_COLORS, TITLES } from '../data/shopDefaults';
 
 // ---- Netlify kreditini tejash sozlamalari ----
@@ -143,8 +144,13 @@ interface AppContextType {
   catalog: ShopItem[];
   shopConf: ShopCfg;
   buyItem: (id: string) => { ok: boolean; error?: string; reveal?: string };
-  equip: (field: 'frame' | 'nameFx' | 'nameColor' | 'nameSym' | 'title' | 'rankBadge' | 'skin', value: string) => boolean;
+  equip: (field: 'frame' | 'nameFx' | 'nameColor' | 'nameSym' | 'title' | 'rankBadge' | 'skin' | 'aura' | 'nameAnim' | 'banner', value: string) => boolean;
   owns: (id: string) => boolean;
+  /** Sotib olishdan oldin mavzuni vaqtincha sinab ko'rish (profilga yozilmaydi) */
+  previewSkin: string;
+  setPreviewSkin: (v: string) => void;
+  /** Hozir ekranda ko'rinadigan mavzu: sinov > tanlangan */
+  activeSkin: string;
   boostActive: boolean;
   inviteLink: string;
   refCount: number;
@@ -532,7 +538,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const words = parsePremium(premiumText || DEFAULT_PREMIUM_TEXT);
     return words.length ? [{ id: 'premium_words', title: "💎 Premium so'zlar", desc: "Do'kondan olingan tanlangan yuqori daraja so'zlari", kind: 'open' as const, date: '', mode: 'extra' as const, order: 900, words }] : [];
   }, [hasPremium, premiumText]);
-  const packs = useMemo(() => [...cloudPacks, ...premiumPack, ...customAsPacks], [cloudPacks, premiumPack, customAsPacks]);
+  // Do'kondan olingan «Phrasal Verbs» (200) va «Idioms» (150) to'plamlari
+  const hasPhrasal = (profile.own || []).includes('phrasal_pack');
+  const hasIdioms = (profile.own || []).includes('idioms_pack');
+  const extraPacks: WordPack[] = useMemo(() => {
+    const out: WordPack[] = [];
+    if (hasPhrasal) out.push({ id: 'phrasal_pack', title: '🧩 Phrasal Verbs (200)', desc: "Do'kondan olingan 200 ta phrasal verb", kind: 'open' as const, date: '', mode: 'extra' as const, order: 910, words: parseWordPack(PHRASAL_TEXT, 'pv', 'Phrasal Verbs', 'B1') });
+    if (hasIdioms) out.push({ id: 'idioms_pack', title: '💬 Idioms (150)', desc: "Do'kondan olingan 150 ta inglizcha idiom", kind: 'open' as const, date: '', mode: 'extra' as const, order: 920, words: parseWordPack(IDIOMS_TEXT, 'idm', 'Idioms', 'B2+') });
+    return out;
+  }, [hasPhrasal, hasIdioms]);
+  const packs = useMemo(() => [...cloudPacks, ...premiumPack, ...extraPacks, ...customAsPacks], [cloudPacks, premiumPack, extraPacks, customAsPacks]);
   const packWords = useMemo(() => {
     const seen = new Set<string>();
     const out: BankWord[] = [];
@@ -580,7 +595,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const wheelCfg = useMemo(() => buildWheel(config?.wheel), [config]);
 
-  const myCos = { fr: profile.frame || '', nf: profile.nameFx || '', nc: profile.nameColor || '', ns: profile.nameSym || '', ti: profile.title || '', vf: (profile.own || []).includes('verified'), rb: profile.rankBadge || '' };
+  const myCos = { fr: profile.frame || '', nf: profile.nameFx || '', nc: profile.nameColor || '', ns: profile.nameSym || '', ti: profile.title || '', vf: (profile.own || []).includes('verified'), rb: profile.rankBadge || '', au: (profile.own || []).includes('aura') ? profile.aura || '' : '', na: (profile.own || []).includes('nameanim') ? profile.nameAnim || '' : '', sp: profile.spotUntil || 0 };
   const leagueUsers: LeaderboardUser[] = (() => {
     const list: LeaderboardUser[] = [];
     let meSeen = false;
@@ -601,7 +616,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         streak: isMe ? profile.streak : Number(e.streak) || 0,
         level: (isMe ? profile.level : e.level || 'A1') as EnglishLevel,
         isCurrentUser: isMe,
-        cos: isMe ? myCos : { fr: e.fr || '', nf: e.nf || '', nc: e.nc || '', ns: e.ns || '', ti: e.ti || '', vf: !!e.vf, rb: e.rb || '' },
+        cos: isMe ? myCos : { fr: e.fr || '', nf: e.nf || '', nc: e.nc || '', ns: e.ns || '', ti: e.ti || '', vf: !!e.vf, rb: e.rb || '', au: e.au || '', na: e.na || '', sp: Number(e.sp) || 0 },
         refs: Number(e.refs) || 0,
       });
     });
@@ -826,6 +841,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (k === 'glow') n.nameFx = 'gold';
     if (k === 'titles') n.title = n.title || TITLES[0];
     if (k === 'rankbadge') n.rankBadge = n.rankBadge || 'crown';
+    if (k === 'aura') n.aura = n.aura || 'gold';
+    if (k === 'nameanim') n.nameAnim = n.nameAnim || 'gradient';
+    if (k === 'banner') n.banner = n.banner || 'aurora';
+    if (k === 'spotlight') { n.own = p.own; n.spotUntil = Math.max(nowMs(), p.spotUntil || 0) + (Number(it!.value) || 24) * 3600000; }
     if (k === 'boost') { n.own = p.own; n.boostUntil = Math.max(nowMs(), p.boostUntil || 0) + (Number(it!.value) || 1) * 3600000; }
     if (k === 'saver' || k === 'spin' || k === 'mystery' || k === 'manual') n.own = p.own;
     return n;
@@ -911,20 +930,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   useEffect(() => { if (syncReady) setTimeout(flushOrders, 4000); }, [syncReady]);
 
-  const equip = (field: 'frame' | 'nameFx' | 'nameColor' | 'nameSym' | 'title' | 'rankBadge' | 'skin', value: string): boolean => {
+  const equip = (field: 'frame' | 'nameFx' | 'nameColor' | 'nameSym' | 'title' | 'rankBadge' | 'skin' | 'aura' | 'nameAnim' | 'banner', value: string): boolean => {
     const own = latest.current.profile.own || [];
-    const need: Record<string, string> = { frame: value ? `frame_${value}` : '', skin: value ? `skin_${value}` : '', title: 'titles', nameColor: 'nickcolor', nameSym: 'nickcolor', nameFx: 'glow', rankBadge: 'rankbadge' };
+    const need: Record<string, string> = { frame: value ? `frame_${value}` : '', skin: value ? `skin_${value}` : '', title: 'titles', nameColor: 'nickcolor', nameSym: 'nickcolor', nameFx: 'glow', rankBadge: 'rankbadge', aura: value ? 'aura' : '', nameAnim: value ? 'nameanim' : '', banner: value ? 'banner' : '' };
     if (need[field] && !own.includes(need[field])) return false;
     setProfile(p => ({ ...p, [field]: value, updatedAt: nowMs() }));
     return true;
   };
 
-  // Mavzu (skin) ilova ranglarini o'zgartiradi
+  // Mavzu (skin) ilova ranglarini o'zgartiradi. Sinab ko'rish (preview) faqat ekranda — profil/ma'lumotlarga TEGMAYDI.
+  const [previewSkin, setPreviewSkin] = useState('');
+  const ownedSkin = profile.skin && (profile.own || []).includes(`skin_${profile.skin}`) ? profile.skin : '';
+  const activeSkin = previewSkin || ownedSkin;
   useEffect(() => {
-    const sk = profile.skin && (profile.own || []).includes(`skin_${profile.skin}`) ? profile.skin : '';
-    if (sk) document.documentElement.setAttribute('data-skin', sk);
+    if (activeSkin) document.documentElement.setAttribute('data-skin', activeSkin);
     else document.documentElement.removeAttribute('data-skin');
-  }, [profile.skin, profile.own]);
+  }, [activeSkin]);
 
   // Boshlang'ich tanga (bir marta) va seriya bonuslari
   useEffect(() => {
@@ -1305,10 +1326,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       co: balanceOf(profile), // tanga balansi (admin ko'rishi uchun)
       fr: profile.frame || '', nf: profile.nameFx || '', nc: profile.nameColor || '', ns: profile.nameSym || '',
       ti: profile.title || '', vf: (profile.own || []).includes('verified'), rb: profile.rankBadge || '',
+      au: (profile.own || []).includes('aura') ? profile.aura || '' : '', na: (profile.own || []).includes('nameanim') ? profile.nameAnim || '' : '', sp: profile.spotUntil || 0,
       ts: 0,
     };
     if (!lbTimer.current) lbTimer.current = setTimeout(() => flushLb(), lbLastSig.current ? LB_THROTTLE_MS : 2000);
-  }, [profile.xp, profile.name, profile.avatar, profile.streak, profile.level, profile.wordsPerDay, profile.username, profile.joinedAt, profile.lastReadDate, wheel.streakSavers, profile.hasCompletedOnboarding, savedWords.length, masteredCount, syncReady, grantsReady, lbGate, leagueRaw, profile.adjV, coins, lbAvatar, profile.frame, profile.nameFx, profile.nameColor, profile.nameSym, profile.title, profile.own, profile.rankBadge]);
+  }, [profile.xp, profile.name, profile.avatar, profile.streak, profile.level, profile.wordsPerDay, profile.username, profile.joinedAt, profile.lastReadDate, wheel.streakSavers, profile.hasCompletedOnboarding, savedWords.length, masteredCount, syncReady, grantsReady, lbGate, leagueRaw, profile.adjV, coins, lbAvatar, profile.frame, profile.nameFx, profile.nameColor, profile.nameSym, profile.title, profile.own, profile.rankBadge, profile.aura, profile.nameAnim, profile.spotUntil]);
   useEffect(() => {
     const onHide = () => document.visibilityState === 'hidden' && flushLb(true);
     const onPageHide = () => flushLb(true);
@@ -2045,7 +2067,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dailyQuests, badges, games, settings, activeTab, setActiveTab, overlay, openLearn, openGame, closeOverlay,
         goBack, canGoBack, packs, todayPacks, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
-        freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, catalog, shopConf, buyItem, equip, owns, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
+        freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
       }}

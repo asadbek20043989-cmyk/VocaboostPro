@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { X, Music2, BookOpen, Sparkles, Zap } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { CATS, ShopCat, ShopItem, FRAMES, NICK_COLORS, NAME_SYMS, TITLES, SKINS, LTD_AVATARS, DEFAULT_BOOKS_TEXT, parseBooks } from '../data/shopDefaults';
+import { CATS, ShopCat, ShopItem, FRAMES, NICK_COLORS, NAME_SYMS, TITLES, SKINS, LTD_AVATARS, DEFAULT_BOOKS_TEXT, parseBooks, AURAS, NAME_ANIMS, BANNERS } from '../data/shopDefaults';
+import { GRAMMAR_TEXT, parseGrammar } from '../data/packs';
 import { priceOf } from '../services/shop';
 import { lofi } from '../services/shop';
 import { presetValue } from '../services/avatar';
@@ -33,8 +34,9 @@ const ItemArt: React.FC<{ it: ShopItem; h?: number }> = ({ it, h = 84 }) =>
   );
 
 export const ShopTab: React.FC = () => {
-  const { profile, coins, catalog, shopConf, buyItem, equip, owns, boostActive, updateProfile, setActiveTab } = useApp();
-  const [cat, setCat] = useState<ShopCat | 'all'>('all');
+  const { profile, coins, catalog, shopConf, buyItem, equip, owns, boostActive, updateProfile, setActiveTab, previewSkin, setPreviewSkin } = useApp();
+  const [cat, setCat] = useState<ShopCat | 'all' | 'owned'>('all');
+  const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
   const [confirm, setConfirm] = useState<ShopItem | null>(null);
   const [result, setResult] = useState<{ it: ShopItem; reveal?: string } | null>(null);
   const [err, setErr] = useState('');
@@ -44,6 +46,7 @@ export const ShopTab: React.FC = () => {
     return false;
   });
   const [booksOpen, setBooksOpen] = useState(false);
+  const [grammarOpen, setGrammarOpen] = useState(false);
   const [lofiOn, setLofiOn] = useState(lofi.on);
   const [, setTick] = useState(0);
 
@@ -54,11 +57,27 @@ export const ShopTab: React.FC = () => {
     return () => { lofi.listeners.delete(f); clearInterval(t); };
   }, []);
 
+  // Sinab ko'rish: do'kondan chiqilganda yoki 20 soniyadan so'ng avtomatik tugaydi (profilga hech narsa yozilmaydi)
+  useEffect(() => {
+    if (!previewSkin) return;
+    const t = setTimeout(() => { setPreviewSkin(''); setPreviewItem(null); }, 20000);
+    return () => clearTimeout(t);
+  }, [previewSkin]);
+  useEffect(() => () => { setPreviewSkin(''); }, []);
+
   if (!shopConf.enabled) return <div className="p-6 text-center text-slate-400 text-sm">Do'kon hozircha yopiq.</div>;
 
-  const list = catalog.filter(i => cat === 'all' || i.cat === cat);
+  const list = catalog.filter(i => (cat === 'owned' ? !i.repeat && owns(i.id) : cat === 'all' || i.cat === cat));
   const boostLeft = Math.max(0, (profile.boostUntil || 0) - nowMs());
   const fmtLeft = (ms: number) => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)} soat ${m % 60} daq` : `${m} daq`; };
+
+  const startPreview = (it: ShopItem) => {
+    if (it.kind === 'skin') { setConfirm(null); setPreviewItem(it); setPreviewSkin(it.value); triggerHaptic('light'); }
+    else setPreviewItem(it);
+  };
+  const stopPreview = () => { setPreviewSkin(''); setPreviewItem(null); };
+  const buyFromPreview = () => { const it = previewItem; stopPreview(); if (it) { setErr(''); setConfirm(it); } };
+  const canTry = (it: ShopItem) => ['skin', 'frame', 'aura', 'nameanim', 'banner'].includes(it.kind);
 
   const doBuy = () => {
     if (!confirm) return;
@@ -71,11 +90,13 @@ export const ShopTab: React.FC = () => {
 
   const action = (it: ShopItem) => {
     if (it.kind === 'books') setBooksOpen(true);
+    else if (it.kind === 'grammar') setGrammarOpen(true);
+    else if (it.kind === 'spotlight') setActiveTab('leaderboard');
     else if (it.kind === 'lofi') { if (lofi.on) lofi.stop(); else lofi.start(shopConf.lofi); }
     else if (it.kind === 'pack') setActiveTab('home');
     else setEquipOpen(true);
   };
-  const ownedLabel = (it: ShopItem) => it.kind === 'books' ? 'Ochish' : it.kind === 'lofi' ? (lofiOn ? "O'chirish" : 'Yoqish') : it.kind === 'pack' ? "O'rganish" : it.kind === 'verified' ? 'Faol ✓' : 'Jihozlash';
+  const ownedLabel = (it: ShopItem) => it.kind === 'books' || it.kind === 'grammar' ? 'Ochish' : it.kind === 'lofi' ? (lofiOn ? "O'chirish" : 'Yoqish') : it.kind === 'pack' ? "O'rganish" : it.kind === 'verified' ? 'Faol ✓' : 'Jihozlash';
 
 
   return (
@@ -100,6 +121,7 @@ export const ShopTab: React.FC = () => {
         {CATS.map(c => (
           <button key={c.id} type="button" onClick={() => setCat(c.id)} className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${cat === c.id ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[#151C28] text-slate-300 border-slate-800'}`}>{c.label}</button>
         ))}
+        <button type="button" onClick={() => setCat('owned')} className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${cat === 'owned' ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-[#151C28] text-slate-300 border-slate-800'}`}>✅ Mening</button>
       </div>
 
       {/* Mahsulotlar */}
@@ -121,16 +143,58 @@ export const ShopTab: React.FC = () => {
                 {has ? (
                   <button type="button" onClick={() => action(it)} className="mt-2 w-full py-2 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 active:scale-95">{ownedLabel(it)}</button>
                 ) : (
-                  <button type="button" onClick={() => { setErr(''); setConfirm(it); }} className={`mt-2 w-full py-2 rounded-xl text-xs font-extrabold active:scale-95 ${can ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-                    {can ? 'Sotib olish' : 'Tanga yetmaydi'}
-                  </button>
+                  <>
+                    {canTry(it) && <button type="button" onClick={() => startPreview(it)} className="mt-2 w-full py-1.5 rounded-xl text-[11px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/40 active:scale-95">👁 Sinab ko'rish</button>}
+                    <button type="button" onClick={() => { setErr(''); setConfirm(it); }} className={`mt-1.5 w-full py-2 rounded-xl text-xs font-extrabold active:scale-95 ${can ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                      {can ? 'Sotib olish' : 'Tanga yetmaydi'}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           );
         })}
       </div>
-      {!list.length && <p className="text-center text-xs text-slate-500">Bu bo'limda mahsulot yo'q</p>}
+      {!list.length && <p className="text-center text-xs text-slate-500">{cat === 'owned' ? "Hali hech narsa sotib olmagansiz. Do'kondan ramka, mavzu yoki unvon tanlang 🛍️" : "Bu bo'limda mahsulot yo'q"}</p>}
+
+      {/* Mavzuni sinab ko'rish paneli */}
+      {previewSkin && previewItem && previewItem.kind === 'skin' && (
+        <div className="vb-preview-bar fixed left-3 right-3 bottom-20 z-[115] max-w-md mx-auto rounded-2xl bg-[#151C28]/95 border border-sky-500/50 p-3 shadow-2xl keep-dark-not">
+          <div className="text-[11px] text-sky-300 font-bold mb-0.5">👁 Sinov rejimi · {previewItem.title}</div>
+          <p className="text-[11px] text-slate-400 mb-2">Mavzu vaqtincha yoqildi — profilingiz o'zgarmaydi.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={stopPreview} className="py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">Bekor qilish</button>
+            <button type="button" onClick={buyFromPreview} className="py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-extrabold active:scale-95">🪙 {priceOf(previewItem).toLocaleString()} · Sotib olish</button>
+          </div>
+        </div>
+      )}
+      {previewItem && ['aura', 'nameanim', 'banner'].includes(previewItem.kind) && (
+        <Modal onClose={stopPreview} title={`👁 ${previewItem.title}`}>
+          <div className="py-3">
+            {previewItem.kind === 'aura' && <div className="flex justify-around">{Object.entries(AURAS).map(([k, a]) => <div key={k} className="flex flex-col items-center gap-2"><CosAvatar src={profile.avatar} name={profile.name} size={52} cos={{ au: k }} /><span className="text-[10px] text-slate-400">{a.label}</span></div>)}</div>}
+            {previewItem.kind === 'nameanim' && <div className="space-y-3">{Object.entries(NAME_ANIMS).map(([k, l]) => <div key={k} className="flex items-center justify-between rounded-xl bg-[#0E1524] border border-slate-800 px-3 py-2.5"><CosName name={profile.name} className="text-sm font-extrabold text-white" cos={{ na: k }} /><span className="text-[10px] text-slate-400">{l}</span></div>)}</div>}
+            {previewItem.kind === 'banner' && <div className="space-y-2">{Object.entries(BANNERS).map(([k, b]) => <div key={k} className="vb-banner h-12 rounded-xl flex items-end px-3 pb-1 text-[11px] font-bold text-white" style={{ background: b.bg }}>{b.label}</div>)}</div>}
+            <p className="text-[11px] text-slate-400 text-center mt-3">Hali sotib olinmagan. Pastdagi tugma bilan olishingiz mumkin.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={stopPreview} className="py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold">Yopish</button>
+            <button type="button" onClick={buyFromPreview} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">🪙 {priceOf(previewItem).toLocaleString()} · Olish</button>
+          </div>
+        </Modal>
+      )}
+      {previewItem && previewItem.kind === 'frame' && (
+        <Modal onClose={stopPreview} title={`👁 ${previewItem.title}`}>
+          <div className="flex flex-col items-center gap-3 py-4">
+            <CosAvatar src={profile.avatar} name={profile.name} size={96} cos={{ fr: previewItem.value }} />
+            <CosName name={profile.name} className="text-sm font-extrabold text-white" cos={{ fr: previewItem.value }} />
+            <p className="text-[11px] text-slate-400 text-center">Ramka avataringizda shunday ko'rinadi. Hali sotib olinmagan.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={stopPreview} className="py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold">Yopish</button>
+            <button type="button" onClick={buyFromPreview} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">🪙 {priceOf(previewItem).toLocaleString()} · Olish</button>
+          </div>
+        </Modal>
+      )}
 
       {/* Tasdiqlash */}
       {confirm && (
@@ -138,6 +202,15 @@ export const ShopTab: React.FC = () => {
           <div className="rounded-2xl overflow-hidden border border-slate-700"><ItemArt it={confirm} h={110} /></div>
           <div className="mt-3 text-sm font-extrabold text-white">{confirm.title}</div>
           <p className="text-xs text-slate-400 mt-1">{confirm.desc}</p>
+          {confirm.kind === 'frame' && (
+            <div className="mt-3 flex items-center gap-3 p-3 rounded-xl bg-[#0E1524] border border-slate-800">
+              <CosAvatar src={profile.avatar} name={profile.name} size={56} cos={{ fr: confirm.value }} />
+              <div className="text-[11px] text-slate-300 leading-snug">Ramka sizning avataringizda shunday ko'rinadi.</div>
+            </div>
+          )}
+          {confirm.kind === 'skin' && (
+            <button type="button" onClick={() => startPreview(confirm)} className="mt-3 w-full py-2 rounded-xl text-xs font-bold bg-sky-500/15 text-sky-300 border border-sky-500/40 active:scale-95">👁 Ilovada sinab ko'rish (20 soniya)</button>
+          )}
           <div className="mt-3 rounded-xl bg-[#0E1524] border border-slate-800 p-3 text-xs space-y-1">
             <div className="flex justify-between"><span className="text-slate-400">Narxi</span><b className="text-amber-400">🪙 {priceOf(confirm).toLocaleString()}</b></div>
             <div className="flex justify-between"><span className="text-slate-400">Balansingiz</span><b className="text-white">🪙 {coins.toLocaleString()}</b></div>
@@ -161,9 +234,11 @@ export const ShopTab: React.FC = () => {
             <p className="text-xs text-slate-400 mt-1">{result.reveal ? 'Sovrin hisobingizga shu zahoti qo\'shildi.' : result.it.kind === 'manual' ? 'Buyurtmangiz adminga yuborildi.' : 'Mahsulot shu zahoti sizga berildi.'}</p>
           </div>
           <div className="grid gap-2">
-            {!result.reveal && !result.it.repeat && ['frame', 'skin', 'titles', 'nickcolor', 'glow', 'rankbadge', 'avatars'].includes(result.it.kind) && (
+            {!result.reveal && !result.it.repeat && ['frame', 'skin', 'titles', 'nickcolor', 'glow', 'rankbadge', 'avatars', 'aura', 'nameanim', 'banner'].includes(result.it.kind) && (
               <button type="button" onClick={() => { setResult(null); setEquipOpen(true); }} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">Jihozlash</button>
             )}
+            {!result.reveal && result.it.kind === 'grammar' && <button type="button" onClick={() => { setResult(null); setGrammarOpen(true); }} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">🎓 Grammar Master ni ochish</button>}
+            {!result.reveal && result.it.kind === 'spotlight' && <button type="button" onClick={() => { setResult(null); setActiveTab('leaderboard'); }} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">🔦 Reytingda ko'rish</button>}
             {!result.reveal && result.it.kind === 'books' && <button type="button" onClick={() => { setResult(null); setBooksOpen(true); }} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">Kitoblarni ochish</button>}
             {!result.reveal && result.it.kind === 'lofi' && <button type="button" onClick={() => { lofi.start(shopConf.lofi); setResult(null); }} className="py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-extrabold">🎧 Musiqani yoqish</button>}
             <button type="button" onClick={() => setResult(null)} className="py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold">Yopish</button>
@@ -191,16 +266,32 @@ export const ShopTab: React.FC = () => {
         </Modal>
       )}
 
+      {/* Grammar Master */}
+      {grammarOpen && (
+        <Modal onClose={() => setGrammarOpen(false)} title="🎓 Grammar Master">
+          <div className="space-y-2">
+            {parseGrammar(GRAMMAR_TEXT).map((g, i) => (
+              <div key={i} className="rounded-xl bg-[#0E1524] border border-slate-800 p-3">
+                <div className="text-sm font-extrabold text-white leading-tight">{i + 1}. {g.title}</div>
+                {g.formula && <div className="mt-1.5 inline-block px-2 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-bold text-indigo-200 font-mono">{g.formula}</div>}
+                <p className="text-[11.5px] text-slate-300 mt-1.5 leading-snug">{g.text}</p>
+                {g.ex && <p className="text-[11.5px] text-emerald-300 mt-1 italic leading-snug">{g.ex}</p>}
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+
       {/* Jihozlar */}
       {equipOpen && (
         <Modal onClose={() => setEquipOpen(false)} title="✨ Jihozlarim">
           <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl bg-[#0E1524] border border-slate-800">
-            <CosAvatar src={profile.avatar} name={profile.name} size={52} cos={{ fr: profile.frame, rb: profile.rankBadge }} />
+            <CosAvatar src={profile.avatar} name={profile.name} size={52} cos={{ fr: profile.frame, rb: profile.rankBadge, au: owns('aura') ? profile.aura : '' }} />
             <div className="min-w-0">
-              <CosName name={profile.name} showTitle className="text-sm font-extrabold text-white" cos={{ nf: profile.nameFx, nc: profile.nameColor, ns: profile.nameSym, ti: profile.title, vf: owns('verified'), rb: profile.rankBadge }} />
+              <CosName name={profile.name} showTitle className="text-sm font-extrabold text-white" cos={{ nf: profile.nameFx, nc: profile.nameColor, ns: profile.nameSym, ti: profile.title, vf: owns('verified'), rb: profile.rankBadge, na: owns('nameanim') ? profile.nameAnim : '' }} />
             </div>
           </div>
-          {!(Object.keys(FRAMES).some(f => owns(`frame_${f}`)) || Object.keys(SKINS).some(k => owns(`skin_${k}`)) || ['titles', 'nickcolor', 'glow', 'rankbadge', 'avatars', 'lofi'].some(owns) || (profile.own || []).some(x => x.startsWith('av:'))) && (
+          {!(Object.keys(FRAMES).some(f => owns(`frame_${f}`)) || Object.keys(SKINS).some(k => owns(`skin_${k}`)) || ['titles', 'nickcolor', 'glow', 'rankbadge', 'avatars', 'lofi', 'aura', 'nameanim', 'banner', 'grammar_pack'].some(owns) || (profile.own || []).some(x => x.startsWith('av:'))) && (
             <div className="text-center py-6 text-sm text-slate-400">Hozircha jihozingiz yo&apos;q.<br />Do&apos;kondan ramka, mavzu yoki unvon xarid qiling 🛍️</div>
           )}
           <EquipSection title="Ramka" show={Object.keys(FRAMES).some(f => owns(`frame_${f}`))}>
@@ -230,6 +321,20 @@ export const ShopTab: React.FC = () => {
             <Chip on={!profile.rankBadge} onClick={() => equip('rankBadge', '')}>Yo'q</Chip>
             <Chip on={profile.rankBadge === 'star'} onClick={() => equip('rankBadge', 'star')}>⭐ Yulduzcha</Chip>
             <Chip on={profile.rankBadge === 'crown'} onClick={() => equip('rankBadge', 'crown')}>👑 Toj</Chip>
+          </EquipSection>
+          <EquipSection title="Aura (avatar nuri)" show={owns('aura')}>
+            {Object.entries(AURAS).map(([k, a]) => <Chip key={k} on={profile.aura === k} onClick={() => equip('aura', k)}>{a.label}</Chip>)}
+            <Chip on={!profile.aura} onClick={() => equip('aura', '')}>Yo'q</Chip>
+          </EquipSection>
+          <EquipSection title="Animatsion nik" show={owns('nameanim')}>
+            <Chip on={!profile.nameAnim} onClick={() => equip('nameAnim', '')}>Yo'q</Chip>
+            {Object.entries(NAME_ANIMS).map(([k, l]) => <Chip key={k} on={profile.nameAnim === k} onClick={() => equip('nameAnim', k)}>{l}</Chip>)}
+          </EquipSection>
+          <EquipSection title="Profil banneri" show={owns('banner')}>
+            <Chip on={!profile.banner} onClick={() => equip('banner', '')}>Yo'q</Chip>
+            {Object.entries(BANNERS).map(([k, b]) => (
+              <button key={k} type="button" onClick={() => equip('banner', k)} className={`px-3 py-1.5 rounded-full text-xs font-bold border text-white ${profile.banner === k ? 'border-white' : 'border-transparent'}`} style={{ background: b.bg }}>{b.label}</button>
+            ))}
           </EquipSection>
           <EquipSection title="Noyob avatarlar" show={owns('avatars') || (profile.own || []).some(x => x.startsWith('av:'))}>
             {LTD_AVATARS.filter(a => owns('avatars') || owns(`av:${a.id}`)).map(a => (
