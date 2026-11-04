@@ -3,9 +3,10 @@ import { Lock, Crown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { BankWord } from '../types';
 import { GameDef } from '../data/games';
+import { TagBadge } from './TagBadge';
 import { Shell, QuestionView } from './Learn';
 import { makeQuestion, shuffle, checkTyped, QKind } from '../services/srs';
-import { speakEnglish, startListening, isRecognitionAvailable, compareSpeech } from '../services/speech';
+import { speakEnglish, prefetchEnglish, startListening, isRecognitionAvailable, compareSpeech } from '../services/speech';
 import { triggerHaptic } from '../services/telegram';
 import { sfx } from '../services/sound';
 import { LuckyWheel } from './LuckyWheel';
@@ -1340,6 +1341,10 @@ export const GameScreen: React.FC<{ id: string }> = ({ id }) => {
   const demo = learned.length < 4;
   const pool = demo ? bank.slice(0, Math.min(bank.length, 12)) : learned;
   const Game = RENDER[id];
+  // Ovozli o'yinlarda so'zlar oldindan yuklanadi (kechikmasligi uchun)
+  useEffect(() => {
+    if (['listen', 'dictation', 'pronounce', 'match', 'hangman'].includes(id)) prefetchEnglish(pool.slice(0, 10).map(w => w.en), 10);
+  }, [id, run]);
   if (!def || !Game || pool.length < 2) {
     return <Shell title="O'yin" onBack={closeOverlay}><p className="text-sm text-slate-400 text-center pt-10">Bu o&apos;yin uchun so&apos;zlar yetarli emas.</p></Shell>;
   }
@@ -1394,14 +1399,20 @@ export const GamesTab: React.FC = () => {
         {games.filter(g => g.enabled).map(g => {
           const locked = g.vip && !isPro;
           return (
-            <button key={g.id} type="button" onClick={() => { triggerHaptic('selection'); if (!openGame(g.id)) setShowWheel(true); }} className={`relative text-left p-4 rounded-2xl border transition-all active:scale-[0.97] ${locked ? 'bg-[#121822] border-slate-800' : 'bg-[#151C28] border-slate-800 hover:border-amber-500/40'}`}>
-              {g.vip && (
-                <span className="absolute top-2 right-2 inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded">{locked ? <Lock className="w-2.5 h-2.5" /> : <Crown className="w-2.5 h-2.5" />} VIP</span>
+            <button key={g.id} type="button" onClick={() => { triggerHaptic('selection'); if (!openGame(g.id)) setShowWheel(true); }} className={`relative text-left rounded-2xl border transition-all active:scale-[0.97] overflow-hidden ${g.img ? '' : 'p-4'} ${locked ? 'bg-[#121822] border-slate-800' : 'bg-[#151C28] border-slate-800 hover:border-amber-500/40'}`}>
+              {g.img && (
+                <img src={g.img} alt="" loading="lazy" referrerPolicy="no-referrer" className={`w-full h-24 object-cover ${locked ? 'opacity-60' : ''}`} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
               )}
-              <div className="text-3xl">{g.icon}</div>
-              <div className="text-sm font-bold text-white mt-2 leading-tight">{g.title}</div>
-              <div className="text-[11px] text-slate-400 mt-1 leading-snug">{g.desc}</div>
-              <div className="text-[11px] text-amber-400 font-semibold mt-2">+{g.xp} XP{g.kind === 'memory' ? ' · 🧠 xotira' : ''}</div>
+              <TagBadge data={g} className="absolute top-2 left-2 z-[1]" />
+              {g.vip && (
+                <span className="absolute top-2 right-2 z-[1] inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded backdrop-blur-sm">{locked ? <Lock className="w-2.5 h-2.5" /> : <Crown className="w-2.5 h-2.5" />} VIP</span>
+              )}
+              <div className={g.img ? 'p-3' : ''}>
+                {g.img ? null : <div className={`text-3xl ${g.badge ? 'mt-3' : ''}`}>{g.icon}</div>}
+                <div className={`text-sm font-bold text-white leading-tight ${g.img ? '' : 'mt-2'}`}>{g.img ? <span className="mr-1">{g.icon}</span> : null}{g.title}</div>
+                <div className="text-[11px] text-slate-400 mt-1 leading-snug">{g.desc}</div>
+                <div className="text-[11px] text-amber-400 font-semibold mt-2">+{g.xp} XP{g.kind === 'memory' ? ' · 🧠 xotira' : ''}</div>
+              </div>
             </button>
           );
         })}

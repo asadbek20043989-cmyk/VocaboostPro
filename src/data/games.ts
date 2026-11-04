@@ -1,3 +1,5 @@
+import { readBadge } from './badges';
+
 export interface GameDef {
   id: string;
   title: string;
@@ -9,6 +11,10 @@ export interface GameDef {
   vip: boolean;
   xp: number; // kuniga bir marta, muvaffaqiyatli tugatilsa
   settings: Record<string, number>;
+  img?: string; // admin qo'ygan rasm havolasi (bo'sh bo'lsa — belgi)
+  badge?: string; // New / Hot... nishoni
+  badgeText?: string;
+  badgeUntil?: number;
 }
 
 // Admin paneldan yoqish/o'chirish va sozlash mumkin (config/games)
@@ -53,6 +59,8 @@ export function mergeGames(cfg: any): GameDef[] {
       vip: o.vip === undefined ? g.vip : !!o.vip,
       xp: Number.isFinite(Number(o.xp)) ? Math.max(0, Number(o.xp)) : g.xp,
       title: typeof o.title === 'string' && o.title ? o.title.slice(0, 40) : g.title,
+      img: typeof o.img === 'string' && /^https?:\/\//i.test(o.img.trim()) ? o.img.trim().slice(0, 500) : '',
+      ...readBadge(o),
       settings,
     };
   }).sort((a, b) => a.order - b.order);

@@ -1,6 +1,7 @@
 // Do'kon yordamchilari: katalog (standart + admin sozlamalari), narx, taklif havolasi, Lo-Fi pleer.
 import { DEFAULT_ITEMS, ShopItem, ShopCat, ShopKind } from '../data/shopDefaults';
 import type { UserProfile } from '../types';
+import { readBadge } from '../data/badges';
 
 const toArr = (v: any): any[] => (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []);
 const num = (v: any, d: number) => (Number.isFinite(Number(v)) && v !== '' && v !== null && v !== undefined ? Number(v) : d);
@@ -49,6 +50,7 @@ export function buildCatalog(raw: any): ShopItem[] {
       cat: (['boosters', 'cosmetics', 'learning', 'social', 'vip', 'rewards'].includes(o.cat) ? o.cat : d.cat) as ShopCat,
       dayLimit: Math.max(0, Math.round(num(o.dayLimit, 0))),
       order: num(o.order, i),
+      ...readBadge(o),
     });
   });
   Object.entries(ov).forEach(([id, o]: [string, any]) => {
@@ -58,6 +60,7 @@ export function buildCatalog(raw: any): ShopItem[] {
       icon: String(o.icon || '🎁'), grad: ['#F472B6', '#9333EA'], price: Math.max(0, Math.round(num(o.price, 100))), kind: 'manual' as ShopKind, value: '',
       repeat: true, img: String(o.img || ''), discount: Math.max(0, Math.min(90, Math.round(num(o.discount, 0)))), active: o.active !== false,
       order: num(o.order, 500), dayLimit: Math.max(0, Math.round(num(o.dayLimit, 0))), custom: true,
+      ...readBadge(o),
     });
   });
   return list.filter(x => x.active).sort((a, b) => a.order - b.order);

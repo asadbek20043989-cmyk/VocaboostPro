@@ -15,9 +15,11 @@ import { handler as shop } from '../../server/functions/shop.mjs';
 import { handler as streakWarn } from '../../server/functions/streak-warn.mjs';
 import { handler as tgWebhook } from '../../server/functions/tg-webhook.mjs';
 import { handler as tgavatar } from '../../server/functions/tgavatar.mjs';
+import { handler as tgemoji } from '../../server/functions/tgemoji.mjs';
+import { handler as tts } from '../../server/functions/tts.mjs';
 
 const HANDLERS = {
-  admin, ai, bot, cert, db, grants, inbox, shop, tgavatar,
+  admin, ai, bot, cert, db, grants, inbox, shop, tgavatar, tgemoji, tts,
   'tg-webhook': tgWebhook,
   'broadcast-background': broadcast,
   remind,

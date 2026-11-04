@@ -51,6 +51,18 @@
   .scroll{max-height:520px;overflow:auto}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:50;overflow:auto;padding:16px}.modal .in{max-width:980px;margin:0 auto}.modal canvas{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#050A14}
   .pv{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);margin-top:10px;background:#050A14}
+  .emoGrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:260px;overflow:auto}
+  .emoT{position:relative;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:#0E1524;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+  .emoT:hover{border-color:var(--gold)}.emoT img{width:30px;height:30px;object-fit:contain}
+  .emoT .x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--bad);color:#fff;font-size:11px;line-height:18px;text-align:center;display:none;padding:0}
+  .emoT:hover .x{display:block}
+  .emoBtn{margin:6px 0 4px;padding:6px 10px;font-size:12px}
+  #emoPop{position:fixed;z-index:50;width:min(360px,94vw);max-height:300px;overflow:auto;background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:10px;box-shadow:0 12px 40px #000a;display:none}
+  .sty{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .tgbtn{display:block;text-align:center;padding:9px;border-radius:9px;font-weight:700;font-size:13px;color:#fff;background:#2b3a4d;border:0}
+  .tgbtn.primary{background:#3390ec}.tgbtn.success{background:#2faa4a}.tgbtn.danger{background:#e5484d}
+  .bdg{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:800;background:#334155;color:#fff}
+  .gimg{width:100%;height:70px;object-fit:cover;border-radius:10px;margin-top:6px;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -207,6 +219,8 @@
       <div class="card"><h2>O'yinlarni boshqarish</h2>
         <p class="small">Yoqing/o'chiring, tartibini o'zgartiring, VIP qiling (faqat baraban orqali VIP yutganlar o'ynay oladi) va sozlamalarini kiriting. Yangi turdagi o'yin qo'shish uchun kod kerak, mavjud 10 ta o'yin esa to'liq sizning qo'lingizda.</p>
         <div id="gList"></div>
+        <p class="small">🖼 Har bir o'yinga <b>rasm havolasi</b> qo'ysangiz (do'kondagi kabi), o'yin kartasida rasm ko'rinadi; bo'sh qolsa — belgi (emoji). 🏷 <b>Nishon</b> (New, Hot…) ni istalgan payt «— nishonsiz —» qilib olib tashlash mumkin.</p>
+        <div class="row"><button class="sec" id="gClearBadges">🧹 Barcha nishonlarni olib tashlash</button></div>
         <div class="row"><button id="gSave">Saqlash</button><button class="sec" id="gReset">Standart holatga qaytarish</button></div>
       </div>
     </section>
@@ -250,19 +264,39 @@
 
     <section id="t-remind" class="hide">
       <div class="card">
+        <h2>💎 Premium emojilar kutubxonasi</h2>
+        <p class="small">Xabarlar (/start, reklama, hammaga yuborish, eslatma) va tugmalarga <b>premium (animatsiyali) emoji</b> qo'shish uchun. Premium emojini ko'rmaydigan foydalanuvchilarga oddiy emoji ko'rinadi. Qo'shish usullari:<br>
+        1) <b>To'plam havolasi</b> bilan — butun to'plam birdan qo'shiladi (Telegramda emoji to'plamini oching → «Havolani nusxalash»).<br>
+        2) <b>Botga premium emoji yuboring</b> — bot uning ID raqamini qaytaradi (siz admin bo'lsangiz, kutubxonaga avtomatik qo'shiladi).<br>
+        Keyin har bir matn maydonidagi <b>💎 Premium emoji</b> tugmasini bosib, kerakligini tanlang.</p>
+        <div class="row"><input id="emo_pack" placeholder="https://t.me/addemoji/EmojiPaketNomi" style="flex:1;min-width:230px" /><button id="emoImport">📦 To'plamni qo'shish</button></div>
+        <div class="row"><input id="emo_id" placeholder="Emoji ID (masalan 5368324170671202286)" style="flex:1;min-width:230px" /><input id="emo_ch" placeholder="😀" maxlength="4" style="width:80px" /><button class="sec" id="emoAdd">➕ ID bilan qo'shish</button><button class="sec" id="emoReload">🔄</button></div>
+        <div class="small" id="emoCount" style="margin-top:8px"></div>
+        <div class="emoGrid" id="emoGrid"></div>
+      </div>
+      <div class="card">
         <h2>🤖 Botning /start xabari</h2>
         <p class="small">Foydalanuvchi botga <b>/start</b> bosganda shu xabar va «🚀 VocaBoostni ochish» tugmasi avtomatik yuboriladi (tugma ilovani to'g'ridan-to'g'ri ochadi). <code>{name}</code> o'rniga ismi qo'yiladi. Qayta deploy kerak emas.</p>
         <p class="small" id="bsHook">Tekshirilmoqda…</p>
         <label class="chk"><input type="checkbox" id="bs_on" checked /> /start bosilganda xabar yuborish</label>
-        <label>Xabar matni</label><textarea id="bs_text" style="min-height:190px"></textarea>
+        <label>Xabar matni (HTML: &lt;b&gt;, &lt;i&gt;, &lt;a href&gt; va 💎 premium emoji)</label><textarea id="bs_text" class="emo" style="min-height:190px"></textarea>
         <label>1-tugma yozuvi (Mini App ilovani ochadi)</label><input id="bs_btn" maxlength="40" placeholder="🚀 VocaBoostni ochish" />
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div class="sty"><div><label>1-tugma rangi</label><select id="bs_btn1_style"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>1-tugma premium ikonka ID (ixtiyoriy)</label><input id="bs_btn1_icon" data-emo="id" placeholder="emoji ID" /></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
           <div><label>2-tugma yozuvi (Ixtiyoriy)</label><input id="bs_btn2_text" maxlength="40" placeholder="📢 Rasmiy kanal" /></div>
           <div><label>2-tugma URL havolasi (Telegram kanal/guruh)</label><input id="bs_btn2_url" placeholder="https://t.me/kanal_nomi" /></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div class="sty"><div><label>2-tugma rangi</label><select id="bs_btn2_style"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>2-tugma premium ikonka ID</label><input id="bs_btn2_icon" data-emo="id" placeholder="emoji ID" /></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
           <div><label>3-tugma yozuvi (Ixtiyoriy)</label><input id="bs_btn3_text" maxlength="40" placeholder="🌐 Veb-sayt / Bot" /></div>
           <div><label>3-tugma URL havolasi (Sayt havolasi)</label><input id="bs_btn3_url" placeholder="https://example.com" /></div>
+        </div>
+        <div class="sty"><div><label>3-tugma rangi</label><select id="bs_btn3_style"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>3-tugma premium ikonka ID</label><input id="bs_btn3_icon" data-emo="id" placeholder="emoji ID" /></div></div>
+        <p class="small">Telegram tugma ranglari: 🟦 ko'k, 🟩 yashil, 🟥 qizil (boshqa rang tanlab bo'lmaydi). Eski Telegram ilovalarida tugma oddiy ko'rinishi mumkin — bu xatolik emas.</p>
+        <h3 style="margin:14px 0 6px;font-size:14px">📱 Telegramdagi ko'rinishi</h3>
+        <div style="max-width:380px;background:#18222d;border:1px solid #283747;border-radius:18px;padding:12px">
+          <div id="bs_pv_text" style="color:#fff;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word"></div>
+          <div id="bs_pv_btns" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
         </div>
         <div class="row" style="margin-top:10px"><button id="bsSave">Saqlash</button><button class="sec" id="bsHookBtn">Botni ulash (webhook)</button><input id="bsTo" placeholder="Sinov uchun Telegram ID (raqam)" style="max-width:220px" /><button class="sec" id="bsTest">Sinov xabari</button></div>
       </div>
@@ -272,7 +306,7 @@
         <label class="chk"><input type="checkbox" id="r_on" /> Har kuni avtomatik yuborish</label>
         <div class="row"><div style="flex:1;min-width:160px"><label>Yuborish vaqti (Toshkent, soat)</label><select id="r_hour"></select></div></div>
         <label>Eslatma matnlari — har qator alohida matn. Kunlar bo'yicha navbatma-navbat yuboriladi. <code>{name}</code> o'rniga foydalanuvchining ismi qo'yiladi</label>
-        <textarea id="r_texts" style="min-height:140px" placeholder="{name}, bugungi so'zlaringizni takrorlash vaqti keldi! 🚀&#10;Bugun 5 daqiqa ajrating — yangi so'zlar sizni kutmoqda 📚"></textarea>
+        <textarea id="r_texts" class="emo" style="min-height:140px" placeholder="{name}, bugungi so'zlaringizni takrorlash vaqti keldi! 🚀&#10;Bugun 5 daqiqa ajrating — yangi so'zlar sizni kutmoqda 📚"></textarea>
         <label class="chk"><input type="checkbox" id="r_skip" checked /> Bugun ilovaga kirgan foydalanuvchilarga yubormaslik</label>
         <div class="row" style="margin-top:10px"><button id="rSave">Saqlash</button></div>
         <p class="small">Eslatmani o'chirgan foydalanuvchilarga (Sozlamalarda yoki /stop) yuborilmaydi.</p>
@@ -280,7 +314,7 @@
       <div class="card">
         <h2>📣 Hozir hammaga yuborish</h2>
         <p class="small">Botga kirgan <b>barcha</b> foydalanuvchilarga bir vaqtda (soniyasiga ~20 ta) yuboriladi. Yuborilgach qaytarib bo'lmaydi.</p>
-        <textarea id="b_text" placeholder="Xabar matni... ({name} — ism)"></textarea>
+        <textarea id="b_text" class="emo" placeholder="Xabar matni... ({name} — ism)"></textarea>
         <div class="row" style="margin-top:10px"><button id="bSend" class="bad">Hammaga yuborish 📣</button><button class="sec" id="bRefresh">Holatni yangilash</button></div>
         <div id="bStatus" class="small" style="margin-top:10px"></div>
         <div class="row" style="margin-top:14px"><input id="t_id" placeholder="Sinov uchun Telegram ID (masalan 123456789)" style="max-width:300px" /><button class="sec" id="tSend">Sinov xabari yuborish</button></div>
@@ -321,7 +355,7 @@
         </div>
 
         <label>Reklama matni * (HTML teglari qo'llab-quvvatlanadi: &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;code&gt;, &lt;a href="..."&gt;)</label>
-        <textarea id="ad_text" style="min-height:160px" placeholder="Assalomu alaykum, {name}! &#10;&#10;<b>Katta yangilik!</b> Bizning yangi kursimizga qabul boshlandi...&#10;&#10;Hoziroq ro'yxatdan o'ting!"></textarea>
+        <textarea id="ad_text" class="emo" style="min-height:160px" placeholder="Assalomu alaykum, {name}! &#10;&#10;<b>Katta yangilik!</b> Bizning yangi kursimizga qabul boshlandi...&#10;&#10;Hoziroq ro'yxatdan o'ting!"></textarea>
 
         <label>Rasm URL manzili (ixtiyoriy — rasm ostida yozuv qilib yuborish uchun)</label>
         <input id="ad_photo" placeholder="https://example.com/banner.jpg yoki https://telegra.ph/file/..." />
@@ -333,14 +367,17 @@
           <div><label>1-tugma matni</label><input id="ad_b1_t" placeholder="🚀 Kanalga qo'shilish" /></div>
           <div><label>1-tugma URL havolasi</label><input id="ad_b1_u" placeholder="https://t.me/kanal_nomi" /></div>
         </div>
+        <div class="sty"><div><label>1-tugma rangi</label><select id="ad_b1_s"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>1-tugma premium ikonka ID (ixtiyoriy)</label><input id="ad_b1_i" data-emo="id" placeholder="emoji ID" /></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
           <div><label>2-tugma matni</label><input id="ad_b2_t" placeholder="🌐 Saytimiz" /></div>
           <div><label>2-tugma URL havolasi</label><input id="ad_b2_u" placeholder="https://example.com" /></div>
         </div>
+        <div class="sty"><div><label>2-tugma rangi</label><select id="ad_b2_s"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>2-tugma premium ikonka ID (ixtiyoriy)</label><input id="ad_b2_i" data-emo="id" placeholder="emoji ID" /></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
           <div><label>3-tugma matni</label><input id="ad_b3_t" placeholder="💬 Bog'lanish" /></div>
           <div><label>3-tugma URL havolasi</label><input id="ad_b3_u" placeholder="https://t.me/menejer" /></div>
         </div>
+        <div class="sty"><div><label>3-tugma rangi</label><select id="ad_b3_s"><option value="">⬜ Oddiy (kulrang)</option><option value="primary">🟦 Ko'k</option><option value="success">🟩 Yashil</option><option value="danger">🟥 Qizil</option></select></div><div><label>3-tugma premium ikonka ID (ixtiyoriy)</label><input id="ad_b3_i" data-emo="id" placeholder="emoji ID" /></div></div>
 
         <!-- Live Telegram Preview Box -->
         <h3 style="margin:20px 0 6px;font-size:14px">📱 Xabarning Telegramdagi ko'rinishi (Live Preview):</h3>
@@ -453,8 +490,9 @@
       <div class="card">
         <h2>📦 Mahsulotlar <span class="small" id="shCount"></span></h2>
         <p class="small">Narx, chegirma, nom, tavsif, rasm havolasi, yoqish/o'chirish. «Rasm» bo'sh bo'lsa mahsulot rangli belgi bilan ko'rinadi. <b>Saqlash</b> bosilganda hammasi foydalanuvchilarga bir necha soniyada yetadi.</p>
-        <div class="scroll" style="max-height:640px"><table><thead><tr><th>Mahsulot</th><th>Narx</th><th>Chegirma %</th><th>Kuniga</th><th>Rasm havolasi</th><th>Faol</th><th></th></tr></thead><tbody id="shBody"></tbody></table></div>
-        <div class="row" style="margin-top:10px"><button class="sec" id="shAdd">➕ Yangi mahsulot (qo'lda beriladigan)</button></div>
+        <div class="scroll" style="max-height:640px"><table><thead><tr><th>Mahsulot</th><th>Narx</th><th>Chegirma %</th><th>Kuniga</th><th>Rasm havolasi</th><th>Nishon (New/Hot…)</th><th>Faol</th><th></th></tr></thead><tbody id="shBody"></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button class="sec" id="shAdd">➕ Yangi mahsulot (qo'lda beriladigan)</button><button class="sec" id="shClearBadges">🧹 Barcha nishonlarni olib tashlash</button></div>
+        <p class="small">🏷 <b>Nishon</b> — mahsulot rasmining burchagida chiqadi (New, Hot, Sale…). Olib tashlash: «— nishonsiz —» ni tanlab <b>Saqlash</b> bosing. «Gacha» — shu sanadan keyin nishon o'zi yo'qoladi (ixtiyoriy).</p>
       </div>
       <div class="card">
         <h2>🧠 Premium so'zlar to'plami</h2>
@@ -592,7 +630,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
+function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -705,13 +743,17 @@ function renderGames() {
       <div><label>Tartib</label><input class="g_ord" type="number" value="${c.order ?? ord}"></div>
       <div><label>XP (kuniga 1 marta)</label><input class="g_xp" type="number" min="0" value="${c.xp ?? xp}"></div>
       <div><label>Nomi</label><input class="g_title" value="${esc(c.title || title)}"></div>
+      <div style="grid-column:1/-1"><label>🖼 Rasm havolasi (ixtiyoriy)</label><input class="g_img" value="${esc(c.img || '')}" placeholder="https://..." oninput="gImgPrev(this)">${c.img ? `<img class="gimg" src="${esc(c.img)}" alt="" onerror="this.style.display='none'">` : ''}</div>
+      <div><label>🏷 Nishon</label><select class="g_badge">${BADGE_OPTS.replace('value="' + (c.badge || '') + '"', 'value="' + (c.badge || '') + '" selected')}</select></div>
+      <div><label>Nishon yozuvi (ixtiyoriy)</label><input class="g_btext" maxlength="14" value="${esc(c.badgeText || '')}" placeholder="masalan: YANGI"></div>
+      <div><label>Nishon gacha (ixtiyoriy)</label><input class="g_buntil" type="datetime-local" value="${untilStr(c.badgeUntil)}"></div>
       ${Object.keys(st).map(k => `<div><label>${SET_LBL[k]||k}</label><input class="g_s" data-k="${k}" type="number" value="${s[k]}"></div>`).join('')}
     </div></div>`; }).join('');
 }
 $('gSave').onclick = guard(async () => {
   const value = {};
   document.querySelectorAll('#gList .gcard').forEach(el => { const s = {}; el.querySelectorAll('.g_s').forEach(i => s[i.dataset.k] = +i.value);
-    value[el.dataset.id] = { enabled: el.querySelector('.g_en').checked, vip: el.querySelector('.g_vip').checked, order: +el.querySelector('.g_ord').value, xp: +el.querySelector('.g_xp').value, title: el.querySelector('.g_title').value, settings: s }; });
+    value[el.dataset.id] = { enabled: el.querySelector('.g_en').checked, vip: el.querySelector('.g_vip').checked, order: +el.querySelector('.g_ord').value, xp: +el.querySelector('.g_xp').value, title: el.querySelector('.g_title').value, img: el.querySelector('.g_img').value.trim(), badge: el.querySelector('.g_badge').value, badgeText: el.querySelector('.g_badge').value ? el.querySelector('.g_btext').value.trim().slice(0, 14) : '', badgeUntil: el.querySelector('.g_badge').value ? untilMs(el.querySelector('.g_buntil').value) : 0, settings: s }; });
   await api('setConfig', { key: 'games', value }); flash("O'yinlar saqlandi ✅"); await load();
 });
 $('gReset').onclick = guard(async () => { if (!confirm("Barcha o'yin sozlamalari standart holatga qaytarilsinmi?")) return; await api('setConfig', { key: 'games', value: { _reset: true } }); flash('Qaytarildi ✅'); await load(); });
@@ -969,6 +1011,8 @@ async function loadBotStart(force) {
     $('bs_btn2_url').value = r.btn2Url || '';
     $('bs_btn3_text').value = r.btn3Text || '';
     $('bs_btn3_url').value = r.btn3Url || '';
+    [1,2,3].forEach(n => { $('bs_btn'+n+'_style').value = r['btn'+n+'Style'] || ''; $('bs_btn'+n+'_icon').value = r['btn'+n+'Icon'] || ''; });
+    updateBsPreview();
     $('bs_on').checked = r.enabled;
     let msg = '';
     if (!r.hasToken) msg = '⚠️ BOT_TOKEN env o\'zgaruvchisi kiritilmagan.';
@@ -986,6 +1030,8 @@ $('bsSave').onclick = guard(async () => {
     btn2Url: $('bs_btn2_url').value,
     btn3Text: $('bs_btn3_text').value,
     btn3Url: $('bs_btn3_url').value,
+    btn1Style: $('bs_btn1_style').value, btn2Style: $('bs_btn2_style').value, btn3Style: $('bs_btn3_style').value,
+    btn1Icon: $('bs_btn1_icon').value, btn2Icon: $('bs_btn2_icon').value, btn3Icon: $('bs_btn3_icon').value,
     enabled: $('bs_on').checked
   });
   flash('Saqlandi ✅');
@@ -1195,20 +1241,21 @@ function updateAdPreview() {
   const photo = $('ad_photo').value.trim();
   $('ad_pv_img').style.display = photo ? 'block' : 'none';
   if (photo) $('ad_pv_img_el').src = photo;
-  $('ad_pv_text').innerHTML = txt.replace(/\{name\}/g, "Do'st") || '<span style="color:#64748b">Xabar matni...</span>';
+  $('ad_pv_text').innerHTML = pvHtml(txt.replace(/\{name\}/g, "Do'st")) || '<span style="color:#64748b">Xabar matni...</span>';
 
   const btns = [
-    { t: $('ad_b1_t').value.trim(), u: $('ad_b1_u').value.trim() },
-    { t: $('ad_b2_t').value.trim(), u: $('ad_b2_u').value.trim() },
-    { t: $('ad_b3_t').value.trim(), u: $('ad_b3_u').value.trim() },
+    { t: $('ad_b1_t').value.trim(), u: $('ad_b1_u').value.trim(), s: $('ad_b1_s').value },
+    { t: $('ad_b2_t').value.trim(), u: $('ad_b2_u').value.trim(), s: $('ad_b2_s').value },
+    { t: $('ad_b3_t').value.trim(), u: $('ad_b3_u').value.trim(), s: $('ad_b3_s').value },
   ].filter(b => b.t && b.u);
 
-  $('ad_pv_btns').innerHTML = btns.map(b => `<a href="${esc(b.u)}" target="_blank" style="display:block;background:#2b5278;color:#fff;text-align:center;padding:8px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">${esc(b.t)}</a>`).join('');
+  $('ad_pv_btns').innerHTML = btns.map(b => `<a href="${esc(b.u)}" target="_blank" class="tgbtn ${esc(b.s || '')}" style="text-decoration:none">${esc(b.t)}</a>`).join('');
 }
 
 ['ad_text','ad_photo','ad_b1_t','ad_b1_u','ad_b2_t','ad_b2_u','ad_b3_t','ad_b3_u'].forEach(id => {
   $(id).oninput = updateAdPreview;
 });
+['ad_b1_s','ad_b2_s','ad_b3_s'].forEach(id => { $(id).onchange = updateAdPreview; });
 
 $('btnFmtB').onclick = () => adFormat('b');
 $('btnFmtI').onclick = () => adFormat('i');
@@ -1244,9 +1291,9 @@ function getAdPayload() {
   const text = $('ad_text').value.trim();
   const photoUrl = $('ad_photo').value.trim();
   const buttons = [
-    { text: $('ad_b1_t').value.trim(), url: $('ad_b1_u').value.trim() },
-    { text: $('ad_b2_t').value.trim(), url: $('ad_b2_u').value.trim() },
-    { text: $('ad_b3_t').value.trim(), url: $('ad_b3_u').value.trim() },
+    { text: $('ad_b1_t').value.trim(), url: $('ad_b1_u').value.trim(), style: $('ad_b1_s').value, icon: $('ad_b1_i').value.trim() },
+    { text: $('ad_b2_t').value.trim(), url: $('ad_b2_u').value.trim(), style: $('ad_b2_s').value, icon: $('ad_b2_i').value.trim() },
+    { text: $('ad_b3_t').value.trim(), url: $('ad_b3_u').value.trim(), style: $('ad_b3_s').value, icon: $('ad_b3_i').value.trim() },
   ].filter(b => b.text && b.url);
   return { text, photoUrl: photoUrl || null, buttons };
 }
@@ -1316,23 +1363,23 @@ function renderShop() {
   $('sh_s7').value = c.streak7 ?? 30; $('sh_s30').value = c.streak30 ?? 150; $('sh_q').value = c.allQuests ?? 15; $('sh_chat').value = c.adminChat || '';
   $('sh_prem').value = c.premiumText || ''; $('sh_books').value = c.booksText || ''; $('sh_lofi').value = toLines(c.lofi);
   shItems = {}; const ov = c.items || {};
-  SHOP_DEF.forEach(([id,title,price]) => { const o = ov[id] || {}; shItems[id] = { title: o.title || title, price: o.price ?? price, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, _def: true }; });
-  Object.entries(ov).forEach(([id,o]) => { if (o && o.custom && !shItems[id]) shItems[id] = { title: o.title || '', price: o.price ?? 100, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, desc: o.desc || '', icon: o.icon || '🎁', custom: true }; });
+  SHOP_DEF.forEach(([id,title,price]) => { const o = ov[id] || {}; shItems[id] = { title: o.title || title, price: o.price ?? price, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, badge: o.badge || '', badgeText: o.badgeText || '', badgeUntil: o.badgeUntil || 0, _def: true }; });
+  Object.entries(ov).forEach(([id,o]) => { if (o && o.custom && !shItems[id]) shItems[id] = { title: o.title || '', price: o.price ?? 100, discount: o.discount || 0, active: o.active !== false, img: o.img || '', dayLimit: o.dayLimit || 0, badge: o.badge || '', badgeText: o.badgeText || '', badgeUntil: o.badgeUntil || 0, desc: o.desc || '', icon: o.icon || '🎁', custom: true }; });
   drawShop();
   $('sg_item').innerHTML = Object.entries(shItems).map(([id,x]) => `<option value="${esc(id)}">${esc(x.title)}</option>`).join('');
 }
 function drawShop() {
   $('shCount').textContent = `(${Object.keys(shItems).length})`;
-  $('shBody').innerHTML = Object.entries(shItems).map(([id,x]) => `<tr data-id="${esc(id)}"><td><input data-f="title" value="${esc(x.title)}" style="min-width:150px" />${x.custom ? `<input data-f="desc" value="${esc(x.desc||'')}" placeholder="Tavsif" style="margin-top:4px" /><input data-f="icon" value="${esc(x.icon||'🎁')}" style="width:60px;margin-top:4px" />` : ''}<div class="small">${esc(id)}</div></td><td><input data-f="price" type="number" min="0" value="${+x.price}" style="width:90px" /></td><td><input data-f="discount" type="number" min="0" max="90" value="${+x.discount}" style="width:70px" /></td><td><input data-f="dayLimit" type="number" min="0" value="${+x.dayLimit}" style="width:60px" /></td><td><input data-f="img" value="${esc(x.img)}" placeholder="https://..." style="min-width:160px" /></td><td><input data-f="active" type="checkbox" ${x.active ? 'checked' : ''} style="width:auto" /></td><td>${x.custom ? '<button class="bad" data-del="1">×</button>' : ''}</td></tr>`).join('');
+  $('shBody').innerHTML = Object.entries(shItems).map(([id,x]) => `<tr data-id="${esc(id)}"><td><input data-f="title" value="${esc(x.title)}" style="min-width:150px" />${x.custom ? `<input data-f="desc" value="${esc(x.desc||'')}" placeholder="Tavsif" style="margin-top:4px" /><input data-f="icon" value="${esc(x.icon||'🎁')}" style="width:60px;margin-top:4px" />` : ''}<div class="small">${esc(id)}</div></td><td><input data-f="price" type="number" min="0" value="${+x.price}" style="width:90px" /></td><td><input data-f="discount" type="number" min="0" max="90" value="${+x.discount}" style="width:70px" /></td><td><input data-f="dayLimit" type="number" min="0" value="${+x.dayLimit}" style="width:60px" /></td><td><input data-f="img" value="${esc(x.img)}" placeholder="https://..." style="min-width:160px" /></td><td>${badgeCell(x)}</td><td><input data-f="active" type="checkbox" ${x.active ? 'checked' : ''} style="width:auto" /></td><td>${x.custom ? '<button class="bad" data-del="1">×</button>' : ''}</td></tr>`).join('');
   $('shBody').querySelectorAll('tr').forEach(tr => {
-    tr.querySelectorAll('[data-f]').forEach(i => i.oninput = i.onchange = () => { const it = shItems[tr.dataset.id]; const f = i.dataset.f; it[f] = i.type === 'checkbox' ? i.checked : (['price','discount','dayLimit'].includes(f) ? +i.value : i.value); });
+    tr.querySelectorAll('[data-f]').forEach(i => i.oninput = i.onchange = () => { const it = shItems[tr.dataset.id]; const f = i.dataset.f; it[f] = i.type === 'checkbox' ? i.checked : (['price','discount','dayLimit'].includes(f) ? +i.value : f === 'badgeUntil' ? untilMs(i.value) : i.value); });
     const d = tr.querySelector('[data-del]'); if (d) d.onclick = () => { delete shItems[tr.dataset.id]; drawShop(); };
   });
 }
-$('shAdd').onclick = () => { const id = 'c' + Date.now().toString(36); shItems[id] = { title: 'Yangi sovg\'a', price: 100, discount: 0, active: true, img: '', dayLimit: 0, desc: '', icon: '🎁', custom: true }; drawShop(); };
+$('shAdd').onclick = () => { const id = 'c' + Date.now().toString(36); shItems[id] = { title: 'Yangi sovg\'a', price: 100, discount: 0, active: true, img: '', dayLimit: 0, badge: '', badgeText: '', badgeUntil: 0, desc: '', icon: '🎁', custom: true }; drawShop(); };
 $('shSave').onclick = guard(async () => {
   const items = {};
-  Object.entries(shItems).forEach(([id,x]) => { const o = { title: x.title, price: Math.max(0, Math.round(+x.price || 0)), discount: Math.max(0, Math.min(90, Math.round(+x.discount || 0))), active: !!x.active, img: x.img || '', dayLimit: Math.max(0, Math.round(+x.dayLimit || 0)) }; if (x.custom) { o.custom = true; o.desc = x.desc || ''; o.icon = x.icon || '🎁'; } items[id] = o; });
+  Object.entries(shItems).forEach(([id,x]) => { const o = { title: x.title, price: Math.max(0, Math.round(+x.price || 0)), discount: Math.max(0, Math.min(90, Math.round(+x.discount || 0))), active: !!x.active, img: x.img || '', dayLimit: Math.max(0, Math.round(+x.dayLimit || 0)), badge: x.badge || '', badgeText: x.badge ? (x.badgeText || '').slice(0, 14) : '', badgeUntil: x.badge ? (+x.badgeUntil || 0) : 0 }; if (x.custom) { o.custom = true; o.desc = x.desc || ''; o.icon = x.icon || '🎁'; } items[id] = o; });
   const lofi = $('sh_lofi').value.split('\n').map(l => l.split('|').map(t => t.trim())).filter(c => c.length >= 2 && /^https?:\/\//.test(c[1])).map(c => ({ title: c[0] || 'Lo-Fi', url: c[1] }));
   const value = { enabled: $('sh_on').value === '1', coinPerXp: +$('sh_rate').value, startCoins: +$('sh_start').value, streak7: +$('sh_s7').value, streak30: +$('sh_s30').value, allQuests: +$('sh_q').value, adminChat: $('sh_chat').value.trim(), premiumText: $('sh_prem').value, booksText: $('sh_books').value, lofi, items };
   await api('setShop', { value }); flash("Do'kon saqlandi ✅"); await load();
@@ -1373,6 +1420,74 @@ $('ibSend').onclick = guard(async () => {
 });
 
 if (code) login();
+
+/* ---------- v5.4: nishonlar, premium emoji, tugma ranglari ---------- */
+const BADGE_OPTS = `<option value="">— nishonsiz —</option><option value="new">🆕 NEW</option><option value="hot">🔥 HOT</option><option value="sale">💸 SALE</option><option value="top">⭐ TOP</option><option value="limited">⏳ LIMIT</option><option value="soon">🚧 TEZDA</option><option value="best">🏆 ENG YAXSHI</option>`;
+const untilStr = ms => { if (!(+ms > 0)) return ''; const d = new Date(+ms); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+const untilMs = v => { const t = v ? new Date(v).getTime() : 0; return Number.isFinite(t) && t > 0 ? t : 0; };
+function badgeCell(x) {
+  const opts = BADGE_OPTS.replace('value="' + (x.badge || '') + '"', 'value="' + (x.badge || '') + '" selected');
+  return `<select data-f="badge" style="min-width:130px">${opts}</select><input data-f="badgeText" maxlength="14" value="${esc(x.badgeText || '')}" placeholder="o'z yozuvi" style="margin-top:4px" /><input data-f="badgeUntil" type="datetime-local" value="${untilStr(x.badgeUntil)}" title="Shu vaqtdan keyin nishon yo'qoladi" style="margin-top:4px" />`;
+}
+window.gImgPrev = el => { const box = el.parentElement; let im = box.querySelector('.gimg'); if (!im) { im = document.createElement('img'); im.className = 'gimg'; im.onerror = () => im.style.display = 'none'; box.appendChild(im); } im.style.display = ''; im.src = el.value.trim(); };
+$('shClearBadges').onclick = () => { Object.values(shItems).forEach(x => { x.badge = ''; x.badgeText = ''; x.badgeUntil = 0; }); drawShop(); flash("Nishonlar olib tashlandi — «Saqlash» ni bosing"); };
+$('gClearBadges').onclick = () => { document.querySelectorAll('#gList .gcard').forEach(el => { el.querySelector('.g_badge').value = ''; el.querySelector('.g_btext').value = ''; el.querySelector('.g_buntil').value = ''; }); flash("Nishonlar olib tashlandi — «Saqlash» ni bosing"); };
+
+// Telegram xabari ko'rinishi: <tg-emoji> ni rasmga aylantiradi
+function pvHtml(t) {
+  return String(t || '').replace(/<tg-emoji\b[^>]*emoji-id="(\d+)"[^>]*>([\s\S]*?)<\/tg-emoji>/gi, (m, id, ch) => `<img src="/api/fn/tgemoji?id=${id}" alt="${esc(ch)}" style="height:1.25em;width:1.25em;vertical-align:-4px;object-fit:contain" onerror="this.replaceWith(document.createTextNode(this.alt))">`);
+}
+function updateBsPreview() {
+  const t = $('bs_text').value.replace(/\{name\}/g, 'Aziz');
+  $('bs_pv_text').innerHTML = pvHtml(t) || '<span style="color:#64748b">Xabar matni...</span>';
+  const b = [{ t: $('bs_btn').value.trim() || '🚀 VocaBoostni ochish', s: $('bs_btn1_style').value }, { t: $('bs_btn2_text').value.trim(), s: $('bs_btn2_style').value, u: $('bs_btn2_url').value.trim() }, { t: $('bs_btn3_text').value.trim(), s: $('bs_btn3_style').value, u: $('bs_btn3_url').value.trim() }];
+  $('bs_pv_btns').innerHTML = b.filter((x, i) => x.t && (i === 0 || x.u)).map(x => `<span class="tgbtn ${esc(x.s || '')}">${esc(x.t)}</span>`).join('');
+}
+['bs_text','bs_btn','bs_btn2_text','bs_btn2_url','bs_btn3_text','bs_btn3_url'].forEach(id => $(id).addEventListener('input', updateBsPreview));
+['bs_btn1_style','bs_btn2_style','bs_btn3_style'].forEach(id => $(id).addEventListener('change', updateBsPreview));
+
+let emojis = {};
+const emoTile = (id, e, del) => `<span class="emoT" data-id="${esc(id)}" data-ch="${esc(e.e || '⭐')}" title="${esc((e.e || '') + ' · ' + id + (e.pack ? ' · ' + e.pack : ''))}"><img loading="lazy" src="/api/fn/tgemoji?id=${esc(id)}" alt="${esc(e.e || '⭐')}" onerror="this.replaceWith(document.createTextNode(this.alt))">${del ? '<button type="button" class="x" data-del="1">×</button>' : ''}</span>`;
+function drawEmojis() {
+  const ids = Object.keys(emojis);
+  $('emoCount').textContent = ids.length ? `Kutubxonada ${ids.length} ta premium emoji. Ustiga olib borib × bosilsa o'chadi.` : "Kutubxona bo'sh. To'plam havolasini yoki emoji ID sini qo'shing.";
+  $('emoGrid').innerHTML = ids.map(id => emoTile(id, emojis[id], true)).join('');
+  $('emoGrid').querySelectorAll('.emoT').forEach(t => {
+    t.onclick = ev => {
+      if (ev.target.dataset.del) { ev.stopPropagation(); if (!confirm("Bu emoji kutubxonadan o'chirilsinmi?")) return; guard(async () => { await api('deleteEmoji', { id: t.dataset.id }); delete emojis[t.dataset.id]; drawEmojis(); })(); return; }
+      navigator.clipboard && navigator.clipboard.writeText(t.dataset.id).then(() => flash('ID nusxalandi: ' + t.dataset.id));
+    };
+  });
+}
+async function loadEmojis() { try { emojis = (await api('getEmojis')).emojis || {}; } catch { emojis = {}; } drawEmojis(); }
+$('emoReload').onclick = guard(loadEmojis);
+$('emoImport').onclick = guard(async () => { const link = $('emo_pack').value.trim(); if (!link) return flash("To'plam havolasini kiriting", false); const r = await api('importEmojiPack', { link }); flash(`«${r.title}» to'plamidan ${r.count} ta emoji qo'shildi ✅`); $('emo_pack').value = ''; await loadEmojis(); });
+$('emoAdd').onclick = guard(async () => { const id = $('emo_id').value.trim(); await api('addEmoji', { id, e: $('emo_ch').value.trim() || '⭐' }); flash("Qo'shildi ✅"); $('emo_id').value = ''; $('emo_ch').value = ''; await loadEmojis(); });
+
+// 💎 tugmasi: har bir [textarea.emo] va [data-emo="id"] maydon uchun
+const pop = document.createElement('div'); pop.id = 'emoPop'; document.body.appendChild(pop);
+let popTarget = null;
+function openPop(btn, target, mode) {
+  popTarget = { el: target, mode };
+  const ids = Object.keys(emojis);
+  pop.innerHTML = ids.length ? `<div class="small" style="margin-bottom:6px">Tanlang — ${mode === 'id' ? 'ID maydonga yoziladi' : 'matnga qo\'shiladi'}:</div><div class="emoGrid" style="max-height:230px;margin:0">${ids.map(id => emoTile(id, emojis[id], false)).join('')}</div>` : `<div class="small">Kutubxona bo'sh. Avval «💎 Premium emojilar kutubxonasi» kartasiga emoji qo'shing (🤖 Bot bo'limi).</div>`;
+  pop.querySelectorAll('.emoT').forEach(t => t.onclick = () => {
+    const id = t.dataset.id, ch = t.dataset.ch, el = popTarget.el;
+    if (popTarget.mode === 'id') { el.value = id; } else {
+      const tag = `<tg-emoji emoji-id="${id}">${ch}</tg-emoji>`;
+      const a = el.selectionStart ?? el.value.length, b = el.selectionEnd ?? a;
+      el.value = el.value.slice(0, a) + tag + el.value.slice(b); el.selectionStart = el.selectionEnd = a + tag.length;
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true })); el.focus();
+    if (popTarget.mode === 'id') pop.style.display = 'none';
+  });
+  const r = btn.getBoundingClientRect();
+  pop.style.display = 'block'; pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+  pop.style.top = Math.min(r.bottom + 6, innerHeight - pop.offsetHeight - 8) + 'px';
+}
+document.addEventListener('click', e => { if (pop.style.display === 'block' && !pop.contains(e.target) && !e.target.classList.contains('emoBtn')) pop.style.display = 'none'; });
+document.querySelectorAll('textarea.emo').forEach(ta => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sec emoBtn'; b.textContent = '💎 Premium emoji qo\'shish'; b.onclick = e => { e.stopPropagation(); openPop(b, ta, 'text'); }; ta.parentNode.insertBefore(b, ta); });
+document.querySelectorAll('[data-emo="id"]').forEach(inp => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sec emoBtn'; b.textContent = '💎 Tanlash'; b.onclick = e => { e.stopPropagation(); openPop(b, inp, 'id'); }; inp.parentNode.appendChild(b); });
 </script>
 </body>
 </html>

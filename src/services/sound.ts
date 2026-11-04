@@ -187,6 +187,26 @@ export const sfx = {
     voice(116.54, 0.14, 0.3, { type: 'sine', vol: 0.12, echo: 0 });
   },
 
+  /** Birinchi kirishdagi tantanali kutib olish (~2 soniya): ko'tariluvchi arpeggio, to'liq akkord va yulduzcha chaqnashlari.
+   *  Brauzer ovozni hali ochmagan bo'lsa (foydalanuvchi ekranga tegmagan) false qaytaradi — keyinroq qayta chaqiriladi. */
+  welcome(): boolean {
+    if (!on) return true; // tovush o'chirilgan — hurmat qilamiz
+    const c = getCtx();
+    if (!c || c.state !== 'running') return false;
+    lastSpecial = now();
+    const rise = [523.25, 659.25, 783.99, 1046.5, 1318.51]; // C5 E5 G5 C6 E6
+    rise.forEach((f, i) => bell(f, i * 0.12, 0.7, 0.18, 0.6));
+    const t = rise.length * 0.12 + 0.05;
+    // yakuniy to'liq akkord (C major) — "ta-daa!"
+    [523.25, 659.25, 783.99, 1046.5].forEach(f => voice(f, t, 1.3, { type: 'triangle', vol: 0.1, echo: 0.5 }));
+    [261.63, 392].forEach(f => voice(f, t, 1.2, { type: 'sine', vol: 0.12, echo: 0.3 }));
+    bell(1567.98, t + 0.05, 1.1, 0.17, 0.7);
+    bell(2093, t + 0.2, 0.9, 0.1, 0.7);
+    // yulduzcha chaqnashlari
+    [2637, 3136, 2349, 3520].forEach((f, i) => voice(f, t + 0.3 + i * 0.12, 0.35, { vol: 0.04, echo: 0.8 }));
+    return true;
+  },
+
   /** G'alaba / sovrin: fanfara. big=true bo'lsa uzunroq va to'laroq. */
   win(big = false) {
     if (!on) return;

@@ -4,7 +4,7 @@
 //   FIREBASE_DB_URL       — https://<project>-default-rtdb.firebaseio.com
 //   FIREBASE_DB_SECRET    — Realtime Database "Database secret" (Project settings > Service accounts > Database secrets)
 import { timingSafeEqual } from 'node:crypto';
-import { tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, siteUrl, issueCertificate, statsFromLb, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
+import { tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -352,7 +352,7 @@ export const handler = async event => {
 
       // ---------- Bot: xabar yuborish ----------
       case 'broadcast': {
-        const text = String(body.text || '').trim().slice(0, 1000);
+        const text = String(body.text || '').trim().slice(0, 3500);
         if (!text) return json(400, { error: 'Xabar matnini yozing' });
         if (!process.env.BOT_TOKEN) return json(400, { error: 'Vercel muhitida BOT_TOKEN kiritilmagan' });
         const base = siteUrl();
@@ -371,7 +371,7 @@ export const handler = async event => {
       }
 
       case 'testSend': {
-        const text = String(body.text || '').trim().slice(0, 1000);
+        const text = String(body.text || '').trim().slice(0, 3500);
         const id = String(body.userId || '').replace(/^tg_/, '');
         if (!text || !/^\d{3,15}$/.test(id)) return json(400, { error: 'Telegram ID va matn kerak' });
         if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
@@ -644,6 +644,10 @@ export const handler = async event => {
           btn2Url: cfg.btn2Url || '',
           btn3Text: cfg.btn3Text || '',
           btn3Url: cfg.btn3Url || '',
+          btn1Style: cfg.btn1Style === undefined ? 'success' : cleanStyle(cfg.btn1Style),
+          btn2Style: cleanStyle(cfg.btn2Style),
+          btn3Style: cleanStyle(cfg.btn3Style),
+          btn1Icon: cfg.btn1Icon || '', btn2Icon: cfg.btn2Icon || '', btn3Icon: cfg.btn3Icon || '',
           enabled: cfg.enabled !== false,
           site: siteUrl(), hook: hook ? { url: hook.url || '', pending: hook.pending_update_count || 0, error: hook.last_error_message || hook.error || '' } : null,
           hasToken: !!process.env.BOT_TOKEN, wantUrl: `${siteUrl()}/api/fn/tg-webhook`,
@@ -660,9 +664,53 @@ export const handler = async event => {
           btn2Url: String(body.btn2Url || '').trim().slice(0, 300),
           btn3Text: String(body.btn3Text || '').trim().slice(0, 40),
           btn3Url: String(body.btn3Url || '').trim().slice(0, 300),
+          btn1Style: cleanStyle(body.btn1Style),
+          btn2Style: cleanStyle(body.btn2Style),
+          btn3Style: cleanStyle(body.btn3Style),
+          btn1Icon: String(body.btn1Icon || '').replace(/\D/g, '').slice(0, 25),
+          btn2Icon: String(body.btn2Icon || '').replace(/\D/g, '').slice(0, 25),
+          btn3Icon: String(body.btn3Icon || '').replace(/\D/g, '').slice(0, 25),
           enabled: body.enabled !== false,
         });
         return json(200, { ok: true });
+      }
+
+      // ---------- Premium emoji kutubxonasi ----------
+      // adminState/emojis/<id> = { e: zaxira emoji, pack?: to'plam nomi }. Admin matnga <tg-emoji emoji-id="ID">😀</tg-emoji> qo'shadi.
+      case 'getEmojis': {
+        return json(200, { emojis: (await call('GET', 'adminState/emojis')) || {} });
+      }
+
+      case 'addEmoji': {
+        const id = String(body.id || '').trim();
+        if (!/^\d{5,25}$/.test(id)) return json(400, { error: 'Premium emoji ID faqat raqamlardan iborat (masalan 5368324170671202286)' });
+        const e = String(body.e || '').trim().slice(0, 8) || '⭐';
+        await call('PUT', `adminState/emojis/${id}`, { e, ...(body.pack ? { pack: String(body.pack).slice(0, 64) } : {}) });
+        return json(200, { ok: true });
+      }
+
+      case 'deleteEmoji': {
+        const id = String(body.id || '').trim();
+        if (!/^\d{5,25}$/.test(id)) return json(400, { error: 'ID xato' });
+        await call('DELETE', `adminState/emojis/${id}`);
+        return json(200, { ok: true });
+      }
+
+      // Telegram premium emoji to'plamini havola bilan qo'shish: https://t.me/addemoji/<nom>
+      case 'importEmojiPack': {
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const m = /(?:addemoji|addstickers)\/([A-Za-z0-9_]{3,64})/.exec(String(body.link || '')) || /^([A-Za-z0-9_]{3,64})$/.exec(String(body.link || '').trim());
+        if (!m) return json(400, { error: 'To\'plam havolasi xato. Masalan: https://t.me/addemoji/EmojiPackNomi' });
+        let set;
+        try { set = await tgApi(process.env.BOT_TOKEN, 'getStickerSet', { name: m[1] }); } catch (e) { return json(502, { error: `Telegram: ${e.message}` }); }
+        const list = (set?.stickers || []).filter(x => x && x.custom_emoji_id).slice(0, 120);
+        if (!list.length) return json(400, { error: 'Bu to\'plamda premium emoji topilmadi (u oddiy stiker to\'plami bo\'lishi mumkin)' });
+        const cur = (await call('GET', 'adminState/emojis')) || {};
+        if (Object.keys(cur).length + list.length > 400) return json(400, { error: 'Kutubxona to\'ldi (ko\'pi bilan 400 ta). Ba\'zi emojilarni o\'chiring' });
+        const upd = {};
+        list.forEach(x => { upd[`adminState/emojis/${x.custom_emoji_id}`] = { e: String(x.emoji || '⭐').slice(0, 8), pack: m[1] }; });
+        await call('PATCH', '', upd);
+        return json(200, { ok: true, count: list.length, title: set.title || m[1] });
       }
 
       // Minnatdorchilik (ilk kirish) sertifikati matni
@@ -687,7 +735,7 @@ export const handler = async event => {
         if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN env o\'zgaruvchisi kiritilmagan' });
         const url = `${siteUrl()}/api/fn/tg-webhook`;
         if (!url.startsWith('https://')) return json(400, { error: 'Sayt manzili (URL) aniqlanmadi — Vercel deployidan keyin urinib ko\'ring' });
-        await tgApi(process.env.BOT_TOKEN, 'setWebhook', { url, allowed_updates: ['message'], drop_pending_updates: false, ...(process.env.TG_WEBHOOK_SECRET ? { secret_token: process.env.TG_WEBHOOK_SECRET } : {}) });
+        await tgApi(process.env.BOT_TOKEN, 'setWebhook', { url, allowed_updates: ['message', 'my_chat_member'], drop_pending_updates: false, ...(process.env.TG_WEBHOOK_SECRET ? { secret_token: process.env.TG_WEBHOOK_SECRET } : {}) });
         return json(200, { ok: true, url });
       }
 
@@ -705,7 +753,7 @@ export const handler = async event => {
         if (!nm) {
           try { nm = String(((await call('GET', `tgusers/${to}`)) || {}).name || '').split(' ')[0].slice(0, 40); } catch { /* ignore */ }
         }
-        await sendMessage(process.env.BOT_TOKEN, to, String(cfg.text || DEFAULT_START_TEXT).replace(/\{name\}/g, nm || "do'st"), makeStartMarkup(cfg));
+        await sendMessage(process.env.BOT_TOKEN, to, String(cfg.text || DEFAULT_START_TEXT).replace(/\{name\}/g, escHtml(nm || "do'st")), makeStartMarkup(cfg));
         return json(200, { ok: true });
       }
 

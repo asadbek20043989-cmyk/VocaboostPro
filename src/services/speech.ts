@@ -1,20 +1,18 @@
-// Talaffuz (v4.7). NETLIFY KREDITI = 0: hamma manba to'g'ridan-to'g'ri brauzerdan ishlaydi (server funksiyasi chaqirilmaydi).
-// Manbalar ketma-ketligi (birinchisi ishlamasa keyingisiga tez o'tiladi):
-//  1) Yakka so'z: haqiqiy INSON ovozi yozuvi (Free Dictionary API)
-//  2) Yakka so'z: Wikimedia Commons'dagi inson yozuvi (En-us-<so'z>.ogg)
-// v5: SUN'IY OVOZ UMUMAN ISHLATILMAYDI (brauzer TTS, Google TTS, server TTS olib tashlandi). Faqat inson yozuvlari.
+// Talaffuz (v5.4): BRITISH ENGLISH, neyral ovoz.
+// Ketma-ketlik (birinchisi ishlamasa keyingisiga zumda o'tiladi):
+//  1) Server neyral ovozi (/api/fn/tts, en-GB) — bir marta yaratiladi, keyin brauzer va CDN keshidan ZUMDA keladi
+//  2) Yakka so'z: haqiqiy inson yozuvi (Free Dictionary, UK afzal) -> Wikimedia
+//  3) Google TTS, so'ng qurilmaning eng yaxshi en-GB ovozi
+// Kechikmaslik uchun: so'zlar OLDINDAN yuklanadi (prefetchEnglish), audio xotirada saqlanadi.
 // Shadowing uchun: Web Speech API SpeechRecognition (bepul).
 
 const TTS_URL: string = ((import.meta as any).env?.VITE_TTS_URL as string) || '/api/fn/tts';
-const SERVER_TTS = String((import.meta as any).env?.VITE_SERVER_TTS ?? '0') === '1';
-const TTS_VER = '2'; // eski (robot ovozli) keshlangan fayllarni almashtirish uchun
-const SERVER_TIMEOUT_MS = 7000; // yangi so'zning birinchi marta yaratilishi bir necha soniya olishi mumkin
-const HUMAN_TIMEOUT_MS = 4000;
-const WIKI_TIMEOUT_MS = 3000;
-const GTTS_TIMEOUT_MS = 5000;
+const SERVER_TIMEOUT_MS = 8000;
+const HUMAN_TIMEOUT_MS = 3500;
+const WIKI_TIMEOUT_MS = 2500;
+const GTTS_TIMEOUT_MS = 4000;
 const GOOD_VOICE_SCORE = 70; // shu balldan yuqori brauzer ovozi "sifatli" hisoblanadi
 const DICT_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
-const WORD_RE = /^[A-Za-z][A-Za-z'’-]*$/;
 
 // iOS/Telegram WebView: bitta umumiy <audio> elementini birinchi bosishda "ochib" qo'yamiz,
 // shunda keyin kutishdan so'ng (fetch tugagach) chaqirilgan ovozlar ham ijro etiladi.
@@ -39,39 +37,21 @@ if (typeof window !== 'undefined') {
 
 let currentAudio: HTMLAudioElement | null = null;
 let reqId = 0;
-// KREDIT TEJASH: server ketma-ket 2 marta xato bersa, 30 daqiqa umuman so'ramaymiz (holat saqlanadi, sahifa yangilansa ham).
-// Xato bergan matn shu seansda qayta so'ralmaydi.
-const COOLDOWN_KEY = 'vb_tts_cooldown_v1';
-const COOLDOWN_MS = 30 * 60 * 1000;
-let serverFails = 0;
-const failedKeys = new Set<string>();
-function serverCoolingDown(): boolean {
-  try {
-    return Date.now() < Number(localStorage.getItem(COOLDOWN_KEY) || 0);
-  } catch {
-    return false;
-  }
-}
-function startCooldown() {
-  try {
-    localStorage.setItem(COOLDOWN_KEY, String(Date.now() + COOLDOWN_MS));
-  } catch {
-    /* ignore */
-  }
-}
 
 // ---------- Brauzer ovozi (zaxira) ----------
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 function scoreVoice(v: SpeechSynthesisVoice): number {
   let sc = 0;
-  if (/^en[-_]US$/i.test(v.lang)) sc += 30;
-  else if (/^en[-_](GB|AU|CA|IE)$/i.test(v.lang)) sc += 18;
+  if (/^en[-_]GB$/i.test(v.lang)) sc += 40; // British accent afzal
+  else if (/^en[-_]US$/i.test(v.lang)) sc += 22;
+  else if (/^en[-_](AU|CA|IE)$/i.test(v.lang)) sc += 14;
   else if (/^en([-_]|$)/i.test(v.lang)) sc += 10;
   // Sifatli (neyral / tarmoq) ovozlar — robotga o'xshamaydi
   if (/Natural|Neural|Online/i.test(v.name)) sc += 60;
-  if (/Google US English|Google UK English/i.test(v.name)) sc += 45;
-  if (/Samantha|Ava|Allison|Susan|Zoe|Daniel|Karen|Moira|Serena|Alex|Aria|Jenny|Guy/i.test(v.name)) sc += 40;
+  if (/Google UK English/i.test(v.name)) sc += 50;
+  else if (/Google US English/i.test(v.name)) sc += 40;
+  if (/Sonia|Libby|Ryan|Daniel|Serena|Kate|Oliver|Martha|Arthur|Samantha|Ava|Allison|Susan|Zoe|Karen|Moira|Alex|Aria|Jenny|Guy/i.test(v.name)) sc += 40;
   // Eski offlayn "robot" ovozlar — oxirgi tanlov
   if (/\b(David|Zira|Mark|Hazel|George|Eddy|Fred|Albert|Bad News|Bells|Boing|Cellos|Trinoids|Whisper|Zarvox)\b|eSpeak|Pico|compact/i.test(v.name)) sc -= 25;
   return sc;
@@ -118,13 +98,13 @@ function browserSpeak(text: string, rate: number, my: number): void {
     try {
       if (!cachedVoice) loadVoices();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US';
+      u.lang = 'en-GB';
       u.rate = Math.min(1, Math.max(0.6, rate));
       u.pitch = 1;
       u.volume = 1;
       if (cachedVoice) {
         u.voice = cachedVoice;
-        u.lang = cachedVoice.lang || 'en-US';
+        u.lang = cachedVoice.lang || 'en-GB';
       }
       synth.speak(u);
       // Chrome xatosi: ba'zan pauza holatida qotib qoladi
@@ -149,7 +129,7 @@ function browserSpeak(text: string, rate: number, my: number): void {
 
 // ---------- Inson ovozi yozuvlari (Free Dictionary API) ----------
 
-const HUMAN_LS_KEY = 'vb_human_audio_v1';
+const HUMAN_LS_KEY = 'vb_human_audio_v2';
 const humanCache = new Map<string, string | null>();
 try {
   const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(HUMAN_LS_KEY) : null;
@@ -191,7 +171,7 @@ async function getHumanAudio(word: string): Promise<string | null> {
         if (ph?.audio) urls.push(String(ph.audio).replace(/^http:/, 'https:').replace(/^\/\//, 'https://'));
       }
     }
-    const best = urls.find(u => /-us\.mp3/i.test(u)) || urls.find(u => /-uk\.mp3/i.test(u)) || urls[0] || null;
+    const best = urls.find(u => /-uk\.mp3/i.test(u)) || urls.find(u => /-us\.mp3/i.test(u)) || urls[0] || null;
     humanCache.set(word, best);
     if (best) saveHuman(word, best);
     return best;
@@ -200,6 +180,83 @@ async function getHumanAudio(word: string): Promise<string | null> {
   } finally {
     clearTimeout(t);
   }
+}
+
+function hasGoodBrowserVoice(): boolean {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+  if (!cachedVoice) loadVoices();
+  return !!cachedVoice && scoreVoice(cachedVoice) >= GOOD_VOICE_SCORE;
+}
+
+// Wikimedia Commons: ko'p uchraydigan so'zlar uchun inson yozuvi (topilmasa 404 -> keyingi manbaga o'tiladi)
+const wikiMiss = new Set<string>();
+const wikiUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-uk-${encodeURIComponent(w)}.ogg`;
+const wikiUsUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-us-${encodeURIComponent(w)}.ogg`;
+// Google Translate TTS (zaxira; audio elementiga to'g'ridan-to'g'ri)
+const gttsUrl = (t: string) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encodeURIComponent(t.slice(0, 190))}`;
+
+// ---------- Server neyral ovozi (British) + xotira keshi ----------
+const blobCache = new Map<string, string>(); // kalit -> objectURL
+const inflight = new Map<string, Promise<string | null>>();
+const MAX_CACHE = 160;
+let serverFails = 0;
+let serverDownUntil = 0;
+
+const cacheKey = (t: string) => t.toLowerCase();
+
+async function serverAudio(text: string): Promise<string | null> {
+  const key = cacheKey(text);
+  const hit = blobCache.get(key);
+  if (hit) return hit;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  if (Date.now() < serverDownUntil) return null;
+  const p = (async () => {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => ctl?.abort(), SERVER_TIMEOUT_MS);
+    try {
+      const r = await fetch(`${TTS_URL}?t=${encodeURIComponent(text)}`, { signal: ctl?.signal });
+      if (!r.ok) throw new Error('tts ' + r.status);
+      const blob = await r.blob();
+      if (blob.size < 600) throw new Error('tts bo\'sh');
+      const url = URL.createObjectURL(blob);
+      blobCache.set(key, url);
+      if (blobCache.size > MAX_CACHE) {
+        const first = blobCache.keys().next().value as string;
+        const old = blobCache.get(first);
+        blobCache.delete(first);
+        if (old) { try { URL.revokeObjectURL(old); } catch { /* ignore */ } }
+      }
+      serverFails = 0;
+      return url;
+    } catch {
+      // Ketma-ket 3 marta xato bo'lsa, 2 daqiqa serverni so'ramaymiz (foydalanuvchi kutib qolmasin)
+      if (++serverFails >= 3) { serverDownUntil = Date.now() + 2 * 60 * 1000; serverFails = 0; }
+      return null;
+    } finally {
+      clearTimeout(timer);
+      inflight.delete(key);
+    }
+  })();
+  inflight.set(key, p);
+  return p;
+}
+
+/** So'z/gaplarni OLDINDAN yuklab qo'yadi — keyin bosilganda ovoz darhol chiqadi. Chaqiruv xavfsiz (xato bo'lsa jim). */
+export function prefetchEnglish(texts: (string | undefined | null)[], max = 8): void {
+  try {
+    if (typeof window === 'undefined' || Date.now() < serverDownUntil) return;
+    const seen = new Set<string>();
+    let n = 0;
+    for (const raw of texts) {
+      const t = String(raw || '').replace(/[*_#`~]/g, '').replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (!t || seen.has(t.toLowerCase()) || !/[A-Za-z]/.test(t)) continue;
+      seen.add(t.toLowerCase());
+      if (blobCache.has(cacheKey(t)) || inflight.has(cacheKey(t))) continue;
+      if (++n > max) break;
+      setTimeout(() => { serverAudio(t).catch(() => {}); }, n * 120);
+    }
+  } catch { /* ignore */ }
 }
 
 // ---------- Ijro ----------
@@ -245,24 +302,27 @@ function playUrl(url: string, rate: number, my: number, timeoutMs: number): Prom
   });
 }
 
-function hasGoodBrowserVoice(): boolean {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
-  if (!cachedVoice) loadVoices();
-  return !!cachedVoice && scoreVoice(cachedVoice) >= GOOD_VOICE_SCORE;
+function waitAudioEnd(a: HTMLAudioElement | null, my: number, capMs = 25000): Promise<void> {
+  return new Promise(res => {
+    if (!a) return res();
+    let done = false;
+    const fin = () => {
+      if (done) return;
+      done = true;
+      clearInterval(poll);
+      clearTimeout(cap);
+      a.removeEventListener('ended', fin);
+      a.removeEventListener('error', fin);
+      res();
+    };
+    a.addEventListener('ended', fin);
+    a.addEventListener('error', fin);
+    const poll = setInterval(() => { if (my !== reqId) fin(); }, 200);
+    const cap = setTimeout(fin, capMs);
+  });
 }
 
-// Wikimedia Commons: ko'p uchraydigan so'zlar uchun inson yozuvi (topilmasa 404 -> keyingi manbaga o'tiladi)
-const wikiMiss = new Set<string>();
-const wikiUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-us-${encodeURIComponent(w)}.ogg`;
-// Google Translate TTS (audio elementiga to'g'ridan-to'g'ri; Netlify ishtirok etmaydi)
-const gttsUrl = (t: string) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=${encodeURIComponent(t.slice(0, 190))}`;
-
-
-// ---------- Gaplar va iboralar: BITTA ravon ovoz (so'zma-so'z emas) ----------
-// Eski usul har bir so'zni alohida yozuvdan ketma-ket chalardi — shuning uchun gap "uzuq-uzuq" eshitilardi.
-// Endi gap/ibora butunligicha bitta audio sifatida o'qiladi (intonatsiya va bog'lanish saqlanadi).
-// Birinchi manba — Google TTS (brauzerdan to'g'ridan-to'g'ri, serverga kredit ketmaydi); ishlamasa — qurilmaning eng yaxshi ovozi.
-function splitChunks(text: string, max = 170): string[] {
+function splitChunks(text: string, max = 200): string[] {
   const sentences = text.match(/[^.!?;:]+[.!?;:]*/g) || [text];
   const out: string[] = [];
   let cur = '';
@@ -274,7 +334,6 @@ function splitChunks(text: string, max = 170): string[] {
       if (cur) out.push(cur);
       if (s.length <= max) cur = s;
       else {
-        // juda uzun bo'lak: vergul/bo'sh joy bo'yicha bo'linadi
         let rest = s;
         while (rest.length > max) {
           let cut = rest.lastIndexOf(',', max);
@@ -291,34 +350,23 @@ function splitChunks(text: string, max = 170): string[] {
   return out;
 }
 
-function waitAudioEnd(a: HTMLAudioElement | null, my: number): Promise<void> {
-  return new Promise(res => {
-    if (!a) return res();
-    let done = false;
-    const fin = () => {
-      if (done) return;
-      done = true;
-      clearInterval(poll);
-      clearTimeout(cap);
-      a.removeEventListener('ended', fin);
-      a.removeEventListener('error', fin);
-      res();
-    };
-    a.addEventListener('ended', fin);
-    a.addEventListener('error', fin);
-    const poll = setInterval(() => { if (my !== reqId) fin(); }, 200);
-    const cap = setTimeout(fin, 20000);
-  });
+/** Bitta bo'lak: server (British) -> Google -> (chaqiruvchi) brauzer ovozi. true = ovoz chiqdi */
+async function playChunk(chunk: string, rate: number, my: number): Promise<boolean> {
+  const url = await serverAudio(chunk);
+  if (my !== reqId) return true;
+  if (url && (await playUrl(url, rate, my, 3000))) return true;
+  if (my !== reqId) return true;
+  return playUrl(gttsUrl(chunk), rate, my, GTTS_TIMEOUT_MS);
 }
 
 async function speakFluent(clean: string, rate: number, my: number): Promise<void> {
   const chunks = splitChunks(clean);
   for (let i = 0; i < chunks.length; i++) {
     if (my !== reqId) return;
-    const ok = await playUrl(gttsUrl(chunks[i]), rate, my, GTTS_TIMEOUT_MS);
+    if (chunks[i + 1]) prefetchEnglish([chunks[i + 1]], 1); // keyingi bo'lak oldindan tayyorlanadi — gaplar orasida pauza bo'lmaydi
+    const ok = await playChunk(chunks[i], rate, my);
     if (my !== reqId) return;
     if (!ok) {
-      // Google ovozi ishlamadi — qolgan qismi qurilmaning o'z ovozi bilan, lekin baribir BIR GAP sifatida
       browserSpeak(chunks.slice(i).join(' '), rate, my);
       return;
     }
@@ -326,8 +374,8 @@ async function speakFluent(clean: string, rate: number, my: number): Promise<voi
   }
 }
 
-/** Talaffuz: yakka so'z — haqiqiy INSON yozuvi; ibora/gap — bitta ravon audio (intonatsiya bilan).
- *  Hech bir manba ishlamasa — qurilma ovozi, u ham bo'lmasa xabar chiqadi. */
+/** Talaffuz: BRITISH ENGLISH. Yakka so'z va gaplar — avval server neyral ovozi (keshdan zumda);
+ *  u ishlamasa — inson yozuvi / Google / qurilma ovozi. Hech biri ishlamasa xabar chiqadi. */
 export function speakEnglish(text: string, rate: number = 0.9): void {
   const clean = text.replace(/[*_#`~]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!clean) return;
@@ -344,37 +392,32 @@ export function speakEnglish(text: string, rate: number = 0.9): void {
     return;
   }
 
-  const playWord = async (key: string): Promise<boolean> => {
-    const url = await getHumanAudio(key);
-    if (my !== reqId) return true;
-    if (url && (await playUrl(url, rate, my, HUMAN_TIMEOUT_MS))) return true;
-    if (my !== reqId) return true;
-    if (!wikiMiss.has(key)) {
-      if (await playUrl(wikiUrl(key), rate, my, WIKI_TIMEOUT_MS)) return true;
-      if (my !== reqId) return true;
-      wikiMiss.add(key);
-    }
-    return false;
-  };
-  // yozuv tugashini kutish (keyingi so'zga o'tish uchun)
-  const waitEnd = () => new Promise<void>(res => {
-    const a = currentAudio;
-    if (!a) return res();
-    const done = () => { a.removeEventListener('ended', done); a.removeEventListener('error', done); res(); };
-    a.addEventListener('ended', done);
-    a.addEventListener('error', done);
-    setTimeout(done, 4000);
-  });
-
+  // Yakka so'z
   (async () => {
-    let any = false;
-    for (let i = 0; i < words.length; i++) {
+    const word = words[0];
+    // 1) server (British neyral) — xotirada bo'lsa zumda chiqadi
+    const url = await serverAudio(word);
+    if (my !== reqId) return;
+    if (url && (await playUrl(url, rate, my, 3000))) return;
+    if (my !== reqId) return;
+    // 2) inson yozuvi (UK afzal)
+    const human = await getHumanAudio(word);
+    if (my !== reqId) return;
+    if (human && (await playUrl(human, rate, my, HUMAN_TIMEOUT_MS))) return;
+    if (my !== reqId) return;
+    if (!wikiMiss.has(word)) {
+      if (await playUrl(wikiUrl(word), rate, my, WIKI_TIMEOUT_MS)) return;
       if (my !== reqId) return;
-      const ok = await playWord(words[i]);
+      if (await playUrl(wikiUsUrl(word), rate, my, WIKI_TIMEOUT_MS)) return;
       if (my !== reqId) return;
-      if (ok) { any = true; if (words.length > 1) await waitEnd(); }
+      wikiMiss.add(word);
     }
-    if (!any && my === reqId && typeof window !== 'undefined') {
+    // 3) Google, so'ng qurilma ovozi (en-GB afzal)
+    if (await playUrl(gttsUrl(word), rate, my, GTTS_TIMEOUT_MS)) return;
+    if (my !== reqId) return;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && (cachedVoice || window.speechSynthesis.getVoices().length)) {
+      browserSpeak(clean, rate, my);
+    } else if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('vb:noaudio', { detail: clean }));
     }
   })().catch(() => {

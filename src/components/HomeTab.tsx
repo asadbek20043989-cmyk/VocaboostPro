@@ -70,7 +70,7 @@ export const HomeTab: React.FC = () => {
   return (
     <div className="space-y-5 pb-6">
       {/* Header */}
-      <header className={`relative overflow-hidden flex items-center justify-between gap-3 ${hasBanner ? 'rounded-2xl p-3' : ''}`}>
+      <header className={`relative flex items-center justify-between gap-3 ${hasBanner ? 'overflow-hidden rounded-2xl p-3' : 'pt-2.5 pl-1.5'}`}>
         {hasBanner && <><div className="vb-banner absolute inset-0" style={{ background: BANNERS[profile.banner as string].bg }} aria-hidden /><div className="absolute inset-0 bg-black/35" aria-hidden /></>}
         <div className="relative flex items-center gap-3 min-w-0">
           <CosAvatar src={profile.avatar} name={profile.name} size={44} cos={{ fr: profile.frame, rb: profile.rankBadge, au: (profile.own || []).includes('aura') ? profile.aura : '' }} />
@@ -90,9 +90,9 @@ export const HomeTab: React.FC = () => {
 
       {/* Jihozlarim: bir bosishda ramka, mavzu, unvon va boshqa bezaklar */}
       <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl p-3 flex items-center gap-3 bg-gradient-to-r from-violet-500/15 via-fuchsia-500/10 to-amber-500/15 border border-violet-400/40 active:scale-[0.98] transition-all">
-        <CosAvatar src={profile.avatar} name={profile.name} size={40} cos={{ fr: profile.frame, rb: profile.rankBadge, au: (profile.own || []).includes('aura') ? profile.aura : '' }} />
+        <span className="keep-dark w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30 shrink-0"><Sparkles className="w-5 h-5 text-white" /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-extrabold text-white flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-amber-400" /> Jihozlarim</div>
+          <div className="text-sm font-extrabold text-white">Jihozlarim</div>
           <div className="text-[11px] text-slate-400 truncate">Ramka, ilova mavzusi, unvon va nik rangi{(profile.own || []).length ? ` · ${(profile.own || []).filter(x => !x.startsWith('av:')).length} ta mahsulot` : ''}</div>
         </div>
         <ChevronRight className="w-5 h-5 text-violet-400 shrink-0" />

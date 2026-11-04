@@ -408,3 +408,24 @@ html[data-skin="snow"]:not(.light) nav { border-top-color: rgb(186 230 253 / .45
 .vb-spot-name { text-shadow: 0 0 8px rgba(253,224,71,.8); }
 @keyframes vb-banner-move { to { background-position: 200% 0 } }
 .vb-banner { background-size: 200% 100%; animation: vb-banner-move 10s linear infinite; }
+
+/* ---- Birinchi kirishdagi «Xush kelibsiz» oynasi ---- */
+@keyframes vb-wl-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vb-wl-pop { 0% { opacity: 0; transform: translateY(30px) scale(.86); } 60% { opacity: 1; transform: translateY(-4px) scale(1.03); } 100% { opacity: 1; transform: none; } }
+@keyframes vb-wl-logo { 0% { transform: scale(.3) rotate(-25deg); opacity: 0; } 55% { transform: scale(1.15) rotate(6deg); opacity: 1; } 100% { transform: none; } }
+@keyframes vb-wl-ring { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes vb-wl-fall { 0% { transform: translateY(-12vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(108vh) rotate(720deg); opacity: .9; } }
+.vb-wl-backdrop { animation: vb-wl-fade .35s ease-out both; }
+.vb-wl-card { animation: vb-wl-pop .7s cubic-bezier(.2,.9,.3,1.2) .1s both; }
+.vb-wl-logo { animation: vb-wl-logo .9s cubic-bezier(.2,.9,.3,1.2) .25s both; }
+.vb-wl-ring { animation: vb-wl-ring 1.8s ease-out .5s infinite; }
+.vb-wl-ring2 { animation-delay: 1.3s; }
+.vb-wl-confetti { position: absolute; top: 0; display: block; animation-name: vb-wl-fall; animation-timing-function: linear; animation-fill-mode: both; }
+@media (prefers-reduced-motion: reduce) {
+  .vb-wl-confetti, .vb-wl-ring { animation: none; display: none; }
+}
+
+/* ---- Nishonlar (New / Hot ...) ---- */
+@keyframes vb-tagbadge-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.vb-tagbadge-pulse { animation: vb-tagbadge-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .vb-tagbadge-pulse { animation: none; } }

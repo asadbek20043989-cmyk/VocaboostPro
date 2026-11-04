@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { ArrowLeft, Volume2, Lightbulb, CheckCircle2, XCircle, ArrowRight, Sparkles, Mic, MicOff, Check, RotateCcw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { BankWord } from '../types';
-import { speakEnglish, isRecognitionAvailable, startListening, compareSpeech } from '../services/speech';
+import { speakEnglish, prefetchEnglish, isRecognitionAvailable, startListening, compareSpeech } from '../services/speech';
 import { triggerHaptic } from '../services/telegram';
 import { Question, makeQuestion, chooseKind, checkTyped } from '../services/srs';
 import { sfx } from '../services/sound';
@@ -332,6 +332,13 @@ export const LearnSession: React.FC = () => {
   const [qNonce, setQNonce] = useState(0);
 
   const batch = batches[bi] || [];
+  // Ovoz kechikmasligi uchun: joriy paket so'zlari va misollari oldindan yuklab qo'yiladi
+  useEffect(() => {
+    prefetchEnglish([...batch.map(w => w.en), ...batch.slice(0, 2).map(w => w.ex)], 10);
+  }, [bi, phase]);
+  useEffect(() => {
+    if (phase === 'review') prefetchEnglish(queue.slice(0, 4).map(w => w.en), 4);
+  }, [phase, queue[0]?.id]);
   const totalSteps = plan.news.length * 2 + plan.dues.length;
   const doneSteps = bi * 10 + (phase === 'learn' ? ci : phase === 'quiz' ? batch.length + qi : 0) + (phase === 'review' ? plan.news.length * 2 + (plan.dues.length - queue.length) : phase === 'done' ? totalSteps : 0);
 

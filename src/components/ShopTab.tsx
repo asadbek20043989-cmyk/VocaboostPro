@@ -9,6 +9,7 @@ import { presetValue } from '../services/avatar';
 import { triggerHaptic } from '../services/telegram';
 import { CosAvatar, CosName } from './Cosmetics';
 import { Avatar } from './Avatar';
+import { TagBadge } from './TagBadge';
 import { nowMs } from '../services/time';
 
 const Modal: React.FC<{ onClose: () => void; children: React.ReactNode; title?: string }> = ({ onClose, children, title }) => (
@@ -23,15 +24,18 @@ const Modal: React.FC<{ onClose: () => void; children: React.ReactNode; title?: 
   </div>
 );
 
-const ItemArt: React.FC<{ it: ShopItem; h?: number }> = ({ it, h = 84 }) =>
-  it.img ? (
-    <img src={it.img} alt="" className="w-full object-cover" style={{ height: h }} loading="lazy" referrerPolicy="no-referrer" />
+const ItemArt: React.FC<{ it: ShopItem; h?: number }> = ({ it, h = 84 }) => {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [it.img]);
+  return it.img && !broken ? (
+    <img src={it.img} alt="" className="w-full object-cover" style={{ height: h }} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />
   ) : (
     <div className="w-full flex items-center justify-center relative overflow-hidden" style={{ height: h, background: `linear-gradient(135deg, ${it.grad[0]}, ${it.grad[1]})` }}>
       <span className="absolute -left-4 -top-6 w-24 h-24 rounded-full bg-white/15" />
       <span className="text-4xl drop-shadow-lg relative">{it.icon}</span>
     </div>
   );
+};
 
 export const ShopTab: React.FC = () => {
   const { profile, coins, catalog, shopConf, buyItem, equip, owns, boostActive, updateProfile, setActiveTab, previewSkin, setPreviewSkin } = useApp();
@@ -131,8 +135,9 @@ export const ShopTab: React.FC = () => {
           const has = !it.repeat && owns(it.id);
           const can = coins >= price;
           return (
-            <div key={it.id} className="rounded-2xl bg-[#151C28] border border-slate-800 overflow-hidden flex flex-col">
+            <div key={it.id} className="relative rounded-2xl bg-[#151C28] border border-slate-800 overflow-hidden flex flex-col">
               <ItemArt it={it} />
+              <TagBadge data={it} className="absolute top-2 left-2 z-[1]" />
               <div className="p-2.5 flex-1 flex flex-col">
                 <div className="text-[13px] font-extrabold text-white leading-tight">{it.title}</div>
                 <p className="text-[10.5px] text-slate-400 leading-snug mt-1 flex-1">{it.desc}</p>

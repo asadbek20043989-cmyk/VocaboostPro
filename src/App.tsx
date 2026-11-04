@@ -13,6 +13,7 @@ import { ShopTab } from './components/ShopTab';
 import { LofiMini } from './components/LofiPlayer';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
+import { WelcomePopup, welcomeSeen, markWelcomeSeen } from './components/WelcomePopup';
 import { LuckyWheel } from './components/LuckyWheel';
 import { BrandMark, Logo, HeaderActions } from './components/Brand';
 import { installGlobalClickSound } from './services/sound';
@@ -67,6 +68,12 @@ const MainScreen: React.FC = () => {
     installGlobalClickSound();
   }, []);
 
+  // Faqat BIRINCHI kirishda «Xush kelibsiz» oynasi. Avval ro'yxatdan o'tgan (eski) foydalanuvchilarga ko'rsatilmaydi.
+  const [welcome, setWelcome] = useState(() => !welcomeSeen());
+  useEffect(() => {
+    if (profile.hasCompletedOnboarding) markWelcomeSeen();
+  }, [profile.hasCompletedOnboarding]);
+
   // Yangi qurilmada bulutdagi progress yuklanguncha onboarding ko'rsatilmaydi
   if (realtimeOn && !syncReady && !profile.hasCompletedOnboarding) {
     return (
@@ -76,7 +83,7 @@ const MainScreen: React.FC = () => {
       </div>
     );
   }
-  if (!profile.hasCompletedOnboarding) return <Onboarding />;
+  if (!profile.hasCompletedOnboarding) return <><Onboarding />{welcome && <WelcomePopup onClose={() => setWelcome(false)} />}</>;
 
   const certificate = certificateView ? <CertificateModal cert={certificateView} onClose={() => showCertificate(null)} /> : null;
   const toast = notice ? (

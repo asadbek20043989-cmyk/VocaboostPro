@@ -24,6 +24,9 @@ export interface ShopItem {
   order: number;
   dayLimit: number; // bir foydalanuvchi kuniga ko'pi bilan (0 — cheklanmagan)
   custom?: boolean; // admin qo'shgan (qo'lda beriladigan) mahsulot
+  badge?: string; // New / Hot / Sale... nishoni (admin qo'yadi va olib tashlaydi)
+  badgeText?: string;
+  badgeUntil?: number;
 }
 
 export const CATS: { id: ShopCat | 'all'; label: string }[] = [

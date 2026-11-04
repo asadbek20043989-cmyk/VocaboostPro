@@ -72,25 +72,39 @@ export async function tgApi(token, method, payload) {
   return data.result;
 }
 
-/** "Ilovani ochish" tugmasi (Mini App) */
-export const openAppMarkup = (label = '🚀 VocaBoost ni ochish') => {
-  const url = siteUrl();
-  return url.startsWith('https://') ? { inline_keyboard: [[{ text: label, web_app: { url } }]] } : undefined;
+/** Telegram tugma ranglari (Bot API 9.4+): primary = ko'k, success = yashil, danger = qizil. Bo'sh = oddiy (kulrang) */
+export const BTN_STYLES = ['primary', 'success', 'danger'];
+export const cleanStyle = v => (BTN_STYLES.includes(String(v || '')) ? String(v) : '');
+const cleanEmojiId = v => (/^\d{5,25}$/.test(String(v || '').trim()) ? String(v).trim() : '');
+
+/** Tugma obyektiga rang va premium emoji ikonkasini qo'shadi (noto'g'ri qiymatlar tashlab yuboriladi) */
+const decorate = (btn, style, icon) => {
+  const st = cleanStyle(style);
+  const ic = cleanEmojiId(icon);
+  if (st) btn.style = st;
+  if (ic) btn.icon_custom_emoji_id = ic;
+  return btn;
 };
 
-/** /start xabari ostidagi 3 ta tugmali klaviatura (1-si Mini App, 2- va 3-si admin havolalari) */
+/** "Ilovani ochish" tugmasi (Mini App) */
+export const openAppMarkup = (label = '🚀 VocaBoost ni ochish', style = 'success') => {
+  const url = siteUrl();
+  return url.startsWith('https://') ? { inline_keyboard: [[decorate({ text: label, web_app: { url } }, style)]] } : undefined;
+};
+
+/** /start xabari ostidagi 3 ta tugmali klaviatura (1-si Mini App, 2- va 3-si admin havolalari). Har biriga rang va premium ikonka berish mumkin */
 export const makeStartMarkup = (cfg = {}) => {
   const url = siteUrl();
   const inline_keyboard = [];
   const btn1Text = String(cfg.button || DEFAULT_START_BUTTON).slice(0, 40);
   if (url.startsWith('https://')) {
-    inline_keyboard.push([{ text: btn1Text, web_app: { url } }]);
+    inline_keyboard.push([decorate({ text: btn1Text, web_app: { url } }, cfg.btn1Style === undefined ? 'success' : cfg.btn1Style, cfg.btn1Icon)]);
   }
   if (cfg.btn2Text && cfg.btn2Url) {
-    inline_keyboard.push([{ text: String(cfg.btn2Text).slice(0, 40), url: String(cfg.btn2Url).trim() }]);
+    inline_keyboard.push([decorate({ text: String(cfg.btn2Text).slice(0, 40), url: String(cfg.btn2Url).trim() }, cfg.btn2Style, cfg.btn2Icon)]);
   }
   if (cfg.btn3Text && cfg.btn3Url) {
-    inline_keyboard.push([{ text: String(cfg.btn3Text).slice(0, 40), url: String(cfg.btn3Url).trim() }]);
+    inline_keyboard.push([decorate({ text: String(cfg.btn3Text).slice(0, 40), url: String(cfg.btn3Url).trim() }, cfg.btn3Style, cfg.btn3Icon)]);
   }
   return inline_keyboard.length ? { inline_keyboard } : undefined;
 };
@@ -99,32 +113,58 @@ export const makeCustomButtonsMarkup = (buttons = []) => {
   const rows = [];
   (Array.isArray(buttons) ? buttons : []).slice(0, 3).forEach(b => {
     if (b && b.text && b.url) {
-      rows.push([{ text: String(b.text).slice(0, 40), url: String(b.url).trim() }]);
+      rows.push([decorate({ text: String(b.text).slice(0, 40), url: String(b.url).trim() }, b.style, b.icon)]);
     }
   });
   return rows.length ? { inline_keyboard: rows } : undefined;
 };
 
-export const sendMessage = (token, chatId, text, markup, parseMode = 'HTML') => {
-  const payload = {
-    chat_id: chatId,
-    text: String(text).slice(0, 4000),
-    disable_web_page_preview: false,
-    ...(markup ? { reply_markup: markup } : {}),
+/** Premium emoji (<tg-emoji emoji-id="..">😀</tg-emoji>) ni oddiy emojiga aylantiradi — Telegram qabul qilmasa zaxira variant */
+export const stripPremium = text => String(text ?? '').replace(/<tg-emoji\b[^>]*>([\s\S]*?)<\/tg-emoji>/gi, '$1');
+/** Tugmalardan rang va premium ikonkani olib tashlaydi (zaxira variant) */
+export const stripButtonExtras = markup => {
+  if (!markup || !markup.inline_keyboard) return markup;
+  return { inline_keyboard: markup.inline_keyboard.map(row => row.map(b => { const { style, icon_custom_emoji_id, ...rest } = b; return rest; })) };
+};
+const isFancyError = e => /custom.?emoji|emoji.?id|entit|style|icon|BUTTON_|DOCUMENT_INVALID|premium/i.test(String(e?.message || ''));
+
+export const sendMessage = async (token, chatId, text, markup, parseMode = 'HTML') => {
+  const build = (t, m) => {
+    const payload = {
+      chat_id: chatId,
+      text: String(t).slice(0, 4000),
+      disable_web_page_preview: false,
+      ...(m ? { reply_markup: m } : {}),
+    };
+    if (parseMode) payload.parse_mode = parseMode;
+    return payload;
   };
-  if (parseMode) payload.parse_mode = parseMode;
-  return tgApi(token, 'sendMessage', payload);
+  try {
+    return await tgApi(token, 'sendMessage', build(text, markup));
+  } catch (e) {
+    // Premium emoji yoki rangli tugma qabul qilinmasa — oddiy ko'rinishda qayta yuboramiz (xabar yo'qolmasin)
+    if (!isFancyError(e)) throw e;
+    return tgApi(token, 'sendMessage', build(stripPremium(text), stripButtonExtras(markup)));
+  }
 };
 
-export const sendPhoto = (token, chatId, photo, caption, markup, parseMode = 'HTML') => {
-  const payload = {
-    chat_id: chatId,
-    photo: String(photo).trim(),
-    ...(caption ? { caption: String(caption).slice(0, 1024) } : {}),
-    ...(markup ? { reply_markup: markup } : {}),
+export const sendPhoto = async (token, chatId, photo, caption, markup, parseMode = 'HTML') => {
+  const build = (c, m) => {
+    const payload = {
+      chat_id: chatId,
+      photo: String(photo).trim(),
+      ...(c ? { caption: String(c).slice(0, 1024) } : {}),
+      ...(m ? { reply_markup: m } : {}),
+    };
+    if (parseMode && c) payload.parse_mode = parseMode;
+    return payload;
   };
-  if (parseMode && caption) payload.parse_mode = parseMode;
-  return tgApi(token, 'sendPhoto', payload);
+  try {
+    return await tgApi(token, 'sendPhoto', build(caption, markup));
+  } catch (e) {
+    if (!isFancyError(e)) throw e;
+    return tgApi(token, 'sendPhoto', build(stripPremium(caption), stripButtonExtras(markup)));
+  }
 };
 
 /** Firebase Realtime Database (REST, maxfiy kalit bilan) */
@@ -203,7 +243,7 @@ export async function runBroadcast(opts) {
   let n = 0;
   for (const [id, u] of targets) {
     const name = String(u.name || '').split(' ')[0] || "do'st";
-    const text = String(opts.text).replace(/\{name\}/gi, name);
+    const text = String(opts.text).replace(/\{name\}/gi, escHtml(name));
     let tries = 0;
     let mk = markup;
     if (opts.invite && inviteBot) {

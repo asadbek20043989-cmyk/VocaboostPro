@@ -198,7 +198,7 @@ Ushbu versiyada barcha so'ralgan funksiyalar va tizim takomillashtirishlari to'l
 
 ## 2. Talaffuz (Netlify kreditini umuman sarflamaydi)
 - Talaffuz tartibi: (1) yakka so'z — haqiqiy inson yozuvi (bepul Free Dictionary API, Netlify'ga tegmaydi); (2) `/tts` (Microsoft neyral ovozi, 1 yil keshlanadi); (3) brauzer ovozi.
-- Kredit tejash: `/tts` faqat lug'atda yo'q so'zlar va gaplar uchun chaqiriladi; xato bo'lsa 6 s dan oshmaydi, server 2 marta xato bersa mijoz 30 daqiqa so'ramaydi, server esa qisqa vaqt tez rad etadi. Google zaxirasi olib tashlangan (sifat va kredit uchun). Serverni butunlay o'chirish: `VITE_SERVER_TTS=0`.
+- Kredit tejash: `/tts` faqat lug'atda yo'q so'zlar va gaplar uchun chaqiriladi; xato bo'lsa 6 s dan oshmaydi, server 2 marta xato bersa mijoz 30 daqiqa so'ramaydi, server esa qisqa vaqt tez rad etadi. (Eski eslatma — v5.4 da talaffuz qayta qurilgan, pastdagi «v5.4» bo'limiga qarang.)
 - Service Worker begona manbalarni (audio) endi ushlamaydi.
 
 ## 3. Chellenj sertifikatlari
@@ -222,7 +222,7 @@ Ushbu versiyada barcha so'ralgan funksiyalar va tizim takomillashtirishlari to'l
 - `public/cert-render.js` `src/services/certificate.ts` o'zgarsa qayta yig'iladi: `npx esbuild src/services/certificate.ts --bundle --format=iife --global-name=VBC --minify --outfile=public/cert-render.js`
 
 ## Talaffuz (TTS) — Netlify krediti 0
-Ilova endi `/.netlify/functions/tts` ni chaqirmaydi. Ketma-ketlik: inson yozuvi (Free Dictionary) → Wikimedia inson yozuvi → sifatli tizim ovozi → Google TTS → brauzer ovozi. Eski serverli neyral ovozni qaytarish uchun Netlify env'da `VITE_SERVER_TTS=1` qo'ying (kredit sarflaydi).
+(Eski eslatma — v5.4 da talaffuz qayta qurilgan, pastdagi «v5.4» bo'limiga qarang.)
 
 ## v4.7.2 — sertifikat dizayni
 Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon rangi shablonga qarab (yashil / ko'k / binafsha / oltin-jigarrang), oltin «SERTIFIKAT», yaltiroq yulduzlar, daraja-so'z-streak muhrlari. Ikkala format (16:9 va 9:16) bir xil uslubda. Dizayn `src/services/certificate.ts` da; o'zgartirsangiz `public/cert-render.js` ni qayta yig'ing (yuqoridagi buyruq).
@@ -240,3 +240,42 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 **Sertifikatlar:** 8 ta yangi dizayn (`public/certs/*.jpg`) + haftalik g'olibga avtomatik «N-HAFTA CHEMPIONI». `public/cert-render.js` qayta yig'ilgan.
 
 **Talaffuz:** sun'iy (robot) ovoz butunlay o'chirildi — faqat inson yozuvlari. `tts` funksiyasi olib tashlandi.
+
+
+---
+
+## v5.4 — yangiliklar
+
+### 1. Premium (animatsiyali) emoji — /start, reklama, hammaga yuborish, eslatma
+- Admin panel → **🤖 Bot** → **💎 Premium emojilar kutubxonasi**.
+- Qo'shish: (a) emoji **to'plami havolasi** (`https://t.me/addemoji/Nomi`) — butun to'plam birdan; (b) **botga premium emoji yuboring** — bot ID ni qaytaradi, siz admin bo'lsangiz kutubxonaga o'zi qo'shadi (admin = `ADMIN_CHAT_ID` env yoki do'kon sozlamasidagi «admin Telegram ID»); (c) ID ni qo'lda kiritish.
+- Har bir matn maydoni (/start, reklama, hammaga yuborish, eslatma) tepasida **💎 Premium emoji qo'shish** tugmasi bor: tanlangan emoji kursor o'rniga `<tg-emoji emoji-id="…">😀</tg-emoji>` bo'lib qo'shiladi.
+- Premium emojini ko'rmaydigan foydalanuvchida oddiy emoji ko'rinadi. Telegram premium emojini qabul qilmasa, xabar avtomatik oddiy emoji bilan qayta yuboriladi (xabar yo'qolmaydi).
+- Tugmalarga ham **premium ikonka ID** berish mumkin (Telegram shartlari: bot egasida Premium bo'lishi kerak).
+
+### 2. Tugma ranglari (/start va reklama)
+- Har bir tugma uchun: ⬜ oddiy, 🟦 ko'k, 🟩 yashil, 🟥 qizil (Telegram faqat shu 3 rangni qo'llaydi). 1-tugma standart: yashil.
+- Admin panelda Telegramdagi ko'rinish (preview) chiqadi.
+- **Muhim:** webhook yangilandi — **«Botni ulash (webhook)»** tugmasini bir marta qayta bosing (botni bloklaganlarni aniqlash uchun `my_chat_member` ham yoqiladi).
+
+### 3. Nishonlar (New, Hot, Sale, Top, Limit, Tezda, Eng yaxshi)
+- **🛒 Do'kon → Mahsulotlar** jadvalida va **🎮 O'yinlar** kartalarida «Nishon» tanlanadi. Ixtiyoriy: o'z yozuvi va «gacha» sanasi (shundan keyin nishon o'zi yo'qoladi).
+- Olib tashlash: «— nishonsiz —» ni tanlab **Saqlash**; yoki **🧹 Barcha nishonlarni olib tashlash**.
+
+### 4. O'yinlarga rasm
+- **🎮 O'yinlar** → har bir o'yinda «Rasm havolasi» (do'kondagi kabi). Bo'sh bo'lsa — emoji belgi.
+
+### 5. Talaffuz (British English)
+- Yangi `/api/fn/tts` funksiyasi: **en-GB neyral ovoz** (standart `en-GB-SoniaNeural`). Boshqa ovoz uchun Vercel env: `TTS_VOICE` = `en-GB-RyanNeural` | `en-GB-LibbyNeural` | `en-GB-ThomasNeural` | `en-GB-MaisieNeural`.
+- Kechikish yo'q: har bir so'z serverda **bir marta** yaratiladi va CDN + brauzerda 1 yil saqlanadi; mashq/o'yin boshida so'zlar **oldindan yuklanadi**; server ishlamasa — inson yozuvi (UK), Google, qurilma ovozi.
+
+### 6. «Bugun» bo'limi
+- Ikkinchi profil rasmi olib tashlandi («Jihozlarim» kartasida belgi bor), tojli/ramkali avatar tepadan kesilib qolmaydi.
+
+### 7. Birinchi kirish: «Xush kelibsiz» oynasi
+- Faqat birinchi marta kirganda: logotip, tabrik, konfetti va ~2 soniyalik tantanali tovush (tovush o'chirilgan bo'lsa chalinmaydi). Eski foydalanuvchilarga ko'rsatilmaydi.
+
+### Qo'shimcha tuzatishlar
+- `{name}` (ism) HTML belgilarini buzmasligi uchun xavfsiz qilindi.
+- Do'kon rasmi havolasi buzuq bo'lsa, rangli belgi ko'rsatiladi.
+- «Hammaga yuborish» matni limiti 1000 → 3500 belgi.
