@@ -50,6 +50,15 @@ export const handler = async event => {
       const buf = Buffer.from(b64, 'base64');
       if (buf[0] !== 0xff || buf[1] !== 0xd8) return json(400, { error: 'Faqat JPEG qabul qilinadi' });
       const asDoc = body.kind === 'document';
+      // Avtomatik yuborish: bitta sertifikat ikki marta (ikki qurilma / ikki ochilish) yuborilmasin
+      if (body.auto === true) {
+        const dbx = makeDb();
+        if (dbx) {
+          const key = `certSent/${id}/${certId}`;
+          if (await dbx('GET', key).catch(() => null)) return json(200, { ok: true, duplicate: true });
+          await dbx('PUT', key, Date.now()).catch(() => {});
+        }
+      }
       const form = new FormData();
       form.append('chat_id', String(id));
       form.append('caption', `🎓 ${clean(body.title, 100) || 'Sertifikat'}\n№ ${certId} · ${clean(body.date, 10)}\n\nVocaBoost — so'zlarni tez va uzoq yodlang`);

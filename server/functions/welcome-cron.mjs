@@ -3,8 +3,6 @@
 // Sozlama: config/thanksCert = { title, reason, delaySec, enabled, caption }
 import {
   makeDb,
-  siteUrl,
-  sendPhoto,
   sendMessage,
   openAppMarkup,
   issueCertificate,
@@ -13,7 +11,7 @@ import {
 
 export const config = { schedule: '* * * * *' }; // har daqiqa
 
-const WELCOME_TITLE = '“VocaBoost” loyihamizga qo‘shgan beqiyos hissangiz, bilimga bo‘lgan ishtiyoqingiz va doimiy qo‘llab-quvvatlashingiz uchun chin dildan minnatdorchilik bildiramiz!';
+const WELCOME_TITLE = 'VocaBoost loyihasiga qo‘shgan hissangiz va bilimga bo‘lgan ishtiyoqingiz uchun minnatdorchilik!'; // sertifikatda 100 belgigacha sig'adi
 const WELCOME_REASON = '— Birgalikda yanada katta maqsadlarga! —';
 const DEFAULT_DELAY = 120; // 2 minut (120 soniya)
 const MAX_PER_RUN = 40;
@@ -52,10 +50,6 @@ export const handler = async () => {
 
   if (!due.length) return { statusCode: 200, body: 'none due' };
 
-  const base = siteUrl();
-  // Sertifikat fon rasmi (Telegram HTTPS URL orqali o'qiydi)
-  const photoUrl = base.startsWith('https://') ? `${base}/certs/bg_thanks.jpg?v=9` : null;
-
   let sent = 0;
   let failed = 0;
 
@@ -65,7 +59,7 @@ export const handler = async () => {
     const uid = `tg_${tgId}`;
 
     try {
-      // Allaqachon berilgan bo'lsa — faqat rasm/xabar yuboramiz, qayta issue qilmaymiz
+      // Allaqachon berilgan bo'lsa — faqat xabar yuboramiz, qayta issue qilmaymiz
       let certId = null;
       let certDate = null;
       const had = await db('GET', `welcomeIdx/${uid}`).catch(() => null);
@@ -91,6 +85,8 @@ export const handler = async () => {
         await db('PUT', `welcomeIdx/${uid}`, { id: certId, date: certDate, ts: Date.now() });
       }
 
+      // Sertifikat rasmi (ism, raqam, sana, QR bilan) brauzerda chiziladi va ilova ochilganda bot orqali BIR MARTA yuboriladi.
+      // Server bo'sh fon rasmini yubormaydi — faqat xabar va ilovani ochish tugmasi.
       const caption =
         String(cfg.caption || '').trim() ||
         `🎓 <b>Minnatdorchilik sertifikati</b>\n\n` +
@@ -98,20 +94,10 @@ export const handler = async () => {
           `${escHtml(title)}\n\n` +
           `<i>${escHtml(reason)}</i>\n\n` +
           (certId ? `№ <code>${escHtml(certId)}</code>${certDate ? ` · ${escHtml(certDate)}` : ''}\n\n` : '') +
+          `Ilovani oching — sertifikatingiz shu chatga rasm bo'lib keladi 👇\n\n` +
           `VocaBoost jamoasi 💚`;
 
-      const markup = openAppMarkup('🚀 VocaBoostni ochish');
-
-      if (photoUrl) {
-        try {
-          await sendPhoto(token, chatId, photoUrl, caption, markup, 'HTML');
-        } catch {
-          // Rasm yuborilmasa — matn bilan yuboramiz
-          await sendMessage(token, chatId, caption, markup, 'HTML');
-        }
-      } else {
-        await sendMessage(token, chatId, caption, markup, 'HTML');
-      }
+      await sendMessage(token, chatId, caption, openAppMarkup('🎓 Sertifikatni olish'), 'HTML');
 
       await db('PUT', `pendingWelcome/${tgId}`, { ...row, sent: true, sentAt: Date.now(), certId });
       sent++;
