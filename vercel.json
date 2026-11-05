@@ -8,11 +8,6 @@
     { "source": "/api/fn/:name", "destination": "/api/fn/[name]?name=:name" },
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
-  "crons": [
-    { "path": "/api/fn/welcome-cron", "schedule": "* * * * *" },
-    { "path": "/api/fn/remind", "schedule": "0 15 * * *" },
-    { "path": "/api/fn/streak-warn", "schedule": "0 17 * * *" }
-  ],
   "headers": [
     { "source": "/admin.html", "headers": [
       { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
