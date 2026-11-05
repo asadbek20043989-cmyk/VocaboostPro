@@ -316,6 +316,7 @@ var VBC = (() => {
   }
 
   // src/services/certificate.ts
+  var import_meta = {};
   var CERT_W = 1754;
   var CERT_H = 1240;
   var CERT_STORY_W = 1080;
@@ -345,7 +346,7 @@ var VBC = (() => {
   var SERIF = "Georgia, 'Times New Roman', 'DejaVu Serif', serif";
   var SANS = "'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'DejaVu Sans', sans-serif";
   var certUrl = (id) => {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
+    const base = import_meta.env?.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
     return `${base.replace(/\/$/, "")}/c/${encodeURIComponent(id)}`;
   };
   var fmtDate = (iso) => {
@@ -633,7 +634,7 @@ var VBC = (() => {
       x += pw + gap;
     });
   }
-  var IMG_V = "6";
+  var IMG_V = "7";
   var IMG_BG = {
     bronze: "bg_bronze",
     silver: "bg_silver",
@@ -731,6 +732,21 @@ var VBC = (() => {
       plateCx: [468, 792, 1126],
       qr: [1435, 777, 116],
       date: [104, 802, 830, 27]
+    },
+    // Yangi Minnatdorchilik dizayni (oltin lenta + oq markaz + pastki qorong'u burchaklar)
+    bg_thanks: {
+      ribbon: [800, 320, 420],
+      // lenta yozuvi bg da bor — chizilmasin yoki yopilsin
+      nameY: 510,
+      divY: 528,
+      zTop: 548,
+      frames: false,
+      plateTop: 700,
+      plateH: 50,
+      plateW: 240,
+      plateGap: 16,
+      qr: [1495, 805, 105],
+      date: [88, 818, 848, 26]
     }
   };
   var loadImg = (src) => new Promise((res) => {
@@ -895,64 +911,94 @@ var VBC = (() => {
     const cxm = L.ribbon[0];
     const dark = bgKey === "bg_wisdom";
     const edge = IMG_EDGE[bgKey] || "#F5C95A";
-    const showStats = k !== "thanks";
-    const label = String(c.label || IMG_LABEL[k] || "").toUpperCase().slice(0, 28);
-    let fs = 28;
-    ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
-    const maxLabel = dark ? L.ribbon[2] + 60 : 520;
-    while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) {
-      fs -= 1;
-      ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
-    }
-    const lw = spacedWidth(ctx, label, 2.5);
-    if (!dark) {
-      const pw = Math.max(lw + 60, 390), ph = 52;
+    const isThanks = k === "thanks";
+    const showStats = !isThanks;
+    if (isThanks) {
       ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 10;
-      rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
-      const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
-      pg.addColorStop(0, "rgb(16,22,44)");
-      pg.addColorStop(1, "rgb(6,10,24)");
+      const plateY = 455, plateH = 280;
+      const pg = ctx.createLinearGradient(0, plateY, 0, plateY + plateH);
+      pg.addColorStop(0, "rgba(255,255,255,0.92)");
+      pg.addColorStop(0.5, "rgba(252,252,255,0.97)");
+      pg.addColorStop(1, "rgba(255,255,255,0.90)");
       ctx.fillStyle = pg;
+      rrect(ctx, 260, plateY, 1080, plateH, 18);
       ctx.fill();
-      ctx.restore();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#E7BE62";
-      rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
+      ctx.strokeStyle = "rgba(212,175,55,0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(520, 535);
+      ctx.lineTo(1080, 535);
       ctx.stroke();
+      ctx.restore();
+    } else {
+      const label = String(c.label || IMG_LABEL[k] || "").toUpperCase().slice(0, 28);
+      let fs = 28;
+      ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
+      const maxLabel = dark ? L.ribbon[2] + 60 : 520;
+      while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) {
+        fs -= 1;
+        ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
+      }
+      const lw = spacedWidth(ctx, label, 2.5);
+      if (!dark) {
+        const pw = Math.max(lw + 60, 390), ph = 52;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = 10;
+        rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
+        const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
+        pg.addColorStop(0, "rgb(16,22,44)");
+        pg.addColorStop(1, "rgb(6,10,24)");
+        ctx.fillStyle = pg;
+        ctx.fill();
+        ctx.restore();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#E7BE62";
+        rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
+        ctx.stroke();
+      }
+      ctx.save();
+      if (!dark) {
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
+      }
+      spaced(ctx, label, cxm, L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || "#FFE48A");
+      ctx.restore();
     }
-    ctx.save();
-    if (!dark) {
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 4;
-    }
-    spaced(ctx, label, cxm, L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || "#FFE48A");
-    ctx.restore();
-    let ns = 66;
+    let ns = isThanks ? 58 : 66;
     const nm = c.name || "F.I.SH.";
     ctx.font = `italic 700 ${ns}px ${SERIF}`;
-    while (ctx.measureText(nm).width > 800 && ns > 34) {
+    while (ctx.measureText(nm).width > (isThanks ? 780 : 800) && ns > 34) {
       ns -= 2;
       ctx.font = `italic 700 ${ns}px ${SERIF}`;
     }
     ctx.save();
-    const rg = ctx.createRadialGradient(cxm, L.nameY - ns * 0.3, 10, cxm, L.nameY - ns * 0.3, 420);
-    rg.addColorStop(0, "rgba(4,8,20,0.5)");
-    rg.addColorStop(1, "rgba(4,8,20,0)");
-    ctx.fillStyle = rg;
-    ctx.fillRect(cxm - 440, L.nameY - ns * 1.2, 880, ns * 1.7);
-    ctx.shadowColor = "rgba(0,0,0,0.65)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = vGrad(ctx, L.nameY - ns * 0.8, L.nameY + 8, "#FFFFFF", dark ? "#E9B24A" : "#F2CB74");
-    ctx.fillText(nm, cxm, L.nameY);
-    ctx.shadowColor = dark ? "rgba(255,190,70,0.55)" : "rgba(255,214,120,0.6)";
-    ctx.shadowBlur = 22;
-    ctx.shadowOffsetY = 0;
-    ctx.fillText(nm, cxm, L.nameY);
+    if (!isThanks) {
+      const rg = ctx.createRadialGradient(cxm, L.nameY - ns * 0.3, 10, cxm, L.nameY - ns * 0.3, 420);
+      rg.addColorStop(0, "rgba(4,8,20,0.5)");
+      rg.addColorStop(1, "rgba(4,8,20,0)");
+      ctx.fillStyle = rg;
+      ctx.fillRect(cxm - 440, L.nameY - ns * 1.2, 880, ns * 1.7);
+    }
+    if (isThanks) {
+      ctx.shadowColor = "rgba(0,0,0,0.25)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = "#0B1A3A";
+      ctx.fillText(nm, cxm, L.nameY);
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,0.65)";
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = vGrad(ctx, L.nameY - ns * 0.8, L.nameY + 8, "#FFFFFF", dark ? "#E9B24A" : "#F2CB74");
+      ctx.fillText(nm, cxm, L.nameY);
+      ctx.shadowColor = dark ? "rgba(255,190,70,0.55)" : "rgba(255,214,120,0.6)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 0;
+      ctx.fillText(nm, cxm, L.nameY);
+    }
     ctx.restore();
-    {
+    if (!isThanks) {
       const lg = ctx.createLinearGradient(cxm - 300, 0, cxm + 300, 0);
       lg.addColorStop(0, "rgba(240,196,99,0)");
       lg.addColorStop(0.2, "rgba(240,196,99,0.95)");
@@ -974,22 +1020,45 @@ var VBC = (() => {
       ctx.lineTo(cxm - 6, L.divY);
       ctx.closePath();
       ctx.fill();
+    } else {
+      ctx.fillStyle = "#D4AF37";
+      ctx.beginPath();
+      const sy = L.divY + 4;
+      ctx.moveTo(cxm, sy - 5);
+      ctx.lineTo(cxm + 5, sy);
+      ctx.lineTo(cxm, sy + 5);
+      ctx.lineTo(cxm - 5, sy);
+      ctx.closePath();
+      ctx.fill();
     }
-    const zBottom = showStats ? L.plateTop - 14 : 742;
+    const zBottom = showStats ? L.plateTop - 14 : isThanks ? 720 : 742;
     const zoneH = zBottom - L.zTop;
-    const blk = fitBlock(ctx, c.title || "", c.reason || "", zoneH, 900);
+    const blk = fitBlock(ctx, c.title || "", c.reason || "", zoneH, isThanks ? 860 : 900);
     let y = L.zTop + (zoneH - blk.h) / 2;
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 1.5;
-    ctx.font = `800 ${blk.ts}px ${SANS}`;
-    ctx.fillStyle = dark ? "#F8E6B0" : "#FFF3C6";
-    blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.2));
-    y += blk.tl.length * blk.ts * 1.2 + 10;
-    ctx.font = `500 ${blk.rs}px ${SANS}`;
-    ctx.fillStyle = dark ? "#EBDDB5" : "#E4EAF6";
-    blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.32));
+    if (isThanks) {
+      ctx.shadowColor = "rgba(0,0,0,0.12)";
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetY = 1;
+      ctx.font = `700 ${blk.ts}px ${SANS}`;
+      ctx.fillStyle = "#1A2744";
+      blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.22));
+      y += blk.tl.length * blk.ts * 1.22 + 8;
+      ctx.font = `500 ${blk.rs}px ${SANS}`;
+      ctx.fillStyle = "#2C3E5A";
+      blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.28));
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 1.5;
+      ctx.font = `800 ${blk.ts}px ${SANS}`;
+      ctx.fillStyle = dark ? "#F8E6B0" : "#FFF3C6";
+      blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.2));
+      y += blk.tl.length * blk.ts * 1.2 + 10;
+      ctx.font = `500 ${blk.rs}px ${SANS}`;
+      ctx.fillStyle = dark ? "#EBDDB5" : "#E4EAF6";
+      blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.32));
+    }
     ctx.restore();
     if (showStats) {
       const st = c.stats || {};
