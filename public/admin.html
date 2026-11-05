@@ -798,7 +798,7 @@ if ($('nbSave')) {
     const games = ($('nb_games').value || '').trim().slice(0, 12);
     const shop = ($('nb_shop').value || '').trim().slice(0, 12);
     const curShop = data.config?.shop || {};
-    await api('setConfig', { key: 'shop', value: { ...curShop, navBadges: { games, shop } } });
+    await api('setShop', { value: { ...curShop, navBadges: { games, shop } } });
     flash('Pastki menyu nishonlari saqlandi ✅');
     await load();
   });
