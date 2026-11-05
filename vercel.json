@@ -5,14 +5,12 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/.netlify/functions/:name", "destination": "/api/fn/:name" },
-    { "source": "/api/fn/:name", "destination": "/api/fn/[name]?name=:name" },
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     { "source": "/admin.html", "headers": [
       { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-      { "key": "Cache-Control", "value": "no-store" }
-    ]},
+      { "key": "Cache-Control", "value": "no-store" } ] },
     { "source": "/certs/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=2592000" } ] },
     { "source": "/icons/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=604800" } ] },
     { "source": "/assets/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" } ] },

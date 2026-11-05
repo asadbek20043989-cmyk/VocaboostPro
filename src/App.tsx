@@ -14,7 +14,6 @@ import { LofiMini } from './components/LofiPlayer';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
 import { WelcomePopup, welcomeSeen, markWelcomeSeen } from './components/WelcomePopup';
-import { RankChangePopup, loadLastRank, saveLastRank, RankDelta } from './components/RankChangePopup';
 import { LuckyWheel } from './components/LuckyWheel';
 import { BrandMark, Logo, HeaderActions } from './components/Brand';
 import { installGlobalClickSound } from './services/sound';
@@ -61,9 +60,8 @@ const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
 };
 
 const MainScreen: React.FC = () => {
-  const { profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady, realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf, leagueUsers, leagueLive } = useApp();
+  const { profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady, realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf } = useApp();
   const [showWheelModal, setShowWheelModal] = useState(false);
-  const [rankDelta, setRankDelta] = useState<RankDelta | null>(null);
 
   // Ilovadagi har bir tugmaga qisqa "ping" tovushi
   useEffect(() => {
@@ -75,23 +73,6 @@ const MainScreen: React.FC = () => {
   useEffect(() => {
     if (profile.hasCompletedOnboarding) markWelcomeSeen();
   }, [profile.hasCompletedOnboarding]);
-
-  // Reyting o'zgarishi: birinchi marta kirganlar uchun emas, keyingi kirishlarda kreativ popup
-  useEffect(() => {
-    if (!profile.hasCompletedOnboarding || !leagueLive || !leagueUsers.length) return;
-    const meIdx = leagueUsers.findIndex(u => u.isCurrentUser);
-    if (meIdx < 0) return;
-    const curr = meIdx + 1;
-    const prev = loadLastRank();
-    if (prev == null) {
-      saveLastRank(curr);
-      return;
-    }
-    if (prev === curr) return;
-    // Faqat sezilarli o'zgarish yoki har qanday o'zgarish — kreativ popup
-    setRankDelta({ prev, curr, delta: prev - curr }); // + = ko'tarilish
-    saveLastRank(curr);
-  }, [profile.hasCompletedOnboarding, leagueLive, leagueUsers]);
 
   // Yangi qurilmada bulutdagi progress yuklanguncha onboarding ko'rsatilmaydi
   if (realtimeOn && !syncReady && !profile.hasCompletedOnboarding) {
@@ -141,10 +122,6 @@ const MainScreen: React.FC = () => {
       {showWheelModal && <LuckyWheel onClose={() => setShowWheelModal(false)} />}
       {/* Streak oynasi: mashq/o'yin tugab, bosh sahifaga qaytilganda ko'rinadi */}
       <StreakPopup />
-      {/* Reyting o'zgarishi (birinchi kirishdan tashqari) */}
-      {rankDelta && !welcome && (
-        <RankChangePopup data={rankDelta} onClose={() => setRankDelta(null)} />
-      )}
     </div>
   );
 };

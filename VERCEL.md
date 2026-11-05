@@ -25,23 +25,13 @@ Muhim: o'zgaruvchi qo'shgach yoki o'zgartirgach **Redeploy** qiling (VITE_* ham,
 ## 4. Telegram bot
 Admin paneldagi "webhook o'rnatish" tugmasini yangi domen ochiq turib qayta bosing (webhook manzili `/api/fn/tg-webhook` bo'ldi). BotFather'da Mini App/Menu Button havolasini ham yangi domenga almashtiring.
 
-## 5. Rejalashtirilgan vazifalar (cron) — Hobby
-`vercel.json` da `crons` YO'Q: Hobby'da kuniga 1 martadan ko'p cron deploy'ni to'xtatadi. Vazifalarni tashqaridan chaqiramiz.
-Hammasi `CRON_SECRET` bilan himoyalangan (`Authorization: Bearer <CRON_SECRET>` yoki `?key=<CRON_SECRET>`).
-
-**a) remind va streak-warn — GitHub Actions** (`.github/workflows/cron.yml`).
+## 5. Soatlik eslatmalar (cron)
+Netlify'dagi "Scheduled Functions" Vercel Hobby'da yo'q (cron kuniga 1 marta). Shu uchun `.github/workflows/cron.yml` GitHub Actions orqali chaqiradi.
 GitHub repo > Settings > Secrets and variables > Actions > New repository secret:
-- `SITE_URL` = sayt manzili (oxirida `/` siz)
+- `SITE_URL` = sayt manzili
 - `CRON_SECRET` = Vercel'dagidek bir xil qiymat
-Keyin Actions > scheduled-bot-tasks > Run workflow bilan sinang (xato bo'lsa endi qizil bo'ladi).
 
-**b) welcome-cron — cron-job.org** (har 1 daqiqa; GitHub bunga yaramaydi).
-Yangi cronjob: URL `https://SAYT/api/fn/welcome-cron`, jadval: every 1 minute, Advanced > Headers: `Authorization: Bearer <CRON_SECRET>`.
-
-**Tekshirish:** `curl -i -H "Authorization: Bearer SECRET" https://SAYT/api/fn/welcome-cron` -> 200; sarlavhasiz -> 401.
-Pro rejaga o'tsangiz, `crons` blokini `vercel.json` ga qaytarish mumkin (Vercel Bearer'ni o'zi yuboradi).
-
-**Telegram webhook xavfsizligi:** `TG_WEBHOOK_SECRET` ni albatta qo'ying va webhook'ni `secret_token` bilan qayta o'rnating, aks holda soxta update yuborish mumkin.
+Alternativa: cron-job.org'da har soat `https://SAYT/api/fn/remind?key=CRON_SECRET` va `https://SAYT/api/fn/streak-warn?key=CRON_SECRET` ni chaqirtiring.
 
 ## 6. Firebase
 Realtime Database qoidalari o'zgarmaydi (`database.rules.json`). Faqat Authorized domains kerak bo'lsa, yangi domenni qo'shing.

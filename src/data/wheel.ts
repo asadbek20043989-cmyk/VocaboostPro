@@ -1,5 +1,5 @@
 // Baraban sovrinlari admin paneldan o'zgartiriladi (config/wheel). Quyidagilar — standart qiymatlar.
-export type PrizeType = 'xp' | 'double_xp' | 'extra_spin' | 'vip' | 'streak_saver' | 'shop_item';
+export type PrizeType = 'xp' | 'double_xp' | 'extra_spin' | 'vip' | 'streak_saver';
 
 export interface WheelPrize {
   id: string; // p0, p1 ...
@@ -12,8 +12,6 @@ export interface WheelPrize {
   probability: number; // foiz (jami 100 ga normallashtiriladi)
   color: string;
   big: boolean; // katta yutuq (konfeti kuchliroq)
-  /** type==='shop_item' bo'lganda do'kon mahsuloti id si */
-  itemId?: string;
 }
 
 export interface WheelConfig {
@@ -55,8 +53,6 @@ export const prizeText = (type: PrizeType, amount: number) => {
       return { label: 'VIP / Pro', title: 'VIP / Pro kirish', description: `VIP o'yinlar ${amount} soat davomida ochiq!`, emoji: '👑' };
     case 'streak_saver':
       return { label: 'Muzlatish', title: 'Streak muzlatish', description: "Bir kun mashq qilolmasangiz ham streakingiz muzlab, saqlanib qoladi. Qaytgach mashqni davom ettiring!", emoji: '❄️' };
-    case 'shop_item':
-      return { label: "Sovg'a", title: "Do'kon sovg'asi", description: "Do'kondagi maxsus sovg'a yutdingiz! Profil yoki inventaringizga qo'shildi.", emoji: '🎁' };
   }
 };
 
