@@ -89,6 +89,20 @@ export const handler = async event => {
         const text = String(cfg.text || DEFAULT_START_TEXT).replace(/\{name\}/g, escHtml(name));
         await sendMessage(token, m.chat.id, text, makeStartMarkup(cfg));
       }
+      // Yangi foydalanuvchi: 2 minutdan (120 soniyadan) keyin Minnatdorchilik sertifikatini yuborish uchun navbat
+      if (wasNew && db && id) {
+        try {
+          const name = firstNameOf(m.from) || "O'quvchi";
+          const delaySec = 120; // 2 minut; welcome-cron config/thanksCert.delaySec bilan o'zgartiriladi
+          await db('PUT', `pendingWelcome/${id}`, {
+            name,
+            chatId: id,
+            at: Date.now(),
+            sendAt: Date.now() + delaySec * 1000,
+            sent: false,
+          });
+        } catch { /* ignore */ }
+      }
       if (wasNew && db && /^ref_\d{3,15}$/.test(refParam)) {
         try {
           await processReferral(db, token, m.from, refParam.slice(4));

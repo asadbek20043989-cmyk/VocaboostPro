@@ -1041,6 +1041,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sovrin effekti baraban to'xtagandan KEYIN qo'llanadi
   const applyPrize = (prize: WheelPrize, usedFree: boolean) => {
     if (prize.type === 'xp') setProfile(p => addXpTo(p, prize.amount));
+    if (prize.type === 'shop_item') {
+      const itId = prize.itemId;
+      if (itId) {
+        const it = catalogRef.current?.find(x => x.id === itId) || DEFAULT_ITEMS.find(x => x.id === itId);
+        if (it) {
+          setProfile(p => giveItem(p, it.id, it));
+          wheelItem(it);
+        }
+      }
+    }
     setWheel(p => {
       const next = { ...p };
       switch (prize.type) {

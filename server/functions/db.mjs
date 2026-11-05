@@ -38,6 +38,16 @@ export const handler = async event => {
   const root = parts[0];
   const targetId = parts[1] || '';
 
+  // Xavfsizlik: yozish faqat ilova yozadigan tugunlarga ruxsat. config/words/packs/certs/hall ga FAQAT admin.mjs yozadi.
+  // Yo'l ildizning o'zi bo'la olmaydi (butun reytingni yoki boshqalar yozuvini almashtirib bo'lmasin),
+  // leaderboard/<id> dan chuqurroq yozish ham yopiq (adj, refs, hasGrant kabi maydonlarni chetlab o'tmasligi uchun).
+  if (method !== 'GET') {
+    const WRITABLE = new Set(['leaderboard', 'state', 'duels', 'challenges']);
+    if (!WRITABLE.has(root)) return reply(403, { error: 'Bu tugunga yozish taqiqlangan' });
+    if (parts.length < 2) return reply(403, { error: "Ildizga yozib bo'lmaydi" });
+    if (root === 'leaderboard' && parts.length !== 2) return reply(403, { error: "Reyting yozuvi faqat butun holda yangilanadi" });
+  }
+
   // Xavfsizlik: DELETE amali faqat eskirgan sub-kalitlarni (masalan: state/<uid>/srs_<epoch>) tozalash uchun ruxsat etiladi.
   // Butun boshli hisob yoki begona tugunlarni o'chirish qat'iyan taqiqlanadi!
   if (method === 'DELETE') {

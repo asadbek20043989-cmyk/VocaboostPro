@@ -717,8 +717,8 @@ export const handler = async event => {
       case 'getThanksCert': {
         const cfg = (await call('GET', 'config/thanksCert')) || {};
         return json(200, {
-          title: cfg.title || '"Vocaboost" ilovamizga tashrif buyurganizdan bag\'oyatda mamnunmiz!!!',
-          reason: cfg.reason || 'Hali oldinda sizni ko‘p sertifikat va sovrinlar kutmoqda...',
+          title: cfg.title || '“VocaBoost” loyihamizga qo‘shgan beqiyos hissangiz, bilimga bo‘lgan ishtiyoqingiz va doimiy qo‘llab-quvvatlashingiz uchun chin dildan minnatdorchilik bildiramiz!',
+          reason: cfg.reason || '— Birgalikda yanada katta maqsadlarga! —',
         });
       }
 

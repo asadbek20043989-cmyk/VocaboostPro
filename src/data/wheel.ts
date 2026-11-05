@@ -1,5 +1,7 @@
+import { DEFAULT_ITEMS } from './shopDefaults';
+
 // Baraban sovrinlari admin paneldan o'zgartiriladi (config/wheel). Quyidagilar — standart qiymatlar.
-export type PrizeType = 'xp' | 'double_xp' | 'extra_spin' | 'vip' | 'streak_saver';
+export type PrizeType = 'xp' | 'double_xp' | 'extra_spin' | 'vip' | 'streak_saver' | 'shop_item';
 
 export interface WheelPrize {
   id: string; // p0, p1 ...
@@ -12,10 +14,12 @@ export interface WheelPrize {
   probability: number; // foiz (jami 100 ga normallashtiriladi)
   color: string;
   big: boolean; // katta yutuq (konfeti kuchliroq)
+  /** type==='shop_item' bo'lganda do'kon mahsuloti id si */
+  itemId?: string;
 }
 
 export interface WheelConfig {
-  prizes: { type: PrizeType; amount: number; label?: string; emoji?: string; color?: string; weight: number; enabled?: boolean }[];
+  prizes: { type: PrizeType; amount: number; label?: string; emoji?: string; color?: string; weight: number; enabled?: boolean; itemId?: string }[];
   freeSpins: number;
   cooldownHours: number;
   vipHours: number;
@@ -41,7 +45,7 @@ export const DEFAULT_WHEEL: WheelConfig = {
 const COLORS = ['#2563EB', '#7C3AED', '#DB2777', '#059669', '#D97706', '#0891B2', '#DC2626', '#4F46E5'];
 const toArr = (v: any): any[] => (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []);
 
-export const prizeText = (type: PrizeType, amount: number) => {
+export const prizeText = (type: PrizeType, amount: number, itemId?: string) => {
   switch (type) {
     case 'xp':
       return { label: `+${amount} XP`, title: amount >= 50 ? 'Super Bonus!' : `+${amount} XP`, description: `Hisobingizga ${amount} XP qo'shildi!`, emoji: amount >= 50 ? '🎁' : '💎' };
@@ -53,6 +57,18 @@ export const prizeText = (type: PrizeType, amount: number) => {
       return { label: 'VIP / Pro', title: 'VIP / Pro kirish', description: `VIP o'yinlar ${amount} soat davomida ochiq!`, emoji: '👑' };
     case 'streak_saver':
       return { label: 'Muzlatish', title: 'Streak muzlatish', description: "Bir kun mashq qilolmasangiz ham streakingiz muzlab, saqlanib qoladi. Qaytgach mashqni davom ettiring!", emoji: '❄️' };
+    case 'shop_item': {
+      const it = itemId ? DEFAULT_ITEMS.find(x => x.id === itemId) : null;
+      if (it) {
+        return {
+          label: it.title.slice(0, 12),
+          title: it.title,
+          description: `Tabriklaymiz! Do'kondagi «${it.title}» sovg'asini yutib oldingiz!`,
+          emoji: it.icon || '🎁',
+        };
+      }
+      return { label: "Sovg'a", title: "Do'kon sovg'asi", description: "Do'kondagi maxsus sovg'a yutdingiz! Profil yoki inventaringizga qo'shildi.", emoji: '🎁' };
+    }
   }
 };
 
@@ -69,20 +85,22 @@ export function buildWheel(cfg: any): { prizes: WheelPrize[]; freeSpins: number;
   const useVp = Number.isFinite(vp) && vipW > 0 && othW > 0;
   const vipShare = useVp ? Math.min(100, Math.max(0, vp)) : 0;
   const prizes: WheelPrize[] = src.slice(0, 10).map((p: any, i: number) => {
-    const type = (['xp', 'double_xp', 'extra_spin', 'vip', 'streak_saver'].includes(p.type) ? p.type : 'xp') as PrizeType;
+    const type = (['xp', 'double_xp', 'extra_spin', 'vip', 'streak_saver', 'shop_item'].includes(p.type) ? p.type : 'xp') as PrizeType;
     const amount = Math.max(1, Math.round(Number(p.amount) || 1));
-    const t = prizeText(type, amount);
+    const itemId = p.itemId ? String(p.itemId) : undefined;
+    const t = prizeText(type, amount, itemId);
     return {
       id: `p${i}`,
       type,
       amount,
+      itemId,
       label: String(p.label || t.label).slice(0, 14),
       title: t.title,
       description: t.description,
       emoji: String(p.emoji || t.emoji).slice(0, 4),
       probability: useVp ? (type === 'vip' ? (Number(p.weight) / vipW) * vipShare : (Number(p.weight) / othW) * (100 - vipShare)) : (Number(p.weight) / total) * 100,
       color: /^#[0-9a-fA-F]{6}$/.test(p.color || '') ? p.color : COLORS[i % COLORS.length],
-      big: type === 'xp' && amount >= 50,
+      big: (type === 'xp' && amount >= 50) || type === 'shop_item',
     };
   });
   return {

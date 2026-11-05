@@ -17,7 +17,7 @@ var VBC = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // src/services/certificate.ts
+  // ../../../../.gemini/antigravity/scratch/vocaboost/VocaBoost_v5_4_3/src/services/certificate.ts
   var certificate_exports = {};
   __export(certificate_exports, {
     CERT_BOT: () => CERT_BOT,
@@ -33,7 +33,7 @@ var VBC = (() => {
     hasImageTemplate: () => hasImageTemplate
   });
 
-  // src/services/qr.ts
+  // ../../../../.gemini/antigravity/scratch/vocaboost/VocaBoost_v5_4_3/src/services/qr.ts
   var ECC_PER_BLOCK = {
     L: [-1, 7, 10, 15, 20, 26, 18, 20, 24, 30, 18, 20, 24, 26, 30, 22, 24, 28, 30, 28, 28, 28, 28, 30, 30, 26, 28, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
     M: [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28]
@@ -315,7 +315,8 @@ var VBC = (() => {
         if (m[r][c]) ctx.fillRect(ox + (c + quiet) * cell, oy + (r + quiet) * cell, cell, cell);
   }
 
-  // src/services/certificate.ts
+  // ../../../../.gemini/antigravity/scratch/vocaboost/VocaBoost_v5_4_3/src/services/certificate.ts
+  var import_meta = {};
   var CERT_W = 1754;
   var CERT_H = 1240;
   var CERT_STORY_W = 1080;
@@ -345,7 +346,7 @@ var VBC = (() => {
   var SERIF = "Georgia, 'Times New Roman', 'DejaVu Serif', serif";
   var SANS = "'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'DejaVu Sans', sans-serif";
   var certUrl = (id) => {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
+    const base = import_meta.env?.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
     return `${base.replace(/\/$/, "")}/c/${encodeURIComponent(id)}`;
   };
   var fmtDate = (iso) => {
@@ -633,7 +634,7 @@ var VBC = (() => {
       x += pw + gap;
     });
   }
-  var IMG_V = "6";
+  var IMG_V = "9";
   var IMG_BG = {
     bronze: "bg_bronze",
     silver: "bg_silver",
@@ -731,6 +732,25 @@ var VBC = (() => {
       plateCx: [468, 792, 1126],
       qr: [1435, 777, 116],
       date: [104, 802, 830, 27]
+    },
+    // Yangi Minnatdorchilik dizayni (1024x576 -> 1600x900)
+    bg_thanks: {
+      ribbon: [800, 320, 420],
+      nameY: 450,
+      // Ism baseline (yulduz chizig'i 494 da)
+      divY: 494,
+      // Oltin yulduzli separator chiziq
+      zTop: 518,
+      // Sarlavha+izoh zonasi boshlanishi
+      frames: false,
+      plateTop: 700,
+      plateH: 50,
+      plateW: 240,
+      plateGap: 16,
+      qr: [1444, 788, 134],
+      // Pastki o'ngdagi maxsus oltin hoshiyali kvadrat
+      date: [142, 812, 0, 21]
+      // 142 da 📅 Sana, 456 da 🏆 № ID
     }
   };
   var loadImg = (src) => new Promise((res) => {
@@ -895,64 +915,77 @@ var VBC = (() => {
     const cxm = L.ribbon[0];
     const dark = bgKey === "bg_wisdom";
     const edge = IMG_EDGE[bgKey] || "#F5C95A";
-    const showStats = k !== "thanks";
-    const label = String(c.label || IMG_LABEL[k] || "").toUpperCase().slice(0, 28);
-    let fs = 28;
-    ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
-    const maxLabel = dark ? L.ribbon[2] + 60 : 520;
-    while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) {
-      fs -= 1;
+    const isThanks = k === "thanks";
+    const showStats = !isThanks;
+    if (!isThanks) {
+      const label = String(c.label || IMG_LABEL[k] || "").toUpperCase().slice(0, 28);
+      let fs = 28;
       ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
-    }
-    const lw = spacedWidth(ctx, label, 2.5);
-    if (!dark) {
-      const pw = Math.max(lw + 60, 390), ph = 52;
+      const maxLabel = dark ? L.ribbon[2] + 60 : 520;
+      while (spacedWidth(ctx, label, 2.5) > maxLabel && fs > 14) {
+        fs -= 1;
+        ctx.font = `800 ${fs}px ${dark ? SERIF : SANS}`;
+      }
+      const lw = spacedWidth(ctx, label, 2.5);
+      if (!dark) {
+        const pw = Math.max(lw + 60, 390), ph = 52;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = 10;
+        rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
+        const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
+        pg.addColorStop(0, "rgb(16,22,44)");
+        pg.addColorStop(1, "rgb(6,10,24)");
+        ctx.fillStyle = pg;
+        ctx.fill();
+        ctx.restore();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#E7BE62";
+        rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
+        ctx.stroke();
+      }
       ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 10;
-      rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
-      const pg = ctx.createLinearGradient(0, L.ribbon[1] - ph / 2, 0, L.ribbon[1] + ph / 2);
-      pg.addColorStop(0, "rgb(16,22,44)");
-      pg.addColorStop(1, "rgb(6,10,24)");
-      ctx.fillStyle = pg;
-      ctx.fill();
+      if (!dark) {
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
+      }
+      spaced(ctx, label, cxm, L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || "#FFE48A");
       ctx.restore();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#E7BE62";
-      rrect(ctx, cxm - pw / 2, L.ribbon[1] - ph / 2, pw, ph, 9);
-      ctx.stroke();
     }
-    ctx.save();
-    if (!dark) {
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 4;
-    }
-    spaced(ctx, label, cxm, L.ribbon[1] + fs * 0.36, 2.5, IMG_INK[k] || "#FFE48A");
-    ctx.restore();
-    let ns = 66;
+    let ns = isThanks ? 54 : 66;
     const nm = c.name || "F.I.SH.";
     ctx.font = `italic 700 ${ns}px ${SERIF}`;
-    while (ctx.measureText(nm).width > 800 && ns > 34) {
+    while (ctx.measureText(nm).width > (isThanks ? 760 : 800) && ns > 32) {
       ns -= 2;
       ctx.font = `italic 700 ${ns}px ${SERIF}`;
     }
     ctx.save();
-    const rg = ctx.createRadialGradient(cxm, L.nameY - ns * 0.3, 10, cxm, L.nameY - ns * 0.3, 420);
-    rg.addColorStop(0, "rgba(4,8,20,0.5)");
-    rg.addColorStop(1, "rgba(4,8,20,0)");
-    ctx.fillStyle = rg;
-    ctx.fillRect(cxm - 440, L.nameY - ns * 1.2, 880, ns * 1.7);
-    ctx.shadowColor = "rgba(0,0,0,0.65)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = vGrad(ctx, L.nameY - ns * 0.8, L.nameY + 8, "#FFFFFF", dark ? "#E9B24A" : "#F2CB74");
-    ctx.fillText(nm, cxm, L.nameY);
-    ctx.shadowColor = dark ? "rgba(255,190,70,0.55)" : "rgba(255,214,120,0.6)";
-    ctx.shadowBlur = 22;
-    ctx.shadowOffsetY = 0;
-    ctx.fillText(nm, cxm, L.nameY);
+    if (!isThanks) {
+      const rg = ctx.createRadialGradient(cxm, L.nameY - ns * 0.3, 10, cxm, L.nameY - ns * 0.3, 420);
+      rg.addColorStop(0, "rgba(4,8,20,0.5)");
+      rg.addColorStop(1, "rgba(4,8,20,0)");
+      ctx.fillStyle = rg;
+      ctx.fillRect(cxm - 440, L.nameY - ns * 1.2, 880, ns * 1.7);
+    }
+    if (isThanks) {
+      ctx.shadowColor = "rgba(0,0,0,0.18)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 1.5;
+      ctx.fillStyle = "#081D39";
+      ctx.fillText(nm, cxm, L.nameY);
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,0.65)";
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = vGrad(ctx, L.nameY - ns * 0.8, L.nameY + 8, "#FFFFFF", dark ? "#E9B24A" : "#F2CB74");
+      ctx.fillText(nm, cxm, L.nameY);
+      ctx.shadowColor = dark ? "rgba(255,190,70,0.55)" : "rgba(255,214,120,0.6)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 0;
+      ctx.fillText(nm, cxm, L.nameY);
+    }
     ctx.restore();
-    {
+    if (!isThanks) {
       const lg = ctx.createLinearGradient(cxm - 300, 0, cxm + 300, 0);
       lg.addColorStop(0, "rgba(240,196,99,0)");
       lg.addColorStop(0.2, "rgba(240,196,99,0.95)");
@@ -975,21 +1008,34 @@ var VBC = (() => {
       ctx.closePath();
       ctx.fill();
     }
-    const zBottom = showStats ? L.plateTop - 14 : 742;
+    const zBottom = showStats ? L.plateTop - 14 : isThanks ? 665 : 742;
     const zoneH = zBottom - L.zTop;
-    const blk = fitBlock(ctx, c.title || "", c.reason || "", zoneH, 900);
+    const blk = fitBlock(ctx, c.title || "", c.reason || "", zoneH, isThanks ? 760 : 900);
     let y = L.zTop + (zoneH - blk.h) / 2;
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 1.5;
-    ctx.font = `800 ${blk.ts}px ${SANS}`;
-    ctx.fillStyle = dark ? "#F8E6B0" : "#FFF3C6";
-    blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.2));
-    y += blk.tl.length * blk.ts * 1.2 + 10;
-    ctx.font = `500 ${blk.rs}px ${SANS}`;
-    ctx.fillStyle = dark ? "#EBDDB5" : "#E4EAF6";
-    blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.32));
+    if (isThanks) {
+      ctx.shadowColor = "rgba(0,0,0,0.10)";
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetY = 1;
+      ctx.font = `700 ${blk.ts}px ${SANS}`;
+      ctx.fillStyle = "#152A44";
+      blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.22));
+      y += blk.tl.length * blk.ts * 1.22 + 8;
+      ctx.font = `italic 500 ${blk.rs}px ${SANS}`;
+      ctx.fillStyle = "#415B78";
+      blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.28));
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 1.5;
+      ctx.font = `800 ${blk.ts}px ${SANS}`;
+      ctx.fillStyle = dark ? "#F8E6B0" : "#FFF3C6";
+      blk.tl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.ts * 0.92 + i * blk.ts * 1.2));
+      y += blk.tl.length * blk.ts * 1.2 + 10;
+      ctx.font = `500 ${blk.rs}px ${SANS}`;
+      ctx.fillStyle = dark ? "#EBDDB5" : "#E4EAF6";
+      blk.rl.forEach((l, i) => ctx.fillText(l, cxm, y + blk.rs * 0.95 + i * blk.rs * 1.32));
+    }
     ctx.restore();
     if (showStats) {
       const st = c.stats || {};
@@ -1004,16 +1050,26 @@ var VBC = (() => {
       });
     }
     ctx.save();
-    ctx.textAlign = "left";
-    ctx.shadowColor = "rgba(0,0,0,0.75)";
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = dark ? "#E2B867" : "#FFF1C2";
-    ctx.font = `600 ${L.date[3]}px ${SANS}`;
-    if (L.date[2]) {
-      ctx.fillText(`Sana: ${fmtDate(c.date)}`, L.date[0], L.date[1]);
-      ctx.fillText(`\u2116 ${c.id}`, L.date[0], L.date[2]);
+    if (isThanks) {
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#FFFFFF";
+      ctx.shadowColor = "rgba(0,0,0,0.7)";
+      ctx.shadowBlur = 4;
+      ctx.font = `700 ${L.date[3]}px ${SANS}`;
+      ctx.fillText(fmtDate(c.date), 142, 812);
+      ctx.fillText(`\u2116 ${c.id}`, 456, 812);
     } else {
-      ctx.fillText(`Sana: ${fmtDate(c.date)}     \u2116 ${c.id}`, L.date[0], L.date[1]);
+      ctx.textAlign = "left";
+      ctx.shadowColor = "rgba(0,0,0,0.75)";
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = dark ? "#E2B867" : "#FFF1C2";
+      ctx.font = `600 ${L.date[3]}px ${SANS}`;
+      if (L.date[2]) {
+        ctx.fillText(`Sana: ${fmtDate(c.date)}`, L.date[0], L.date[1]);
+        ctx.fillText(`\u2116 ${c.id}`, L.date[0], L.date[2]);
+      } else {
+        ctx.fillText(`Sana: ${fmtDate(c.date)}       \u2116 ${c.id}`, L.date[0], L.date[1]);
+      }
     }
     ctx.restore();
     const qs = L.qr[2];

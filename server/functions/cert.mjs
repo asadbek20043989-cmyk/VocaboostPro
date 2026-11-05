@@ -15,8 +15,8 @@ const DEFAULT_TEXT = {
 };
 
 // «Minnatdorchilik» sertifikati (standart matn, admin paneldan tahrirlanadi)
-const WELCOME_TITLE = '"Vocaboost" ilovamizga tashrif buyurganizdan bag\'oyatda mamnunmiz!!!';
-const WELCOME_REASON = 'Hali oldinda sizni ko‘p sertifikat va sovrinlar kutmoqda...';
+const WELCOME_TITLE = '“VocaBoost” loyihamizga qo‘shgan beqiyos hissangiz, bilimga bo‘lgan ishtiyoqingiz va doimiy qo‘llab-quvvatlashingiz uchun chin dildan minnatdorchilik bildiramiz!';
+const WELCOME_REASON = '— Birgalikda yanada katta maqsadlarga! —';
 
 /** Yo'l bo'sh bo'lsagina band qiladi (ETag "null_etag"): ikki qurilma bir vaqtda so'rasa ham sertifikat bitta beriladi */
 async function reserveOnce(path) {

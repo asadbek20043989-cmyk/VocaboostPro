@@ -16,6 +16,7 @@ export interface ShopCfg {
   premiumText: string;
   booksText: string;
   lofi: { title: string; url: string }[];
+  navBadges?: Partial<Record<string, string>>;
 }
 
 export function shopCfg(raw: any): ShopCfg {
@@ -30,6 +31,7 @@ export function shopCfg(raw: any): ShopCfg {
     premiumText: String(c.premiumText || ''),
     booksText: String(c.booksText || ''),
     lofi: toArr(c.lofi).filter((t: any) => t && /^https?:\/\//.test(String(t.url || ''))).map((t: any) => ({ title: String(t.title || 'Lo-Fi').slice(0, 60), url: String(t.url) })),
+    navBadges: (c.navBadges || c.badges || {}) as Partial<Record<string, string>>,
   };
 }
 

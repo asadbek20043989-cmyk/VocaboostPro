@@ -223,6 +223,36 @@
         <div class="row"><button class="sec" id="gClearBadges">🧹 Barcha nishonlarni olib tashlash</button></div>
         <div class="row"><button id="gSave">Saqlash</button><button class="sec" id="gReset">Standart holatga qaytarish</button></div>
       </div>
+      <div class="card" style="margin-top:16px">
+        <h2>🏷️ Pastki menyu nishonlari (O'yinlar va Do'kon badge)</h2>
+        <p class="small">Pastki asosiy menyudagi <b>O'yinlar</b> va <b>Do'kon</b> tugmalari ustiga ko'rsatiladigan yorqin nishon (badge). Rasmda ko'rsatilganidek ikkala tugmaga ham o'rnatiladi. Bo'sh qoldirsangiz olib tashlanadi.</p>
+        <div class="grid">
+          <div>
+            <label>🎮 O'yinlar tugmasi nishoni</label>
+            <input id="nb_games" placeholder="Masalan: HOT, YANGI, 10, 🔥" maxlength="12" />
+            <div class="row" style="margin-top:4px;gap:4px">
+              <button type="button" class="sec small" onclick="$('nb_games').value='🔥 HOT'">🔥 HOT</button>
+              <button type="button" class="sec small" onclick="$('nb_games').value='⚡ YANGI'">⚡ YANGI</button>
+              <button type="button" class="sec small" onclick="$('nb_games').value='•'">🔴 Nuqta</button>
+              <button type="button" class="sec small" onclick="$('nb_games').value=''">✕ Tozalash</button>
+            </div>
+          </div>
+          <div>
+            <label>🛍️ Do'kon tugmasi nishoni</label>
+            <input id="nb_shop" placeholder="Masalan: SALE, SOVG'A, 🎁, TOP" maxlength="12" />
+            <div class="row" style="margin-top:4px;gap:4px">
+              <button type="button" class="sec small" onclick="$('nb_shop').value='🎁 SOVG\'A'">🎁 SOVG'A</button>
+              <button type="button" class="sec small" onclick="$('nb_shop').value='SALE'">SALE</button>
+              <button type="button" class="sec small" onclick="$('nb_shop').value='🔥 HOT'">🔥 HOT</button>
+              <button type="button" class="sec small" onclick="$('nb_shop').value='•'">🔴 Nuqta</button>
+              <button type="button" class="sec small" onclick="$('nb_shop').value=''">✕ Tozalash</button>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="nbSave">Nishonlarni saqlash 🏷️</button>
+        </div>
+      </div>
     </section>
 
     <section id="t-wheel" class="hide">
@@ -445,9 +475,9 @@
         <h2>🎉 Ilk kirish «Minnatdorchilik» sertifikati matni</h2>
         <p class="small">Ilovaga birinchi marta kirgan yangi foydalanuvchiga avtomatik taqdim etiladigan «Minnatdorchilik» sertifikatining Sarlavha va Izohini shu yerdan xohlagancha o'zgartirishingiz mumkin.</p>
         <label>Sarlavha (Katta yozuv)</label>
-        <input id="tc_title" placeholder="&quot;Vocaboost&quot; ilovamizga tashrif buyurganizdan bag'oyatda mamnunmiz!!!" />
+        <input id="tc_title" placeholder="&quot;VocaBoost&quot; loyihamizga qo‘shgan beqiyos hissangiz, bilimga bo‘lgan ishtiyoqingiz va doimiy qo‘llab-quvvatlashingiz uchun chin dildan minnatdorchilik bildiramiz!" />
         <label>Izoh (Sarlavha ostidagi kichik qiya yozuv)</label>
-        <input id="tc_reason" placeholder="Hali oldinda sizni ko‘p sertifikat va sovrinlar kutmoqda..." />
+        <input id="tc_reason" placeholder="— Birgalikda yanada katta maqsadlarga! —" />
         <div class="row" style="margin-top:8px"><button id="tcSave">Saqlash</button></div>
       </div>
       <div class="card">
@@ -630,7 +660,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
+function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderNavBadges(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -758,9 +788,29 @@ $('gSave').onclick = guard(async () => {
 });
 $('gReset').onclick = guard(async () => { if (!confirm("Barcha o'yin sozlamalari standart holatga qaytarilsinmi?")) return; await api('setConfig', { key: 'games', value: { _reset: true } }); flash('Qaytarildi ✅'); await load(); });
 
+function renderNavBadges() {
+  const nb = data.config?.shop?.navBadges || data.config?.shop?.badges || {};
+  if ($('nb_games')) $('nb_games').value = nb.games || '';
+  if ($('nb_shop')) $('nb_shop').value = nb.shop || '';
+}
+if ($('nbSave')) {
+  $('nbSave').onclick = guard(async () => {
+    const games = ($('nb_games').value || '').trim().slice(0, 12);
+    const shop = ($('nb_shop').value || '').trim().slice(0, 12);
+    const curShop = data.config?.shop || {};
+    await api('setConfig', { key: 'shop', value: { ...curShop, navBadges: { games, shop } } });
+    flash('Pastki menyu nishonlari saqlandi ✅');
+    await load();
+  });
+}
+
 /* ---------- baraban ---------- */
 const DEF_PRIZES = [{type:'xp',amount:10,weight:25,color:'#2563EB'},{type:'xp',amount:25,weight:18,color:'#7C3AED'},{type:'double_xp',amount:1,weight:15,color:'#DB2777'},{type:'extra_spin',amount:1,weight:14,color:'#059669'},{type:'vip',amount:24,weight:12,color:'#D97706'},{type:'streak_saver',amount:1,weight:10,color:'#0891B2'},{type:'xp',amount:50,weight:6,color:'#DC2626'}];
-const PT = { xp:'XP', double_xp:'2x XP', extra_spin:"Qo'shimcha urinish", vip:'VIP (soat)', streak_saver:'Streak muzlatish ❄️' };
+const PT = { xp:'XP', double_xp:'2x XP', extra_spin:"Qo'shimcha urinish", vip:'VIP (soat)', streak_saver:'Streak muzlatish ❄️', shop_item:"Do'kondagi sovg'a 🎁" };
+function allShopItemsList() {
+  const custom = Object.entries(data.config?.shop?.items || {}).filter(([id, o]) => o && o.custom).map(([id, o]) => [id, o.title || "Maxsus sovg'a", o.price || 100]);
+  return [...SHOP_DEF, ...custom];
+}
 function renderWheel() {
   const w = data.config.wheel;
   if (!prizes.length || !$('pList').dataset.init) { prizes = arr(w?.prizes).length ? arr(w.prizes).map(p => ({...p})) : DEF_PRIZES.map(p => ({...p})); $('pList').dataset.init = 1; $('p_free').value = w?.freeSpins ?? 3; $('p_cool').value = w?.cooldownHours ?? 24; $('p_vip').value = w?.vipHours ?? 24; $('p_vipPct').value = (w?.vipPercent ?? '') === null ? '' : (w?.vipPercent ?? ''); }
@@ -774,23 +824,62 @@ function pctOf(p, act, tot) {
 }
 function drawPrizes() {
   const act = prizes.filter(p => p.enabled !== false && +p.weight > 0), tot = act.reduce((s,p)=>s+(+p.weight),0) || 1;
-  $('pList').innerHTML = prizes.map((p,i) => `<div class="prz">
+  const sItems = allShopItemsList();
+  $('pList').innerHTML = prizes.map((p,i) => {
+    const isShop = p.type === 'shop_item';
+    return `<div class="prz">
     <select data-i="${i}" data-f="type">${Object.entries(PT).map(([k,v])=>`<option value="${k}" ${p.type===k?'selected':''}>${v}</option>`).join('')}</select>
-    <input data-i="${i}" data-f="amount" type="number" min="1" value="${p.amount||1}" title="Miqdor">
+    ${isShop ? `<select data-i="${i}" data-f="itemId" style="max-width:180px">${sItems.map(([sid,stitle])=>`<option value="${sid}" ${(p.itemId||'mystery')===sid?'selected':''}>${esc(stitle)}</option>`).join('')}</select>` : `<input data-i="${i}" data-f="amount" type="number" min="1" value="${p.amount||1}" title="Miqdor">`}
     <input data-i="${i}" data-f="label" placeholder="Yozuv (ixtiyoriy)" value="${esc(p.label||'')}">
     <input data-i="${i}" data-f="weight" type="number" min="0" value="${p.weight}" title="Og'irlik">
-    <input data-i="${i}" data-f="color" type="color" value="${p.color||'#2563EB'}">
+    <input data-i="${i}" data-f="color" type="color" value="${p.color||(isShop?'#EC4899':'#2563EB')}">
     <span class="small">${p.enabled===false||!(+p.weight>0)?'—':pctOf(p,act,tot).toFixed(1)+'%'}</span>
     <label class="chk" title="Yoqilgan"><input type="checkbox" data-i="${i}" data-f="enabled" ${p.enabled===false?'':'checked'}></label>
-    <button class="bad" data-del="${i}">×</button></div>`).join('');
-  $('pList').querySelectorAll('[data-f]').forEach(el => el.onchange = () => { const p = prizes[+el.dataset.i], f = el.dataset.f; p[f] = el.type === 'checkbox' ? el.checked : (['amount','weight'].includes(f) ? +el.value : el.value); drawPrizes(); });
+    <button class="bad" data-del="${i}">×</button></div>`;
+  }).join('');
+  $('pList').querySelectorAll('[data-f]').forEach(el => el.onchange = () => {
+    const p = prizes[+el.dataset.i], f = el.dataset.f;
+    if (f === 'type' && el.value === 'shop_item') {
+      if (!p.itemId) p.itemId = 'mystery';
+      p.label = "Sirli quti";
+      p.color = '#F472B6';
+    }
+    if (f === 'itemId') {
+      p.itemId = el.value;
+      const found = allShopItemsList().find(x => x[0] === el.value);
+      if (found) p.label = String(found[1]).slice(0, 14);
+    }
+    p[f] = el.type === 'checkbox' ? el.checked : (['amount','weight'].includes(f) ? +el.value : el.value);
+    drawPrizes();
+  });
   $('pList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { prizes.splice(+b.dataset.del, 1); drawPrizes(); });
   const xp = act.reduce((s,p) => s + (p.type === 'xp' ? (+p.amount||0) * pctOf(p,act,tot)/100 : 0), 0);
   $('pEv').textContent = `Faol sovrinlar: ${act.length}. Bitta aylantirishda o'rtacha ~${xp.toFixed(1)} XP beradi (katta XP sovrinlari ligani qadrsizlantirishi mumkin).`;
 }
 $('p_vipPct').oninput = () => drawPrizes();
 $('pAdd').onclick = () => { if (prizes.length >= 10) return flash("Ko'pi bilan 10 ta sovrin", false); prizes.push({ type:'xp', amount:15, weight:10, color:'#2563EB' }); drawPrizes(); };
-$('pSave').onclick = guard(async () => { await api('setConfig', { key: 'wheel', value: { prizes: prizes.map(p => ({ type:p.type, amount:+p.amount||1, label:p.label||'', color:p.color, weight:+p.weight||0, enabled:p.enabled!==false })), freeSpins:+$('p_free').value||3, cooldownHours:+$('p_cool').value||24, vipHours:+$('p_vip').value||24, vipPercent: $('p_vipPct').value === '' ? null : +$('p_vipPct').value } }); flash('Baraban saqlandi ✅'); await load(); });
+$('pSave').onclick = guard(async () => {
+  await api('setConfig', {
+    key: 'wheel',
+    value: {
+      prizes: prizes.map(p => ({
+        type: p.type,
+        amount: +p.amount || 1,
+        ...(p.type === 'shop_item' ? { itemId: p.itemId || 'mystery' } : {}),
+        label: p.label || '',
+        color: p.color,
+        weight: +p.weight || 0,
+        enabled: p.enabled !== false
+      })),
+      freeSpins: +$('p_free').value || 3,
+      cooldownHours: +$('p_cool').value || 24,
+      vipHours: +$('p_vip').value || 24,
+      vipPercent: $('p_vipPct').value === '' ? null : +$('p_vipPct').value
+    }
+  });
+  flash('Baraban saqlandi ✅');
+  await load();
+});
 $('pReset').onclick = () => { prizes = DEF_PRIZES.map(p => ({...p})); $('p_free').value = 3; $('p_cool').value = 24; $('p_vip').value = 24; $('p_vipPct').value = ''; drawPrizes(); flash("Standart qiymatlar qo'yildi. Saqlash tugmasini bosing."); };
 
 /* ---------- missiyalar ---------- */
