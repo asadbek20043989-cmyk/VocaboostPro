@@ -458,7 +458,7 @@ export async function processReferral(db, token, friend, refId) {
   const upd = {};
   if (xp > 0) {
     const gid = 'r' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
-    upd[`grants/${refUid}/${gid}`] = { type: 'xp', amount: xp, validHours: 0, note: `Do'st taklif qilindi: ${fname}`.slice(0, 80), ts: Date.now() };
+    upd[`grants/${refUid}/${gid}`] = { type: 'xp', amount: xp, validHours: 0, note: `Do'st taklif qilindi: ${fname}`.slice(0, 80), ts: Date.now(), keep: true };
     upd[`leaderboard/${refUid}/hasGrant`] = true;
   }
   upd[`leaderboard/${refUid}/refs`] = count;

@@ -1142,6 +1142,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (list.length) setGrantsDone(prev => Array.from(new Set([...prev, ...list.map(g => g.id)])));
       setGrantsReady(true);
+      if (j.more) setTimeout(() => claimGrants(), 1500); // yana sovg'a qolgan (ko'p bo'lsa bo'laklab olinadi)
     } catch {
       setTimeout(() => setGrantsReady(true), 4000); // aloqa yo'q bo'lsa ham ilova to'xtab qolmaydi
     } finally {

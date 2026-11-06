@@ -296,3 +296,8 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 
 ### Yangi API amallari (`/api/fn/admin`)
 `giftAudience` (ro'yxat), `giftSend` (sovg'a/sertifikat + xabar, bo'laklab), `giftNotify` (faqat xabar). `grant` endi `giftName`, `notify`, `text` qabul qiladi.
+
+### v5.4.5 — sovg'a olish xatosi tuzatildi (yuzlab do'st taklifi)
+- Ilgari `grants` sovg'alarni birin-ketin olardi: 100+ sovg'a bo'lsa Vercel 60 soniya chegarasidan oshib, sovg'alar serverda «olingan» deb belgilanib, ilovaga yetmay **jimgina yo'qolardi** (masalan, ko'p do'st taklif qilgan foydalanuvchi XP sini to'liq ololmasdi).
+- Endi 10 tadan parallel olinadi, vaqt tugasa qolgani keyingi so'rovda (ilova o'zi qayta so'raydi) olinadi. Do'st taklifi XP si ham `keep` belgisiga ega: 7 kundan keyin yo'qolmaydi.
+- Eslatma: bu tuzatishdan **oldin** yo'qolgan sovg'alar o'z-o'zidan qaytmaydi. Admin → Sozlamalar → «Foydalanuvchiga sovg'a» orqali kamini qo'lda berish mumkin.
