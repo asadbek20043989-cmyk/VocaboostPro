@@ -4,7 +4,7 @@
 //   FIREBASE_DB_URL       — https://<project>-default-rtdb.firebaseio.com
 //   FIREBASE_DB_SECRET    — Realtime Database "Database secret" (Project settings > Service accounts > Database secrets)
 import { timingSafeEqual } from 'node:crypto';
-import { tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
+import { tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -17,6 +17,10 @@ const safeEq = (a, b) => {
   const B = Buffer.from(String(b));
   return A.length === B.length && timingSafeEqual(A, B);
 };
+
+/** Sovg'a nomi (bot xabarida ko'rinadi). Mahsulot nomini admin panel yuboradi; bo'lmasa umumiy nom */
+const giftLabel = (type, n, itemId) =>
+  type === 'spins' ? `${n} ta baraban aylantirish` : type === 'vip' ? `${n} soatlik VIP` : type === 'xp' ? `${n} XP` : type === 'coins' ? `${Number(n).toLocaleString('en-US').replace(/,/g, ' ')} tanga` : `Do'kon mahsuloti (${itemId})`;
 
 const newGid = () => 'g' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
 const ID_RE = /^[A-Za-z0-9_\-]{1,64}$/;
@@ -482,10 +486,10 @@ export const handler = async event => {
         let notified = false;
         if (process.env.BOT_TOKEN && /^tg_\d+$/.test(userId)) {
           try {
-            await sendMessage(process.env.BOT_TOKEN, Number(userId.slice(3)), `🎓 Sizga maxsus sertifikat berildi!\n\n«${t}»\n№ ${id}\n\nIlovani oching — sertifikat shu chatga rasm bo'lib keladi.`, openAppMarkup('🎓 Sertifikatni olish'));
+            await notifyGift(process.env.BOT_TOKEN, Number(userId.slice(3)), { name: String(name || user?.name || '').trim(), gift: t, id, kind: 'cert', text: body.text });
             notified = true;
           } catch {
-            /* foydalanuvchi botni boshlamagan bo'lishi mumkin */
+            /* foydalanuvchi botni boshlamagan yoki bloklagan bo'lishi mumkin */
           }
         }
         return json(200, { ok: true, id, notified, url: `${siteUrl()}/c/${id}` });
@@ -551,11 +555,13 @@ export const handler = async event => {
           targets = [userId];
         }
         const ts = Date.now();
+        const notify = body.notify !== false && !!process.env.BOT_TOKEN; // botga «sovg'a berildi» xabari (standart: yoqilgan)
+        const giftName = String(body.giftName || '').trim().slice(0, 100) || giftLabel(type, n, itemId);
         // Bitta so'rovda ko'p yo'lni yangilash (Firebase multi-path update) — tez va arzon
         for (let i = 0; i < targets.length; i += 200) {
           const upd = {};
           targets.slice(i, i + 200).forEach(uid => {
-            upd[`grants/${uid}/${newGid()}`] = { type, amount: n, validHours, ...(type === 'item' ? { itemId } : {}), note: String(note || '').slice(0, 80), ts };
+            upd[`grants/${uid}/${newGid()}`] = { type, amount: n, validHours, ...(type === 'item' ? { itemId } : {}), note: String(note || '').slice(0, 80), ts, ...(notify ? { keep: true } : {}) };
             upd[`leaderboard/${uid}/hasGrant`] = true;
           });
           if (targets.length === 1 && !(await call('GET', `leaderboard/${targets[0]}/ts`))) {
@@ -564,7 +570,143 @@ export const handler = async event => {
             await call('PATCH', '', u2); // reyting yozuvi yo'q: bo'sh yozuv yaratilmaydi
           } else await call('PATCH', '', upd);
         }
-        return json(200, { ok: true, count: targets.length });
+        // Bot xabari: bitta foydalanuvchiga darhol; ko'pchilikka — admin panel `giftNotify` ni bo'laklab chaqiradi (Vercel vaqt chegarasi uchun)
+        let notified = false;
+        let ids = [];
+        if (notify) {
+          const tgIds = targets.filter(u => /^tg_\d+$/.test(u)).map(u => u.slice(3));
+          if (targets.length === 1 && tgIds.length === 1) {
+            const [tu, lbu] = await Promise.all([call('GET', `tgusers/${tgIds[0]}`).catch(() => null), call('GET', `leaderboard/${targets[0]}/name`).catch(() => null)]);
+            if (!tu?.blocked) {
+              try {
+                await notifyGift(process.env.BOT_TOKEN, Number(tgIds[0]), { name: String(lbu || tu?.name || ''), gift: giftName, text: body.text });
+                notified = true;
+              } catch { /* bot yozolmaydi */ }
+            }
+          } else ids = tgIds;
+        }
+        return json(200, { ok: true, count: targets.length, notified, ids });
+      }
+
+      // Faqat bot xabarini yuboradi (sovg'a allaqachon berilgan): admin panel ro'yxatni 30 tadan bo'lib chaqiradi
+      case 'giftNotify': {
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(x => String(x).replace(/^tg_/, '')).filter(x => /^\d{3,15}$/.test(x)))].slice(0, 30);
+        const giftName = String(body.giftName || '').trim().slice(0, 100);
+        if (!ids.length || !giftName) return json(400, { error: 'Qabul qiluvchi va sovg\'a nomi kerak' });
+        const r = { sent: 0, blocked: 0, failed: 0 };
+        for (const id of ids) {
+          const u = (await call('GET', `tgusers/${id}`).catch(() => null)) || {};
+          if (u.blocked) { r.blocked++; continue; }
+          try {
+            await notifyGift(process.env.BOT_TOKEN, Number(id), { name: u.name, gift: giftName, text: body.text });
+            r.sent++;
+          } catch (e) {
+            if (e.code === 403 || /blocked|deactivated|chat not found/i.test(String(e.message))) { r.blocked++; await call('PATCH', `tgusers/${id}`, { blocked: true }).catch(() => {}); } else r.failed++;
+          }
+          await new Promise(r2 => setTimeout(r2, 40));
+        }
+        return json(200, { ok: true, ...r });
+      }
+
+      // ---------- Botga /start bosgan, lekin ilovaga HECH QACHON kirmaganlar ----------
+      // Mezon: reytingda (leaderboard) yozuvi yo'q va ilova `register` qilmagan (tgusers.lastSeen yo'q). Bloklaganlarga xabar yetmaydi, shuning uchun alohida sanaladi.
+      case 'giftAudience': {
+        const [tgu, lb] = await Promise.all([call('GET', 'tgusers'), call('GET', 'leaderboard')]);
+        const items = [];
+        let total = 0;
+        let blocked = 0;
+        for (const [id, u] of Object.entries(tgu || {})) {
+          if (!u || typeof u !== 'object' || !/^\d{3,15}$/.test(id)) continue;
+          const e = lb?.[`tg_${id}`];
+          if ((e && e.ts) || u.lastSeen) continue; // ilovaga kirgan
+          total++;
+          if (u.blocked) { blocked++; continue; }
+          items.push({ id, name: String(u.name || ''), username: String(u.username || ''), joined: Number(u.joined || u.ts) || 0 });
+        }
+        items.sort((a, b) => b.joined - a.joined);
+        return json(200, { items: items.slice(0, 5000), total, blocked, truncated: items.length > 5000 });
+      }
+
+      // Tanlangan (yoki hamma) foydalanuvchilarga sovg'a yoki sertifikat + bot xabari. Admin panel ro'yxatni bo'laklab chaqiradi.
+      // `cid` — yuborish kampaniyasi ID si: qayta urinishda bir kishiga ikki marta berilmaydi (adminState/gifts/<cid>/<tgId>).
+      case 'giftSend': {
+        const token = process.env.BOT_TOKEN;
+        if (!token) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const cid = String(body.cid || '');
+        if (!/^[A-Za-z0-9_\-]{6,40}$/.test(cid)) return json(400, { error: 'Kampaniya ID xato' });
+        const g = body.gift && typeof body.gift === 'object' ? body.gift : {};
+        const isCert = g.kind === 'cert';
+        let spec;
+        if (isCert) {
+          const title = String(g.title || '').trim().slice(0, 100);
+          if (!title) return json(400, { error: 'Sertifikat sarlavhasi kerak' });
+          spec = { title, reason: String(g.reason || '').trim().slice(0, 200), tpl: CERT_TPLS.includes(g.tpl) ? g.tpl : 'gold', fmt: g.fmt === 'story' ? 'story' : 'wide' };
+        } else {
+          const type = String(g.type || '');
+          if (!['spins', 'vip', 'xp', 'coins', 'item'].includes(type)) return json(400, { error: 'Tur xato' });
+          const itemId = String(g.itemId || '').trim().slice(0, 64);
+          if (type === 'item' && !ID_RE.test(itemId)) return json(400, { error: 'Mahsulot ID xato' });
+          const n = type === 'item' ? 1 : Math.round(Number(g.amount));
+          const cap = type === 'xp' ? 100000 : type === 'vip' ? 720 : type === 'coins' ? 100000000 : type === 'item' ? 1 : 50;
+          if (!(n > 0) || n > cap) return json(400, { error: "Miqdor noto'g'ri" });
+          spec = { type, amount: n, itemId, validHours: type === 'spins' ? Math.max(0, Math.min(24 * 60, Math.round(Number(g.validHours ?? 24) || 0))) : 0 };
+        }
+        const giftName = String(body.giftName || '').trim().slice(0, 100) || (isCert ? spec.title : giftLabel(spec.type, spec.amount, spec.itemId));
+        const text = String(body.text || '').trim().slice(0, 1500);
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(x => String(x).replace(/^tg_/, '')).filter(x => /^\d{3,15}$/.test(x)))];
+        const batch = ids.slice(0, isCert ? 12 : 30);
+        const done = (await call('GET', `adminState/gifts/${cid}`)) || {};
+        const t0 = Date.now();
+        const r = { sent: 0, blocked: 0, failed: 0, skipped: 0 };
+        let processed = 0;
+        let lastError = '';
+        for (const id of batch) {
+          if (Date.now() - t0 > 45000) break; // Vercel 60 soniya chegarasi: qolganini panel keyingi so'rovda yuboradi
+          processed++;
+          const uid = `tg_${id}`;
+          const mark = done[id];
+          if (mark && mark.notified) { r.skipped++; continue; }
+          const u = (await call('GET', `tgusers/${id}`).catch(() => null)) || {};
+          if (u.blocked) { r.blocked++; continue; }
+          let certId = mark?.cert || '';
+          if (!mark) {
+            const ts = Date.now();
+            try {
+              if (isCert) {
+                const issued = await issueCertificate(call, { userId: uid, tpl: spec.tpl, title: spec.title, reason: spec.reason, name: String(u.name || "O'quvchi").trim().slice(0, 40) || "O'quvchi", fmt: spec.fmt });
+                certId = issued.id;
+                await call('PUT', `adminState/gifts/${cid}/${id}`, { ts, cert: certId });
+              } else {
+                // Ilovaga kirmagan foydalanuvchi uchun reyting yozuvi yaratilmaydi (Ligada bo'sh qator paydo bo'lmasin): ilova birinchi ochilganda sovg'ani o'zi oladi
+                await call('PATCH', '', {
+                  [`grants/${uid}/${newGid()}`]: { type: spec.type, amount: spec.amount, validHours: spec.validHours, ...(spec.type === 'item' ? { itemId: spec.itemId } : {}), note: giftName.slice(0, 80), ts, keep: true },
+                  [`adminState/gifts/${cid}/${id}`]: { ts },
+                });
+              }
+            } catch (e) {
+              r.failed++;
+              lastError = String(e.message || e);
+              continue;
+            }
+          }
+          try {
+            await notifyGift(token, Number(id), { name: u.name, gift: giftName, id: certId, text, kind: isCert ? 'cert' : 'gift' });
+            r.sent++;
+            await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: true }).catch(() => {});
+          } catch (e) {
+            if (e.code === 403 || /blocked|deactivated|chat not found/i.test(String(e.message))) {
+              r.blocked++;
+              await call('PATCH', `tgusers/${id}`, { blocked: true }).catch(() => {});
+              await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: 'blocked' }).catch(() => {});
+            } else {
+              r.failed++;
+              lastError = String(e.message || e);
+            }
+          }
+          await new Promise(r2 => setTimeout(r2, 40));
+        }
+        return json(200, { ok: true, processed, ...r, lastError });
       }
 
       // ---------- Do'kon va taklif sozlamalari ----------

@@ -50,6 +50,7 @@ Sababi: Google eski `gemini-2.0-flash` modelini o'chirgan. Endi funksiya bir nec
 | 👥 Foydalanuvchilar | Onboarding'da tanlangan **daraja** va **kuniga so'z soni** taqsimoti va har bir foydalanuvchi ro'yxati, CSV yuklab olish |
 | 🔔 Eslatmalar | Kunlik eslatma matni/vaqti, hammaga bir vaqtda xabar yuborish, sinov xabari |
 | 🏆 Liga | XP tahrirlash, ismni o'zgartirish, yashirish, o'chirish/tiklash, «yangi mavsum» (hammasi 0 dan) |
+| 🎁 Sovg'alar | Botga **faqat /start bosgan, ilovaga hech qachon kirmaganlarga** (tanlab yoki hammaga) sovg'a yoki sertifikat yuborish. Pastga qarang (v5.4.5) |
 | 🎓 Sertifikat | Tanlangan foydalanuvchiga **maxsus sertifikat** (8 andozadan), bekor qilish, **raqam bo'yicha tekshirish** |
 | ⚙️ Sozlamalar | Takrorlash chegarasi, XP qiymatlari, e'lon, foydalanuvchiga sovg'a (aylantirish / VIP / XP) |
 
@@ -279,3 +280,19 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 - `{name}` (ism) HTML belgilarini buzmasligi uchun xavfsiz qilindi.
 - Do'kon rasmi havolasi buzuq bo'lsa, rangli belgi ko'rsatiladi.
 - «Hammaga yuborish» matni limiti 1000 → 3500 belgi.
+
+## v5.4.5 — Sovg'alar bo'limi va bot xabarlari
+
+### Ilovaga kirmaganlarga sovg'a / sertifikat (admin → 🎁 Sovg'alar)
+- Ro'yxatda botga `/start` bosgan, lekin ilovaga **hech qachon kirmagan** foydalanuvchilar chiqadi (reytingda yozuvi yo'q va ilova ularni `register` qilmagan). Botni bloklaganlar ro'yxatga kirmaydi — ularga xabar yetmaydi, faqat sanab ko'rsatiladi.
+- Tanlab yoki «hammaga» yuborish mumkin. Tur: tanga, XP, baraban aylantirish, VIP, do'kon mahsuloti yoki **sertifikat** (andoza, format, sarlavha, izoh).
+- Har bir foydalanuvchiga bot orqali xabar boradi: «Sizga «…» nomli sovg'a berildi» + **🚀 Ilovani ochish** tugmasi. Sovg'a nomi va xabar matni ixtiyoriy o'zgartiriladi (`{name}`, `{gift}`, `{id}`).
+- Yuborish 30 tadan (sertifikat 12 tadan) bo'laklab bajariladi (Vercel 60 soniya chegarasi uchun), jarayon va «To'xtatish» tugmasi bor. Kampaniya ID si tufayli qayta urinishda yoki tarmoq uzilganda **hech kimga sovg'a ikki marta berilmaydi**.
+- Foydalanuvchi ilovani birinchi marta ochganda sovg'a avtomatik qo'llanadi, sertifikat esa shu chatga rasm bo'lib keladi. Ilovaga kirmaganlar uchun Ligada bo'sh qator yaratilmaydi.
+
+### Barcha sovg'alar uchun bot xabari
+- Do'kon → «Tanga / mahsulot sovg'a qilish», Sozlamalar → «Foydalanuvchiga sovg'a» va Sertifikat → «Maxsus sertifikat yuborish» endi ham foydalanuvchiga bot orqali shu xabarni yuboradi (ilgari faqat sertifikat uchun bor edi).
+- Xabar yuborilgan sovg'alar (`keep`) 7 kundan keyin ham yo'qolmaydi. Ilgari 7 kundan eski olinmagan sovg'a jimgina bekor bo'lardi.
+
+### Yangi API amallari (`/api/fn/admin`)
+`giftAudience` (ro'yxat), `giftSend` (sovg'a/sertifikat + xabar, bo'laklab), `giftNotify` (faqat xabar). `grant` endi `giftName`, `notify`, `text` qabul qiladi.

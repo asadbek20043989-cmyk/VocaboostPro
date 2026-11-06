@@ -360,6 +360,46 @@ export async function claimNode(path) {
   return null;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// SOVG'A XABARI: foydalanuvchiga bot orqali «Sizga shu nomdagi sovg'a berildi» + «🚀 Ilovani ochish» tugmasi.
+// Matnda {name} (ism), {gift} (sovg'a nomi), {id} (sertifikat raqami) ishlatiladi. Admin o'z matnini bera oladi.
+// ---------------------------------------------------------------------------------------------------------
+export const DEFAULT_GIFT_TEXT =
+  "🎁 <b>Sizga sovg'a berildi!</b>\n\nHurmatli <b>{name}</b>, sizga «<b>{gift}</b>» nomli sovg'a berildi.\n\nUni olish uchun ilovani oching 👇";
+export const DEFAULT_GIFT_CERT_TEXT =
+  "🎓 <b>Sizga sertifikat berildi!</b>\n\nHurmatli <b>{name}</b>, sizga «<b>{gift}</b>» nomli sertifikat berildi.\n№ <code>{id}</code>\n\nIlovani oching — sertifikat shu chatga rasm bo'lib keladi 👇";
+
+/** Sovg'a haqida xabar yuboradi. Xato bo'lsa tashlaydi (403 = bot bloklangan). 429 bo'lsa kutib qayta uriniladi */
+export async function notifyGift(token, tgId, { name, gift, id = '', text, kind = 'gift' }) {
+  const tpl = String(text || '').trim() || (kind === 'cert' ? DEFAULT_GIFT_CERT_TEXT : DEFAULT_GIFT_TEXT);
+  const first = String(name || '').trim().split(/\s+/)[0] || "do'st";
+  const body = tpl
+    .replace(/\{name\}/gi, () => escHtml(first))
+    .replace(/\{gift\}/gi, () => escHtml(gift))
+    .replace(/\{id\}/gi, () => escHtml(id));
+  const markup = openAppMarkup('🚀 Ilovani ochish');
+  for (let tries = 0; ; tries++) {
+    try {
+      try {
+        return await sendMessage(token, tgId, body, markup, 'HTML');
+      } catch (e) {
+        // Admin yozgan HTML noto'g'ri bo'lsa — teglarsiz oddiy matn sifatida yuboramiz (xabar yo'qolmasin)
+        if (/parse entities|can't find end|unsupported start tag/i.test(String(e?.message))) {
+          const plain = body.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+          return await sendMessage(token, tgId, plain, markup, null);
+        }
+        throw e;
+      }
+    } catch (e) {
+      if (e.code === 429 && tries < 2) {
+        await sleep(((e.retryAfter || 2) + 0.5) * 1000);
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
 export const DEFAULT_START_BUTTON = '🚀 VocaBoostni ochish';
 export const DEFAULT_START_TEXT =
   "👋 Assalomu alaykum, {name}!\n\n🚀 VocaBoost'ga xush kelibsiz — inglizcha so'zlarni tez va uzoq yodlash ilovasi.\n\n✅ Har kuni atigi 10 ta yangi so'z\n🧠 Aqlli takrorlash — o'rgangan so'zlaringizni unutmaysiz\n🎮 O'yinlar, omadli baraban va raqiblar bilan bellashuv\n🎓 100 / 250 / 500 / 1000 ta so'zga sertifikat\n\nBoshlash uchun pastdagi tugmani bosing 👇";

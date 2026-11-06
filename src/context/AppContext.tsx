@@ -1566,7 +1566,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     (async () => {
       try {
         const image = await certificateBase64(next);
-        await botSendCertificate({ id: next.id, title: next.title, date: next.date, image, kind: 'photo', auto: true });
+        await botSendCertificate({ id: next.id, title: next.title, date: next.date, image, kind: 'photo' });
         setProfile(p => ({ ...p, sentCerts: [...(p.sentCerts || []).slice(-60), next.id] }));
         pushNotice('🎓 Sertifikat Telegram chatingizga yuborildi');
       } catch {

@@ -27,7 +27,8 @@ export const handler = async event => {
       if (!g || typeof g !== 'object' || g.claimedAt) continue;
       const claimed = await claimNode(`grants/${uid}/${gid}`);
       if (!claimed) continue; // boshqa qurilma oldin oldi
-      const old = done.has(gid) || Date.now() - (Number(g.ts) || 0) > MAX_AGE;
+      // `keep` — botda xabar yuborilgan sovg'alar (ayniqsa ilovaga hali kirmaganlarga): muddati o'tib yo'qolmaydi
+      const old = done.has(gid) || (!g.keep && Date.now() - (Number(g.ts) || 0) > MAX_AGE);
       if (old) continue; // eski/qo'llangan sovg'a: faqat belgilanadi, qayta qo'llanmaydi
       out.push({ id: gid, type: g.type, amount: Number(g.amount) || 0, validHours: Number(g.validHours) || 0, note: g.note || '', itemId: String(g.itemId || '').slice(0, 64) });
     }

@@ -97,6 +97,7 @@
       <button data-t="league">🏆 Liga</button>
       <button data-t="inbox">✉️ Xabarlar <span id="inboxBadge" class="tag d" style="display:none"></span></button>
       <button data-t="certs">🎓 Sertifikat</button>
+      <button data-t="gifts">🎁 Sovg'alar</button>
       <button data-t="shop">🛒 Do'kon</button>
       <button data-t="refs">📣 Taklif</button>
       <button data-t="settings">⚙️ Sozlamalar</button>
@@ -498,6 +499,42 @@
     </section>
 
 
+    <section id="t-gifts" class="hide">
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><h2>🎁 Ilovaga kirmaganlarga sovg'a / sertifikat <span class="small" id="gaCount"></span></h2><button class="sec" id="gaReload">Ro'yxatni yangilash</button></div>
+        <p class="small">Bu yerda botga faqat <b>/start</b> bosgan, lekin ilovaga <b>hech qachon kirmagan</b> foydalanuvchilar ko'rinadi. Sovg'a yuborilgach ularga bot orqali «Sizga … nomli sovg'a berildi» xabari <b>🚀 Ilovani ochish</b> tugmasi bilan boradi. Foydalanuvchi ilovani birinchi marta ochganda sovg'a avtomatik qo'llanadi (muddati o'tib yo'qolmaydi), sertifikat esa shu chatga rasm bo'lib keladi.</p>
+        <div id="gaInfo" class="small" style="margin-bottom:8px"></div>
+        <input id="gaSearch" placeholder="Ism, @username yoki ID bo'yicha qidirish..." />
+        <div class="row" style="margin:8px 0"><label class="chk"><input type="checkbox" id="gaAll"> Ko'rinayotganlarning hammasini tanlash</label><span class="small" id="gaSelInfo"></span></div>
+        <div class="scroll" style="max-height:320px"><table><thead><tr><th style="width:34px"></th><th>Foydalanuvchi</th><th>/start bosgan</th></tr></thead><tbody id="gaBody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>Nima yuboramiz?</h2>
+        <div class="row">
+          <div style="flex:1"><label>Kimga</label><select id="gaTarget"><option value="sel">Faqat tanlanganlarga</option><option value="all">Ro'yxatdagi HAMMAGA (ilovaga kirmaganlar)</option></select></div>
+          <div style="flex:1"><label>Sovg'a turi</label><select id="gaType"><option value="coins">🪙 Tanga</option><option value="xp">💎 XP</option><option value="spins">🎡 Baraban aylantirish</option><option value="vip">👑 VIP (soat)</option><option value="item">🛍 Do'kon mahsuloti</option><option value="cert">🎓 Sertifikat</option></select></div>
+        </div>
+        <div class="row" id="gaGrantBox">
+          <div style="flex:1" id="gaAmtBox"><label>Miqdor</label><input id="ga_amt" type="number" min="1" value="100" /></div>
+          <div style="flex:1;display:none" id="gaValidBox"><label>Aylantirish muddati (ilovani ochgandan boshlab)</label><select id="ga_valid"><option value="24">24 soat</option><option value="72">3 kun</option><option value="168" selected>7 kun</option><option value="0">Foydalanilguncha</option></select></div>
+          <div style="flex:1;display:none" id="gaItemBox"><label>Mahsulot</label><select id="ga_item"></select></div>
+        </div>
+        <div id="gaCertBox" class="hide">
+          <label>Andoza</label><div class="tplrow" id="gaTpls"></div>
+          <label>Sertifikat formati</label><select id="ga_fmt"><option value="wide">🖥 16:9 — albom</option><option value="story">📱 9:16 — tik</option></select>
+          <label>Sarlavha * (sertifikatda ismning ostida)</label><input id="ga_title" placeholder="Masalan: VocaBoost jamoasining faol a'zosi" />
+          <label>Izoh (ixtiyoriy)</label><input id="ga_reason" />
+          <p class="small">Sertifikatdagi ism foydalanuvchining Telegramdagi ismi bo'ladi. Har biriga alohida raqam va QR kod beriladi.</p>
+        </div>
+        <label>Sovg'a nomi (xabarda ko'rinadi; bo'sh qoldirsangiz avtomatik)</label><input id="ga_name" maxlength="100" placeholder="" />
+        <label>Xabar matni (ixtiyoriy). <code>{name}</code> — ism, <code>{gift}</code> — sovg'a nomi, <code>{id}</code> — sertifikat raqami. Bo'sh = standart</label>
+        <textarea id="ga_text" placeholder="🎁 Sizga sovg'a berildi!&#10;&#10;Hurmatli {name}, sizga «{gift}» nomli sovg'a berildi.&#10;&#10;Uni olish uchun ilovani oching 👇"></textarea>
+        <div class="row" style="margin-top:10px"><button id="gaSend">Yuborish 🎁</button><button class="sec hide" id="gaStop">To'xtatish</button></div>
+        <div class="bar hide" id="gaBarBox" style="margin-top:12px"><i id="gaBar" style="width:0%"></i></div>
+        <div class="small" id="gaProg"></div>
+      </div>
+    </section>
+
     <section id="t-shop" class="hide">
       <div class="card">
         <h2>🏆 Tanga ro'yxati — kim qancha tanga yig'gan <span class="small" id="coinCount"></span></h2>
@@ -798,7 +835,7 @@ if ($('nbSave')) {
     const games = ($('nb_games').value || '').trim().slice(0, 12);
     const shop = ($('nb_shop').value || '').trim().slice(0, 12);
     const curShop = data.config?.shop || {};
-    await api('setShop', { value: { ...curShop, navBadges: { games, shop } } });
+    await api('setConfig', { key: 'shop', value: { ...curShop, navBadges: { games, shop } } });
     flash('Pastki menyu nishonlari saqlandi ✅');
     await load();
   });
@@ -1418,7 +1455,7 @@ function renderSettings() {
 }
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
-$('gSend').onclick = guard(async () => { await api('grant', { userId: $('gUser').value.trim(), type: $('gType').value, amount: +$('gAmt').value, validHours: +$('gValid').value }); flash('Sovg\'a yuborildi 🎁 (foydalanuvchi ilovani ochganda qo\'llanadi)'); });
+$('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value }, giftNameOf(type, amt)); flash(grantMsg(r)); });
 
 /* ---------- 🛒 Do'kon ---------- */
 const SHOP_DEF = [
@@ -1475,11 +1512,28 @@ $('shSave').onclick = guard(async () => {
 });
 function sgUi() { const a = $('sg_aud').value, t = $('sg_type').value; $('sg_userBox').style.display = a === 'one' ? '' : 'none'; $('sg_minBox').style.display = a === 'referrers' ? '' : 'none'; $('sg_amtBox').style.display = t === 'item' ? 'none' : ''; $('sg_itemBox').style.display = t === 'item' ? '' : 'none'; }
 $('sg_aud').onchange = $('sg_type').onchange = sgUi; sgUi();
+/* Sovg'a nomi (botdagi xabarda ko'rinadi) */
+const giftNameOf = (type, amt, itemTitle) => type === 'spins' ? `${amt} ta baraban aylantirish` : type === 'vip' ? `${amt} soatlik VIP` : type === 'xp' ? `${amt} XP` : type === 'coins' ? `${Number(amt).toLocaleString('en-US').replace(/,/g, ' ')} tanga` : (itemTitle || "Do'kon mahsuloti");
+/* Sovg'a beradi va foydalanuvchiga bot orqali xabar yuboradi (ko'pchilikka — 30 tadan bo'lib) */
+async function grantNotified(payload, giftName) {
+  const r = await api('grant', { ...payload, giftName, notify: true });
+  let sent = r.notified ? 1 : 0, blocked = 0;
+  const ids = r.ids || [];
+  for (let i = 0; i < ids.length; i += 30) {
+    $('sync').textContent = `Xabar yuborilmoqda: ${Math.min(i, ids.length)} / ${ids.length}`;
+    const n = await api('giftNotify', { ids: ids.slice(i, i + 30), giftName });
+    sent += n.sent || 0; blocked += n.blocked || 0;
+  }
+  $('sync').textContent = 'Yangilandi: ' + new Date().toLocaleTimeString();
+  return { count: r.count, sent, blocked };
+}
+const grantMsg = r => `Yuborildi 🎁 (${r.count} ta foydalanuvchi). Botga xabar: ${r.sent} ta${r.blocked ? `, bloklaganlar: ${r.blocked}` : ''}. Ilovani ochganda qo'llanadi`;
 $('sgSend').onclick = guard(async () => {
   const aud = $('sg_aud').value, type = $('sg_type').value;
   if (aud !== 'one' && !confirm(aud === 'all' ? 'Hamma foydalanuvchilarga yuborilsinmi?' : "Do'st taklif qilgan foydalanuvchilarga yuborilsinmi?")) return;
-  const r = await api('grant', { userId: $('sg_user').value.trim(), audience: aud === 'one' ? '' : aud, minRefs: +$('sg_min').value, type, amount: +$('sg_amt').value, itemId: $('sg_item').value, note: $('sg_note').value });
-  flash(`Yuborildi 🎁 (${r.count} ta foydalanuvchi). Ilovani ochganlarda shu zahoti qo'llanadi`);
+  const it = $('sg_item').selectedOptions[0];
+  const r = await grantNotified({ userId: $('sg_user').value.trim(), audience: aud === 'one' ? '' : aud, minRefs: +$('sg_min').value, type, amount: +$('sg_amt').value, itemId: $('sg_item').value, note: $('sg_note').value }, giftNameOf(type, +$('sg_amt').value, it && it.textContent));
+  flash(grantMsg(r));
 });
 let orders = [];
 async function loadOrders() { try { const r = await api('listOrders'); orders = r.items || []; renderOrders(); } catch (e) { flash(e.message, false); } }
@@ -1577,6 +1631,91 @@ function openPop(btn, target, mode) {
 document.addEventListener('click', e => { if (pop.style.display === 'block' && !pop.contains(e.target) && !e.target.classList.contains('emoBtn')) pop.style.display = 'none'; });
 document.querySelectorAll('textarea.emo').forEach(ta => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sec emoBtn'; b.textContent = '💎 Premium emoji qo\'shish'; b.onclick = e => { e.stopPropagation(); openPop(b, ta, 'text'); }; ta.parentNode.insertBefore(b, ta); });
 document.querySelectorAll('[data-emo="id"]').forEach(inp => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sec emoBtn'; b.textContent = '💎 Tanlash'; b.onclick = e => { e.stopPropagation(); openPop(b, inp, 'id'); }; inp.parentNode.appendChild(b); });
+
+/* ---------- 🎁 Sovg'alar: botga /start bosgan, lekin ilovaga kirmaganlar ---------- */
+let gaItems = [], gaSel = new Set(), gaTpl = 'gold', gaBusy = false, gaStop = false, gaLoaded = false;
+const gaGifted = {};
+const GA_TPLS = ['bronze','silver','gold','marathon','thanks','growth','wisdom','consistent','weekly'];
+const gaSleep = ms => new Promise(r => setTimeout(r, ms));
+async function loadGiftAudience() {
+  const r = await api('giftAudience');
+  gaItems = r.items || []; gaLoaded = true;
+  const ids = new Set(gaItems.map(x => x.id)); gaSel = new Set([...gaSel].filter(id => ids.has(id)));
+  $('gaInfo').innerHTML = `Ilovaga kirmaganlar: <b>${gaItems.length}</b> ta${r.blocked ? ` · botni bloklaganlar (xabar yetmaydi): ${r.blocked} ta` : ''}${r.truncated ? ' · <b>faqat birinchi 5000 tasi ko\'rsatilmoqda</b>' : ''}`;
+  renderGifts();
+}
+const gaFiltered = () => { const q = $('gaSearch').value.toLowerCase(); return gaItems.filter(u => !q || u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.id.includes(q)); };
+function gaSelInfo() {
+  const all = $('gaTarget').value === 'all';
+  $('gaSelInfo').textContent = all ? `Yuboriladi: hammaga (${gaItems.length} ta)` : `Tanlangan: ${gaSel.size} ta`;
+}
+function renderGifts() {
+  const rows = gaFiltered();
+  $('gaCount').textContent = `(${rows.length} / ${gaItems.length})`;
+  $('gaBody').innerHTML = rows.slice(0, 500).map(u => `<tr><td><input type="checkbox" style="width:auto" data-id="${esc(u.id)}" ${gaSel.has(u.id) ? 'checked' : ''} /></td><td><b>${esc(u.name || '—')}</b>${gaGifted[u.id] ? ` <span class="tag h">🎁 ${esc(gaGifted[u.id])}</span>` : ''}<br><span class="small">${u.username ? '@' + esc(u.username) + ' · ' : ''}${esc(u.id)}</span></td><td class="small">${u.joined ? new Date(u.joined).toISOString().slice(0, 10) : '—'}</td></tr>`).join('') || `<tr><td colspan="3" class="small">${gaLoaded ? 'Ilovaga kirmagan foydalanuvchi yo\'q 🎉' : 'Yuklanmoqda...'}</td></tr>`;
+  $('gaBody').querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => { c.checked ? gaSel.add(c.dataset.id) : gaSel.delete(c.dataset.id); gaSelInfo(); });
+  gaSelInfo();
+}
+$('gaSearch').oninput = renderGifts;
+$('gaAll').onchange = () => { gaFiltered().slice(0, 500).forEach(u => $('gaAll').checked ? gaSel.add(u.id) : gaSel.delete(u.id)); renderGifts(); };
+$('gaReload').onclick = guard(loadGiftAudience);
+document.querySelector('#tabs button[data-t="gifts"]').addEventListener('click', () => { if (!gaLoaded) guard(loadGiftAudience)(); });
+function gaTplDraw() {
+  $('gaTpls').innerHTML = Object.entries(TPL).filter(([k]) => GA_TPLS.includes(k)).map(([k,[n,c]]) => `<div class="tplb ${gaTpl === k ? 'on' : ''}" data-k="${k}" style="border-left:6px solid ${c}">${n}</div>`).join('');
+  $('gaTpls').querySelectorAll('.tplb').forEach(b => b.onclick = () => { gaTpl = b.dataset.k; gaTplDraw(); });
+}
+function gaUi() {
+  const t = $('gaType').value;
+  $('gaGrantBox').classList.toggle('hide', t === 'cert'); $('gaCertBox').classList.toggle('hide', t !== 'cert');
+  $('gaAmtBox').style.display = t === 'item' || t === 'cert' ? 'none' : ''; $('gaValidBox').style.display = t === 'spins' ? '' : 'none'; $('gaItemBox').style.display = t === 'item' ? '' : 'none';
+  if (t === 'item') $('ga_item').innerHTML = $('sg_item').innerHTML;
+  $('ga_name').placeholder = gaAutoName() || '';
+  gaSelInfo();
+}
+function gaAutoName() {
+  const t = $('gaType').value;
+  if (t === 'cert') return $('ga_title').value.trim();
+  const it = $('ga_item').selectedOptions[0];
+  return giftNameOf(t, +$('ga_amt').value || 0, it && it.textContent);
+}
+['gaType', 'ga_amt', 'ga_item', 'ga_title'].forEach(id => { $(id).oninput = $(id).onchange = gaUi; });
+$('gaTarget').onchange = gaSelInfo;
+gaTplDraw(); gaUi();
+$('gaStop').onclick = () => { gaStop = true; $('gaStop').disabled = true; };
+$('gaSend').onclick = guard(async () => {
+  if (gaBusy) return;
+  const ids = $('gaTarget').value === 'all' ? gaItems.map(u => u.id) : [...gaSel];
+  if (!ids.length) return flash('Qabul qiluvchi tanlanmagan' + (gaLoaded ? '' : " (avval ro'yxat yuklansin)"), false);
+  const type = $('gaType').value, isCert = type === 'cert';
+  const gift = isCert ? { kind: 'cert', tpl: gaTpl, fmt: $('ga_fmt').value, title: $('ga_title').value.trim(), reason: $('ga_reason').value.trim() }
+    : { kind: 'grant', type, amount: +$('ga_amt').value, validHours: +$('ga_valid').value, itemId: $('ga_item').value };
+  if (isCert && !gift.title) return flash('Sertifikat sarlavhasini yozing', false);
+  if (!isCert && type !== 'item' && !(gift.amount > 0)) return flash('Miqdorni kiriting', false);
+  if (type === 'item' && !gift.itemId) return flash("Do'kon mahsulotini tanlang (Do'kon bo'limi yuklangan bo'lishi kerak)", false);
+  const name = $('ga_name').value.trim() || gaAutoName();
+  if (!confirm(`«${name}» ${isCert ? 'sertifikati' : 'sovg\'asi'} ${ids.length} ta foydalanuvchiga yuborilsinmi?\nHar biriga botdan xabar boradi.`)) return;
+  const cid = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+  const tot = { sent: 0, blocked: 0, failed: 0, skipped: 0 }; let pos = 0, fails = 0, lastErr = '';
+  gaBusy = true; gaStop = false; $('gaSend').disabled = true; $('gaStop').disabled = false; $('gaStop').classList.remove('hide'); $('gaBarBox').classList.remove('hide');
+  const show = () => { $('gaBar').style.width = Math.round(pos / ids.length * 100) + '%'; $('gaProg').textContent = `${Math.min(pos, ids.length)} / ${ids.length} · xabar yuborildi: ${tot.sent} · bloklagan: ${tot.blocked} · xato: ${tot.failed}${tot.skipped ? ` · allaqachon berilgan: ${tot.skipped}` : ''}`; };
+  try {
+    while (pos < ids.length && !gaStop) {
+      const chunk = ids.slice(pos, pos + (isCert ? 12 : 30));
+      let r;
+      try { r = await api('giftSend', { cid, ids: chunk, gift, giftName: name, text: $('ga_text').value }); fails = 0; }
+      catch (e) { lastErr = e.message; if (++fails >= 3) throw e; await gaSleep(2000); continue; } // qayta urinish xavfsiz: kampaniya ID si ikki marta berilishiga yo'l qo'ymaydi
+      if (!r.processed) { if (++fails >= 3) throw new Error(r.lastError || 'Server javob bermadi'); await gaSleep(2000); continue; }
+      chunk.slice(0, r.processed).forEach(id => { gaGifted[id] = name.slice(0, 24); });
+      pos += r.processed; ['sent', 'blocked', 'failed', 'skipped'].forEach(k => tot[k] += r[k] || 0); if (r.lastError) lastErr = r.lastError;
+      show();
+    }
+  } finally {
+    gaBusy = false; $('gaSend').disabled = false; $('gaStop').classList.add('hide'); show();
+  }
+  flash(`${gaStop ? 'To\'xtatildi' : 'Tayyor'} ✅ Xabar: ${tot.sent} ta · bloklagan: ${tot.blocked} · xato: ${tot.failed}${lastErr && tot.failed ? ' (' + lastErr + ')' : ''}`, !tot.failed);
+  renderGifts();
+  if (isCert) await load();
+});
 </script>
 </body>
 </html>

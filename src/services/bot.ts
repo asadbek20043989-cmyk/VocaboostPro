@@ -27,5 +27,5 @@ export const botRegister = (info: { remind: boolean; level: string; wordsPerDay:
 export const botSetRemind = (remind: boolean) => call<{ ok: boolean }>('setRemind', { remind });
 
 /** Sertifikat rasmini foydalanuvchining Telegram chatiga yuboradi. kind: 'photo' (ko'rinish) yoki 'document' (fayl) */
-export const botSendCertificate = (c: { id: string; title: string; date: string; image: string; kind?: 'photo' | 'document'; auto?: boolean }) =>
+export const botSendCertificate = (c: { id: string; title: string; date: string; image: string; kind?: 'photo' | 'document' }) =>
   call<{ ok: boolean }>('sendCertificate', c);
