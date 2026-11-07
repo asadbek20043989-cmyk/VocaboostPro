@@ -179,22 +179,22 @@
       </div>
       <div class="card">
         <h2>📁 Darajalar bo'yicha .txt fayldan yuklash (IELTS: A1, A2, B1, B2, C1, C2)</h2>
-        <p class="small">Har qanday <b>.txt</b> matn faylini tanlang yoki matnni pastdagi maydonga joylang. Qatorlar avtomatik tanlangan IELTS darajasiga moslab yuklanadi. Qabul qilinadigan formatlar: <code>word - tarjima</code> yoki <code>word : tarjima</code> yoki <code>word \t tarjima</code> yoki <code>word | tarjima | misol | misol tarjimasi</code>.</p>
+        <p class="small">Har qanday <b>.txt / .csv / .tsv / .json</b> faylni tanlang yoki matnni pastdagi maydonga joylang. Barcha qatorlar <b>tanlangan darajaga</b> yoziladi va <b>faqat shu darajani tanlagan foydalanuvchilarga</b> ko'rinadi (kunlik so'zlar, mashqlar, o'yinlar). To'liq format (Tab bilan ajratilgan — Excel/Sheets'dan nusxalaganda avtomatik): <code>en, uz, ipa, pos, ex, exUz, col (| bilan), hook, topic</code> — ya'ni so'z, tarjima, talaffuz, so'z turi, misol, misol tarjimasi va hokazo. Oddiy ko'rinishlar ham ishlaydi: <code>apple - olma</code>, <code>apple : olma</code>, <code>apple,olma</code> yoki <code>word | tarjima | misol | misol tarjimasi</code>. Faylning ichidagi <code>level</code> ustuni e'tiborga olinmaydi — daraja yuqoridagi tanlovdan olinadi.</p>
         <div class="row" style="margin-bottom:8px">
           <div style="flex:1;max-width:280px">
             <label>Qaysi darajaga yuklanadi?</label>
             <select id="txtLevel">
               <option value="A1">A1 · Beginner (IELTS 2.0-3.0)</option>
               <option value="A2">A2 · Elementary (IELTS 3.5-4.0)</option>
-              <option value="B1" selected>B1 · Intermediate (IELTS 4.5-5.0)</option>
-              <option value="B2">B2 · Upper-Intermediate (IELTS 5.5-6.5)</option>
+              <option value="B1" selected>B1 · Pre-Intermediate (IELTS 4.5-5.0)</option>
+              <option value="B2">B2 · Intermediate (IELTS 5.5-6.5)</option>
               <option value="C1">C1 · Advanced (IELTS 7.0-8.0)</option>
               <option value="C2">C2 · Proficiency / Master (IELTS 8.5-9.0)</option>
             </select>
           </div>
           <div style="flex:1">
             <label>.txt faylni tanlang</label>
-            <input type="file" id="txtFile" accept=".txt,.tsv,.csv" style="padding:6px" />
+            <input type="file" id="txtFile" accept=".txt,.tsv,.csv,.json,text/plain" style="padding:6px" />
           </div>
         </div>
         <textarea id="txtContent" style="min-height:130px" placeholder="abandon - tark etmoq&#10;ability - qobiliyat&#10;abroad - chet elda&#10;cautious - ehtiyotkor&#10;...yoki .txt faylni tanlang"></textarea>
@@ -230,6 +230,7 @@
         <div class="f3">
           <div><label>Nomi *</label><input id="pk_title" placeholder="Masalan: Sayohat so'zlari" /></div>
           <div><label>Turi</label><select id="pk_kind"><option value="daily">Kunlik (aniq sana uchun)</option><option value="topic">⭐ Maxsus mavzu — kunlik TOP 20</option><option value="open">Doim ochiq</option></select></div>
+          <div><label>Daraja (kimga ko'rinadi)</label><select id="pk_level"><option value="">Hamma darajalar</option><option value="A1">A1 · Beginner</option><option value="A2">A2 · Elementary</option><option value="B1">B1 · Pre-Intermediate</option><option value="B2">B2 · Intermediate</option><option value="C1">C1 · Advanced</option><option value="C2">C2 · Proficiency</option></select></div>
           <div id="pk_dateBox"><label>Sana *</label><input id="pk_date" type="date" /></div>
           <div id="pk_modeBox"><label>Qanday qo'shiladi</label><select id="pk_mode"><option value="replace">Odatdagi kunlik so'zlar o'rniga</option><option value="extra">Odatdagi kunlik so'zlar ustiga</option></select></div>
           <div><label>Tartib raqami</label><input id="pk_order" type="number" value="0" /></div>
@@ -237,7 +238,7 @@
         <label>Tavsif (ixtiyoriy)</label><input id="pk_desc" placeholder="Qisqa izoh" />
         <label class="chk" style="margin-top:8px"><input type="checkbox" id="pk_pub" checked /> Foydalanuvchilarga ko'rsatish (e'lon qilingan)</label>
         <label>So'zlar ro'yxati — Excel/Google Sheets'dan nusxalab qo'ying yoki fayl yuklang (.csv, .tsv, .txt, .json)</label>
-        <p class="small">Har qator — bitta so'z. Ustunlar: <b>en, uz</b>, keyin ixtiyoriy: ipa, pos, ex, exUz, col (| bilan), hook, topic, level. Eng sodda ko'rinish: <code>apple - olma</code> yoki <code>apple,olma</code>. Bir to'plamda ko'pi bilan 500 ta so'z.</p>
+        <p class="small">Har qator — bitta so'z. Ustunlar: <b>en, uz</b>, keyin ixtiyoriy: ipa, pos, ex, exUz, col (| bilan), hook, topic, level. <b>Muhim:</b> to'plam faqat bitta darajaga mo'ljallangan bo'lsa, yuqoridan <b>Daraja</b>ni tanlang — shunda u faqat shu darajadagi foydalanuvchilarga chiqadi (aks holda <i>hamma</i> darajaga bir xil so'zlar chiqadi). Eng sodda ko'rinish: <code>apple - olma</code> yoki <code>apple,olma</code>. Bir to'plamda ko'pi bilan 500 ta so'z.</p>
         <textarea id="pk_text" style="min-height:160px" placeholder="afford&#9;xarajatini ko'tara olmoq&#9;/əˈfɔːd/&#9;verb&#9;I can't afford a car.&#9;Men mashina ololmayman."></textarea>
         <div class="row" style="margin-top:8px"><input id="pk_file" type="file" accept=".csv,.tsv,.txt,.json,text/plain,text/csv,application/json" style="max-width:320px" /><span class="small" id="pk_info"></span></div>
         <div class="scroll" style="max-height:220px;margin-top:8px"><table><thead><tr><th>#</th><th>Inglizcha</th><th>O'zbekcha</th><th>Boshqa</th></tr></thead><tbody id="pk_prev"></tbody></table></div>
@@ -969,75 +970,48 @@ if ($('txtFile')) {
     const reader = new FileReader();
     reader.onload = e => {
       $('txtContent').value = e.target.result || '';
-      $('txtInfo').textContent = `Fayl tanlandi: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+      txtRefresh();
+      $('txtInfo').textContent = `${file.name} (${Math.round(file.size / 1024)} KB) · ` + $('txtInfo').textContent;
     };
     reader.readAsText(file, 'utf-8');
   };
 }
 
+function parseLevelText(raw) {
+  const text = String(raw || '').replace(/^\uFEFF/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim() && !l.trim().startsWith('#'));
+  if (!lines.length) return [];
+  const first = lines[0];
+  if (/^[\[{]/.test(first.trim()) || first.includes('\t') || first.includes(';')) return parseWords(lines.join('\n')); // to'liq ustunlar: en, uz, ipa, pos, ex, exUz, col, hook, topic
+  if (first.includes('|')) return lines.map(l => { const p = l.split('|').map(x => x.trim()); return { en: p[0] || '', uz: p[1] || '', ex: p[2] || '', exUz: p[3] || '', topic: p[4] || '' }; });
+  if (/\s[-–—]\s/.test(first)) return lines.map(l => { const p = l.split(/\s+[-–—]\s+/); return { en: (p[0] || '').trim(), uz: p.slice(1).join(' - ').trim() }; });
+  if (first.includes(':') && !first.includes(',')) return lines.map(l => { const k = l.indexOf(':'); return k < 0 ? { en: l.trim(), uz: '' } : { en: l.slice(0, k).trim(), uz: l.slice(k + 1).trim() }; });
+  return parseWords(lines.join('\n')); // CSV: apple,olma
+}
+function txtRefresh() {
+  try {
+    const list = parseLevelText($('txtContent').value);
+    const ok = list.filter(w => w.en && w.uz).length;
+    const rich = list.filter(w => w.ipa || w.pos || w.ex).length;
+    $('txtInfo').textContent = list.length ? `${ok} ta so'z topildi` + (rich ? ` (shundan ${rich} tasida talaffuz/turi/misol bor)` : '') + (list.length - ok ? ` · ${list.length - ok} ta qatorda tarjima yo'q (o'tkazib yuboriladi)` : '') : '';
+  } catch (e) { $('txtInfo').textContent = e.message; }
+}
+if ($('txtContent')) $('txtContent').oninput = txtRefresh;
 if ($('txtUploadBtn')) {
   $('txtUploadBtn').onclick = guard(async () => {
     const raw = ($('txtContent').value || '').trim();
     if (!raw) return flash('.txt faylni tanlang yoki matn maydoniga so\'zlarni kiriting', false);
     const targetLevel = $('txtLevel').value || 'B1';
-    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-    if (!lines.length) return flash('Hech qanday so\'z topilmadi', false);
-
+    let parsed;
+    try { parsed = parseLevelText(raw); } catch (e) { return flash(e.message, false); }
     const list = [];
     let currentOrder = Math.max(0, ...words.map(x => +x.order || 0)) + 1;
-
-    for (const line of lines) {
-      let en = '', uz = '', ex = '', exUz = '', pos = '', ipa = '', topic = '';
-      if (line.includes('|')) {
-        const parts = line.split('|').map(s => s.trim());
-        en = parts[0] || '';
-        uz = parts[1] || '';
-        ex = parts[2] || '';
-        exUz = parts[3] || '';
-        topic = parts[4] || '';
-      } else if (line.includes('\t')) {
-        const parts = line.split('\t').map(s => s.trim());
-        en = parts[0] || '';
-        uz = parts[1] || '';
-        ipa = parts[2] || '';
-        pos = parts[3] || '';
-        ex = parts[4] || '';
-        exUz = parts[5] || '';
-      } else if (line.includes(' - ')) {
-        const parts = line.split(' - ').map(s => s.trim());
-        en = parts[0] || '';
-        uz = parts.slice(1).join(' - ') || '';
-      } else if (line.includes(' — ')) {
-        const parts = line.split(' — ').map(s => s.trim());
-        en = parts[0] || '';
-        uz = parts.slice(1).join(' — ') || '';
-      } else if (line.includes(':')) {
-        const parts = line.split(':').map(s => s.trim());
-        en = parts[0] || '';
-        uz = parts.slice(1).join(':') || '';
-      } else {
-        const parts = line.split(',');
-        en = parts[0] ? parts[0].trim() : '';
-        uz = parts.slice(1).join(',').trim() || '';
-      }
-
-      if (en && uz) {
-        list.push({
-          en,
-          uz,
-          ipa,
-          pos,
-          ex,
-          exUz,
-          topic: topic || `${targetLevel} Vocabulary`,
-          level: targetLevel,
-          published: true,
-          order: currentOrder++
-        });
-      }
+    for (const w of parsed) {
+      if (!w.en || !w.uz) continue;
+      list.push({ en: w.en, uz: w.uz, ipa: w.ipa || '', pos: w.pos || '', ex: w.ex || '', exUz: w.exUz || '', col: w.col || '', hook: w.hook || '', topic: w.topic || `${targetLevel} Vocabulary`, level: targetLevel, published: true, order: currentOrder++ });
     }
-
     if (!list.length) return flash("Qatorlardan so'z va tarjima ajratib bo'lmadi. Format: apple - olma", false);
+    if (!confirm(`${list.length} ta so'z faqat ${targetLevel} darajasiga yuklanadi. Davom etilsinmi?`)) return;
 
     $('txtInfo').textContent = `${list.length} ta so'z ${targetLevel} darajasiga yuklanmoqda...`;
     let saved = 0, errs = [];
@@ -1047,7 +1021,7 @@ if ($('txtUploadBtn')) {
       errs = errs.concat(r.errors || []);
     }
     flash(`Muvaffaqiyatli: ${saved} ta so'z ${targetLevel} darajasiga yuklandi ✅`);
-    $('txtInfo').textContent = `${saved} ta so'z saqlandi (${targetLevel})`;
+    $('txtInfo').textContent = `${saved} ta so'z saqlandi (${targetLevel})` + (errs.length ? ` · ${errs.length} ta xato: ` + errs.slice(0, 3).join('; ') : '');
     $('txtContent').value = '';
     if ($('txtFile')) $('txtFile').value = '';
     await load();
@@ -1060,7 +1034,7 @@ function planList() { return words.filter(w => (w.level || 'B1') === $('plLevel'
 function renderPlan() {
   const list = planList(), per = +$('plPer').value || 10, days = Math.ceil(list.length / per);
   $('plCount').textContent = `(${list.length} ta so'z · ${days} kunlik)`;
-  $('plWarn').innerHTML = list.length < 30 ? `<span style="color:#fbbf24">⚠️ Bu darajada so'z kam (${list.length} ta). Tugagach foydalanuvchilarga eng yaqin daraja so'zlari beriladi — shuning uchun ${$('plLevel').value} darajasiga yetarlicha so'z qo'shing.</span>` : '';
+  $('plWarn').innerHTML = list.length < 30 ? `<span style="color:#fbbf24">⚠️ Bu darajada so'z kam (${list.length} ta). Bu darajadagi foydalanuvchilar faqat shu so'zlarni o'rganadi, hammasi yodlangach esa avtomatik keyingi darajaga o'tadi — shuning uchun ${$('plLevel').value} darajasiga yetarlicha so'z qo'shing.</span>` : '';
   let h = '';
   for (let d = 0; d < days; d++) {
     const chunk = list.slice(d * per, d * per + per);
@@ -1120,7 +1094,7 @@ $('gReset').onclick = guard(async () => { if (!confirm("Barcha o'yin sozlamalari
 
 
 /* ---------- Daraja ikonkalari ---------- */
-const LI_LEVELS = [['A1','🌱'],['A2','🚀'],['B1','🔮'],['B2','🎯'],['B2+','⚡'],['C1','👑'],['C2','💎']];
+const LI_LEVELS = [['A1','🌱'],['A2','🚀'],['B1','🔮'],['B2','🎯'],['C1','👑'],['C2','💎']];
 function renderLevelIcons() {
   const box = $('liBox');
   if (!box) return;
@@ -1571,11 +1545,11 @@ $('pk_text').oninput = pkRefresh;
 $('pk_file').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('pk_text').value = await f.text(); pkRefresh(); e.target.value = ''; };
 function pkKindUi() { const k = $('pk_kind').value; $('pk_dateBox').classList.toggle('hide', k === 'open'); $('pk_modeBox').classList.toggle('hide', k !== 'daily'); if (k === 'topic') $('pk_title').placeholder = 'Masalan: Home and Furniture'; else $('pk_title').placeholder = "Masalan: Sayohat so'zlari"; }
 $('pk_kind').onchange = pkKindUi;
-function pkReset() { pkEditId = null; $('pkEdTitle').textContent = "Yangi to'plam"; ['pk_title','pk_desc','pk_text'].forEach(i => $(i).value = ''); $('pk_date').value = todayStr(); $('pk_kind').value = 'daily'; $('pk_mode').value = 'replace'; $('pk_order').value = 0; $('pk_pub').checked = true; pkKindUi(); pkRefresh(); }
+function pkReset() { pkEditId = null; $('pkEdTitle').textContent = "Yangi to'plam"; ['pk_title','pk_desc','pk_text'].forEach(i => $(i).value = ''); $('pk_date').value = todayStr(); $('pk_kind').value = 'daily'; $('pk_level').value = ''; $('pk_mode').value = 'replace'; $('pk_order').value = 0; $('pk_pub').checked = true; pkKindUi(); pkRefresh(); }
 $('pkNew').onclick = pkReset;
 function renderPacks() {
   $('pkCount').textContent = `(${packs.length})`;
-  $('pkBody').innerHTML = packs.map(p => `<tr><td><b>${esc(p.title)}</b><br><span class="small">${esc(p.desc||'')}</span></td><td>${p.kind === 'topic' ? '⭐ Maxsus mavzu · ' + esc(p.date) : p.kind === 'daily' ? '📅 ' + esc(p.date) + (p.mode === 'extra' ? ' (ustiga)' : ' (o\'rniga)') : '📚 Doim ochiq'}</td><td>${p.count}</td><td><span class="tag ${p.published ? 'h' : ''}">${p.published ? "e'lon qilingan" : 'yashirin'}</span></td><td><div class="acts"><button class="sec" data-pa="edit" data-id="${esc(p.id)}">Tahrirlash</button><button class="sec" data-pa="pub" data-id="${esc(p.id)}">${p.published ? 'Yashirish' : "E'lon qilish"}</button><button class="bad" data-pa="del" data-id="${esc(p.id)}">O'chirish</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="small">Hali to\'plam yo\'q</td></tr>';
+  $('pkBody').innerHTML = packs.map(p => `<tr><td><b>${esc(p.title)}</b> ${p.level ? `<span class="tag">${esc(p.level)}</span>` : '<span class="small">(hamma daraja)</span>'}<br><span class="small">${esc(p.desc||'')}</span></td><td>${p.kind === 'topic' ? '⭐ Maxsus mavzu · ' + esc(p.date) : p.kind === 'daily' ? '📅 ' + esc(p.date) + (p.mode === 'extra' ? ' (ustiga)' : ' (o\'rniga)') : '📚 Doim ochiq'}</td><td>${p.count}</td><td><span class="tag ${p.published ? 'h' : ''}">${p.published ? "e'lon qilingan" : 'yashirin'}</span></td><td><div class="acts"><button class="sec" data-pa="edit" data-id="${esc(p.id)}">Tahrirlash</button><button class="sec" data-pa="pub" data-id="${esc(p.id)}">${p.published ? 'Yashirish' : "E'lon qilish"}</button><button class="bad" data-pa="del" data-id="${esc(p.id)}">O'chirish</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="small">Hali to\'plam yo\'q</td></tr>';
   $('pkBody').querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
     const id = b.dataset.id, p = packs.find(x => x.id === id), a = b.dataset.pa;
     if (a === 'pub') { await api('setPackPublished', { id, published: !p.published }); flash('Bajarildi ✅'); await load(); }
@@ -1583,7 +1557,7 @@ function renderPacks() {
     if (a === 'edit') {
       const r = await api('getPack', { id });
       pkEditId = id; $('pkEdTitle').textContent = 'Tahrirlash: ' + p.title;
-      $('pk_title').value = r.pack.title || ''; $('pk_desc').value = r.pack.desc || ''; $('pk_kind').value = r.pack.kind || 'open'; $('pk_date').value = r.pack.date || todayStr(); $('pk_mode').value = r.pack.mode || 'replace'; $('pk_order').value = r.pack.order || 0; $('pk_pub').checked = r.pack.published !== false;
+      $('pk_title').value = r.pack.title || ''; $('pk_desc').value = r.pack.desc || ''; $('pk_kind').value = r.pack.kind || 'open'; $('pk_date').value = r.pack.date || todayStr(); $('pk_mode').value = r.pack.mode || 'replace'; $('pk_level').value = r.pack.level || ''; $('pk_order').value = r.pack.order || 0; $('pk_pub').checked = r.pack.published !== false;
       $('pk_text').value = r.words.map(w => [w.en, w.uz, w.ipa, w.pos, w.ex, w.exUz, arr(w.col).join('|'), w.hook, w.topic, w.level].map(x => String(x || '').replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n');
       pkKindUi(); pkRefresh(); window.scrollTo({ top: $('pkEdTitle').offsetTop - 60, behavior: 'smooth' });
     }
@@ -1594,7 +1568,7 @@ $('pkSave').onclick = guard(async () => {
   const title = $('pk_title').value.trim(); if (!title) return flash("To'plam nomini kiriting", false);
   const kind = $('pk_kind').value; if (kind !== 'open' && !$('pk_date').value) return flash('Sanani tanlang', false);
   if (!pkWords.length && !pkEditId) return flash("So'zlar ro'yxatini kiriting", false);
-  const r = await api('savePack', { id: pkEditId, title, desc: $('pk_desc').value, kind, date: $('pk_date').value, mode: $('pk_mode').value, order: +$('pk_order').value || 0, published: $('pk_pub').checked, words: pkWords });
+  const r = await api('savePack', { id: pkEditId, title, desc: $('pk_desc').value, kind, level: $('pk_level').value, date: $('pk_date').value, mode: $('pk_mode').value, order: +$('pk_order').value || 0, published: $('pk_pub').checked, words: pkWords });
   flash(`Saqlandi ✅ ${r.saved} ta so'z` + (r.errors && r.errors.length ? ` (${r.errors.length} ta qator o'tkazib yuborildi)` : ''));
   pkReset(); await load();
 });

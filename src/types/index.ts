@@ -1,4 +1,4 @@
-export type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'B2+';
+export type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type DailyGoalMinutes = number;
 export type Track = 'comm' | 'ielts' | 'both';
 export type WordTrack = 'comm' | 'ielts' | 'acad';
@@ -19,6 +19,7 @@ export interface BankWord {
   topic: string;
   level: EnglishLevel;
   order: number;
+  published?: boolean; // false bo'lsa foydalanuvchiga ko'rsatilmaydi
 }
 
 /** Foydalanuvchining shu so'z bo'yicha takrorlash holati (faqat qurilmada saqlanadi) */
@@ -203,6 +204,7 @@ export interface WordPack {
   date: string; // YYYY-MM-DD (faqat daily uchun)
   mode: 'replace' | 'extra'; // daily: odatdagi kunlik so'zlar o'rniga yoki ustiga
   order: number;
+  level?: EnglishLevel | ''; // faqat shu darajadagi foydalanuvchilarga ko'rinadi (bo'sh — hamma darajaga)
   words: BankWord[];
   isCustom?: boolean; // foydalanuvchi tomonidan yaratilgan
 }

@@ -20,7 +20,7 @@ const json = (status, body) => ({
   body: JSON.stringify(body),
 });
 
-const LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'B2+', 'C1', 'C2']);
+const LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
 const clean = (s, n) => String(s || '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, n);
 
 async function callModel(model, key, prompt, schemaHint) {

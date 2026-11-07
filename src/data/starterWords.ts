@@ -74,7 +74,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "SUS-TAIN-able: 'sustain' — davom ettirmoq; uzoq davom etadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 4
   },
   {
@@ -93,7 +93,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Signal' — belgi; belgi beradigan darajada katta.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 5
   },
   {
@@ -150,7 +150,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "RE (qayta) + NEW (yangi) + able: qayta yangilanadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 8
   },
   {
@@ -188,7 +188,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Aprosh' — yaqinlashish: yaqinlashib kelayotgan yondashuv.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 10
   },
   {
@@ -340,7 +340,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Kurrikulum' — ruscha 'куррикулум', o'quv rejasi.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 18
   },
   {
@@ -359,7 +359,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "TU-ition: 'two' (ikki) — kontrakt to'lovi ikki baravar.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 19
   },
   {
@@ -378,7 +378,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Impakt' — zarba; ta'sir kuchli bo'lsa, zarbadek.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 20
   },
   {
@@ -454,7 +454,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "SCHOLAR (olim) + SHIP — olimlarga beriladigan yordam.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 24
   },
   {
@@ -473,7 +473,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "MORE + OVER: yana ham ustiga.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 25
   },
   {
@@ -530,7 +530,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Literatura' — adabiyot; o'qiy-yoza olish.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 28
   },
   {
@@ -549,7 +549,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Innovatsiya' — o'zbekchada ham ishlatiladi.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 29
   },
   {
@@ -663,7 +663,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "WHERE + AS: qarama-qarshilik qiyoslaydi.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 35
   },
   {
@@ -720,7 +720,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Avtomat' — o'zi ishlaydigan; ruscha 'автоматизация'.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 38
   },
   {
@@ -739,7 +739,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Private' — shaxsiy; privacy — shaxsiy holat.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 39
   },
   {
@@ -758,7 +758,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "CONSEQUENCE (oqibat) + ly.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 40
   },
   {
@@ -796,7 +796,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Per-SWADE: 'suv' ichirib ishontirdi — ko'ndirdi.",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 42
   },
   {
@@ -815,7 +815,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Nutritsiya' — ruscha 'нутриция', ovqatlanish fani.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 43
   },
   {
@@ -834,7 +834,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Obez' — ruscha 'ожирение'ga yaqin.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 44
   },
   {
@@ -853,7 +853,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "NEVER + THE + LESS: hech kam emas — baribir.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 45
   },
   {
@@ -872,7 +872,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Re-LUK-tant: 'luk' — lug'at ochishga erinadigan odam.",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 46
   },
   {
@@ -948,7 +948,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "FURTHER (yana uzoqroq) + MORE.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 50
   },
   {
@@ -1024,7 +1024,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "UN (yo'q) + EMPLOY (ish bermoq) + MENT.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 54
   },
   {
@@ -1100,7 +1100,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Immigratsiya' — o'zbekchada ham shunday.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 58
   },
   {
@@ -1119,7 +1119,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "IN (yo'q) + EQUAL (teng) + ITY.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 59
   },
   {
@@ -1138,7 +1138,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "EVIDENT — ravshan; ravshan qilib ko'rsatadigan narsa.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 60
   },
   {
@@ -1233,7 +1233,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Indikator' — ko'rsatkich; indicate — ko'rsatmoq.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 65
   },
   {
@@ -1309,7 +1309,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "WORK + FORCE (kuch).",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 69
   },
   {
@@ -1328,7 +1328,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Potentsial' — ruscha 'потенциал'.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 70
   },
   {
@@ -1480,7 +1480,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Influenser' — ta'sir qiluvchi blogger.",
     "track": "ielts",
     "topic": "Media",
-    "level": "B2+",
+    "level": "B2",
     "order": 78
   },
   {
@@ -1518,7 +1518,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Substantsiya' — mohiyat; katta, mohiyatli.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 80
   },
   {
@@ -1594,7 +1594,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "HERIT-age: 'irs' (meros) — heir (voris) bilan bir ildiz.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 84
   },
   {
@@ -1670,7 +1670,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Urban' — 'Urbanizatsiya' (shaharlashuv).",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 88
   },
   {
@@ -1879,7 +1879,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "'Konsum' — iste'mol; CONSUME — yutib yubormoq.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 99
   },
   {
@@ -1898,7 +1898,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "A-SUME: 'sum' (jami) — jamini o'zim hisoblab oldim.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 100
   },
   {
@@ -7864,7 +7864,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Abosrbent — singdiruvchi modda.",
     "track": "acad",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 414
   },
   {
@@ -7883,7 +7883,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Abstrakt — aniq shaklga ega bo'lmagan.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 415
   },
   {
@@ -7978,7 +7978,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Akvayring — bank kartalarini qabul qilish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 420
   },
   {
@@ -7997,7 +7997,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Adaptatsiya — yangi sharoitga ko'nikish.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 421
   },
   {
@@ -8016,7 +8016,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Adekvat — to'g'ri va yetarli.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 422
   },
   {
@@ -8301,7 +8301,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Apparat — ochiq-oydin ko'z oldida.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 437
   },
   {
@@ -8377,7 +8377,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Apropo — mavzuga to'la mos.",
     "track": "acad",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 441
   },
   {
@@ -8510,7 +8510,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Assesment — bilim darajasini tekshirish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 448
   },
   {
@@ -8567,7 +8567,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Assotsiatsiya — xotiradagi bog'lanish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 451
   },
   {
@@ -8643,7 +8643,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Avtoritet — so'zi o'tadigan kishi.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 455
   },
   {
@@ -8738,7 +8738,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Bio (hayot) + Diversity (xilma-xillik).",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 460
   },
   {
@@ -8795,7 +8795,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Baundari — o'tib bo'lmas chiziq.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 463
   },
   {
@@ -8966,7 +8966,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kapasitet — ichiga sig'dirish kuchi.",
     "track": "ielts",
     "topic": "Kundalik",
-    "level": "B2+",
+    "level": "B2",
     "order": 472
   },
   {
@@ -9156,7 +9156,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Sivilizatsiya — yuksak jamiyat taraqqiyoti.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 482
   },
   {
@@ -9251,7 +9251,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kollaboratsiya — birgalikdagi ish.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 487
   },
   {
@@ -9365,7 +9365,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kommit — o'z so'zida turish mas'uliyati.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 493
   },
   {
@@ -9498,7 +9498,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Komponent — butunning bir bo'lagi.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 500
   },
   {
@@ -9536,7 +9536,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konseptsiya — asosiy qarashlar tizimi.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 502
   },
   {
@@ -9574,7 +9574,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Xulosa qilib xotima yasash.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 504
   },
   {
@@ -9631,7 +9631,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konduktor boshqargandek jarayonni olib borish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 507
   },
   {
@@ -9669,7 +9669,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konsikvens — qilingan ishning ortidan kelgan natija.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 509
   },
   {
@@ -9688,7 +9688,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konservatsiya — saqlab qolish.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 510
   },
   {
@@ -9707,7 +9707,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Katta e'tiborga arzigulik hajm.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 511
   },
   {
@@ -9726,7 +9726,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konsistent — o'zgaruvchan emas, qat'iy bir maromda.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 512
   },
   {
@@ -9764,7 +9764,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Konstruksiya — qurilish asoslari.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 514
   },
   {
@@ -9859,7 +9859,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kontemporari — bugungi davr ruhi.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 519
   },
   {
@@ -9916,7 +9916,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kontributsiya — hissa qo'shish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 522
   },
   {
@@ -9935,7 +9935,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Katta hissa va xizmat.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 523
   },
   {
@@ -9973,7 +9973,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kryushal — barcha natijani belgilovchi burilish nuqtasi.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 525
   },
   {
@@ -10106,7 +10106,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Deklinatsiya — pastga qarab tushish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 532
   },
   {
@@ -10220,7 +10220,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Demonstratsiya — ko'rgazmali namoyish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 538
   },
   {
@@ -10296,7 +10296,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Derivativ — hosila narsa.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 542
   },
   {
@@ -10315,7 +10315,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Detektiv sirni fosh etadi.",
     "track": "acad",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 543
   },
   {
@@ -10372,7 +10372,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "3D format — 3 o'lchamli makon.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 546
   },
   {
@@ -10467,7 +10467,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Diskriminatsiya — huquqlarni poymol qilish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 551
   },
   {
@@ -10505,7 +10505,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dismis — hisobdan chiqarib yuborish.",
     "track": "comm",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 553
   },
   {
@@ -10524,7 +10524,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Order (tartib) ning buzilishi.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 554
   },
   {
@@ -10562,7 +10562,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Disput — ochiq bahs-munozara.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 556
   },
   {
@@ -10600,7 +10600,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Distinktiv — ajralib turuvchi xususiyat.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 558
   },
   {
@@ -10619,7 +10619,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Distribyutor — mahsulotni tarqatuvchi.",
     "track": "acad",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 559
   },
   {
@@ -10638,7 +10638,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dayvers — turli xil rang-baranglik.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 560
   },
   {
@@ -10657,7 +10657,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dayversiti — barcha qatlamlarning uyg'unligi.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 561
   },
   {
@@ -10714,7 +10714,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dominantlik — yetakchi mavqega ega bo'lish.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 564
   },
   {
@@ -10771,7 +10771,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dramatik o'zgarish — ko'zga yaqqol tashlanadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 567
   },
   {
@@ -10790,7 +10790,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dravt — yomg'irsiz, qurib qolgan yer.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 568
   },
   {
@@ -10847,7 +10847,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Dinamika — to'xtovsiz rivojlanish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 571
   },
   {
@@ -10904,7 +10904,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Serob va mo'l-ko'l",
     "track": "comm",
     "topic": "Tabiat",
-    "level": "B2+",
+    "level": "B2",
     "order": 574
   },
   {
@@ -10923,7 +10923,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Haddidan oshish",
     "track": "comm",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 575
   },
   {
@@ -10942,7 +10942,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Akselerator pedali",
     "track": "comm",
     "topic": "Harakat",
-    "level": "B2+",
+    "level": "B2",
     "order": 576
   },
   {
@@ -10999,7 +10999,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Akkumulyator kabi energiya yig'ish",
     "track": "comm",
     "topic": "Fan",
-    "level": "B2+",
+    "level": "B2",
     "order": 579
   },
   {
@@ -11037,7 +11037,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Bilish va tan olish",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 581
   },
   {
@@ -11132,7 +11132,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Himoya qilmoq",
     "track": "comm",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 586
   },
   {
@@ -11170,7 +11170,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Samimiy mehr",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 588
   },
   {
@@ -11360,7 +11360,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Taqsimlab ajratmoq",
     "track": "comm",
     "topic": "Reja",
-    "level": "B2+",
+    "level": "B2",
     "order": 598
   },
   {
@@ -11379,7 +11379,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Birlashgan do'st",
     "track": "comm",
     "topic": "Siyosat",
-    "level": "B2+",
+    "level": "B2",
     "order": 599
   },
   {
@@ -11569,7 +11569,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Oldindan his qilmoq",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 609
   },
   {
@@ -11740,7 +11740,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Kelib chiqmoq",
     "track": "comm",
     "topic": "Holat",
-    "level": "B2+",
+    "level": "B2",
     "order": 618
   },
   {
@@ -11778,7 +11778,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Zirhli himoya",
     "track": "comm",
     "topic": "Tarix",
-    "level": "B2+",
+    "level": "B2",
     "order": 620
   },
   {
@@ -11816,7 +11816,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Tuyg'u uyg'otish",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 622
   },
   {
@@ -11930,7 +11930,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Tiniq va ravon gapirish",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 628
   },
   {
@@ -12006,7 +12006,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Yurakdagi orzu",
     "track": "comm",
     "topic": "Hayot",
-    "level": "B2+",
+    "level": "B2",
     "order": 632
   },
   {
@@ -12025,7 +12025,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Bo'laklardan yig'ish",
     "track": "comm",
     "topic": "Harakat",
-    "level": "B2+",
+    "level": "B2",
     "order": 633
   },
   {
@@ -12044,7 +12044,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Katta yig'in",
     "track": "comm",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 634
   },
   {
@@ -12063,7 +12063,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "O'zini ko'rsatmoq",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 635
   },
   {
@@ -12101,7 +12101,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Foyda keltiruvchi mulk",
     "track": "comm",
     "topic": "Iqtisod",
-    "level": "B2+",
+    "level": "B2",
     "order": 637
   },
   {
@@ -12177,7 +12177,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Taxminiy fikr",
     "track": "comm",
     "topic": "Fan",
-    "level": "B2+",
+    "level": "B2",
     "order": 641
   },
   {
@@ -12196,7 +12196,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Juda qattiq hayratlantirmoq",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 642
   },
   {
@@ -12310,7 +12310,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Zahmat bilan yetishmoq",
     "track": "comm",
     "topic": "Yutuq",
-    "level": "B2+",
+    "level": "B2",
     "order": 648
   },
   {
@@ -12424,7 +12424,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Sababini bog'lash",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 654
   },
   {
@@ -12443,7 +12443,7 @@ export const STARTER_WORDS: BankWord[] = [
     "hook": "Asl nusxa",
     "track": "comm",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 655
   },
   {

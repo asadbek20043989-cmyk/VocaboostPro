@@ -26,7 +26,7 @@ import { claimCertificate, claimWelcomeCertificate, claimAward } from '../servic
 import { ACCOUNT_ID, lsGet, lsSet, lsDel } from '../services/account';
 import { shopCfg, buildCatalog, priceOf, balanceOf, inviteLinkFor, botNameFrom, ShopCfg } from '../services/shop';
 import { parseWordPack, PHRASAL_TEXT, IDIOMS_TEXT } from '../data/packs';
-import { ShopItem, parsePremium, DEFAULT_PREMIUM_TEXT, LTD_AVATARS, NICK_COLORS, TITLES } from '../data/shopDefaults';
+import { ShopItem, DEFAULT_ITEMS, parsePremium, DEFAULT_PREMIUM_TEXT, LTD_AVATARS, NICK_COLORS, TITLES } from '../data/shopDefaults';
 
 // ---- Netlify kreditini tejash sozlamalari ----
 // Har bir bazaga yozish Netlify funksiyasi (db.mjs) chaqiruvi hisoblanadi, shuning uchun yozuvlar jamlanadi.
@@ -58,13 +58,19 @@ const LEVEL_PREF: Record<string, EnglishLevel[]> = {
   A2: ['A2', 'B1', 'A1', 'B2', 'C1', 'C2'],
   B1: ['B1', 'B2', 'A2', 'C1', 'A1', 'C2'],
   B2: ['B2', 'C1', 'B1', 'C2', 'A2', 'A1'],
-  'B2+': ['B2', 'C1', 'B1', 'C2', 'A2', 'A1'],
   C1: ['C1', 'C2', 'B2', 'B1', 'A2', 'A1'],
   C2: ['C2', 'C1', 'B2', 'B1', 'A2', 'A1'],
 };
 export const LEVEL_ORDER: EnglishLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-/** Daraja bo'yicha so'z kam bo'lsa ham o'yin/mashqlar to'xtab qolmasligi uchun eng kam ko'rinadigan so'zlar soni */
-const MIN_LEVEL_WORDS = 40;
+/** Daraja juda kam so'zli bo'lsa (admin hali yuklamagan) o'yin variantlari yetishi uchun eng kam so'zlar soni.
+ *  Kunlik so'zlar HECH QACHON boshqa darajadan olinmaydi — bu faqat ko'rsatish/variantlar uchun zaxira. */
+const MIN_LEVEL_WORDS = 6;
+/** Eski ma'lumotlardagi 'B2+' va noto'g'ri yozilgan darajalar xavfsiz tarzda to'g'rilanadi */
+const normLevel = (v: unknown, fallback: EnglishLevel = 'B1'): EnglishLevel => {
+  const t = String(v ?? '').trim().toUpperCase();
+  const x = t === 'B2+' ? 'B2' : t;
+  return (LEVEL_ORDER as string[]).includes(x) ? (x as EnglishLevel) : fallback;
+};
 const DEFAULT_SETTINGS: Settings = { reviewCap: 30, xpNewWord: 3, xpCorrect: 2, xpDailyBonus: 10 };
 
 export const MILESTONES: { n: number; tpl: string; title: string }[] = [
@@ -102,6 +108,7 @@ interface AppContextType {
   // lug'at to'plamlari ("Bugungi mashqlar")
   packs: WordPack[];
   todayPacks: WordPack[];
+  levelProgress: { total: number; learned: number; mastered: number };
   packProgress: (p: WordPack) => { learned: number; total: number };
   // shaxsiy lug'at to'plamlari
   customPacks: CustomWordPack[];
@@ -265,7 +272,7 @@ const normalizeBankWord = (id: string, w: any, i: number): BankWord | null => {
     hook: String(w.hook || ''),
     track: (['comm', 'ielts', 'acad'].includes(w.track) ? w.track : 'comm') as BankWord['track'],
     topic: String(w.topic || ''),
-    level: (['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1') as EnglishLevel,
+    level: normLevel(w.level),
     order: Number.isFinite(Number(w.order)) ? Number(w.order) : 100000 + i,
   };
 };
@@ -280,7 +287,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ---------- holat ----------
   const [profile, setProfile] = useState<UserProfile>(() => {
     const stored = load<Partial<UserProfile> | null>('lx_profile_v1', null);
-    if (stored) return { ...INITIAL_PROFILE, ...stored, level: ((stored.level as string) === 'B2+' ? 'B2' : stored.level || INITIAL_PROFILE.level) as EnglishLevel };
+    if (stored) return { ...INITIAL_PROFILE, ...stored, level: normLevel(stored.level, INITIAL_PROFILE.level) };
     return freshProfile();
   });
   // Telegram ichida: ism va profil rasmi avtomatik Telegramdagidek qo'yiladi (foydalanuvchi o'zi o'zgartirmagan bo'lsa)
@@ -454,7 +461,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (base.length >= MIN_BANK) return base;
     const ids = new Set<string>([...base.map(w => w.id), ...knownIds]);
     const ens = new Set(base.map(w => w.en.toLowerCase()));
-    const extra = STARTER_WORDS.filter(w => !ids.has(w.id) && !ens.has(w.en.toLowerCase())).map(w => ((w.level as string) === 'B2+' ? { ...w, level: 'B2' as EnglishLevel } : w));
+    const extra = STARTER_WORDS.filter(w => !ids.has(w.id) && !ens.has(w.en.toLowerCase())).map(w => ({ ...w, level: normLevel(w.level) }));
     return [...base, ...extra];
   }, [cloudWords, knownIds]);
   const bankFromCloud = !!(cloudWords && cloudWords.length);
@@ -478,9 +485,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
           words.sort((a, b) => a.order - b.order);
           if (!words.length) return;
+          // To'plam darajaga bog'langan bo'lsa — uning so'zlari ham shu darajada hisoblanadi
+          const pl = (LEVEL_ORDER as string[]).includes(String(p.level)) ? (String(p.level) as EnglishLevel) : '';
           list.push({
             id, title: String(p.title || 'Lug\'at'), desc: String(p.desc || ''), kind: p.kind === 'daily' ? 'daily' : p.kind === 'topic' ? 'topic' : 'open',
-            date: String(p.date || ''), mode: p.mode === 'extra' ? 'extra' : 'replace', order: Number(p.order) || 0, words,
+            date: String(p.date || ''), mode: p.mode === 'extra' ? 'extra' : 'replace', order: Number(p.order) || 0, level: pl,
+            words: pl ? words.map(w => ({ ...w, level: pl })) : words,
           });
         });
         list.sort((a, b) => a.order - b.order);
@@ -555,42 +565,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const extraPacks: WordPack[] = useMemo(() => {
     const out: WordPack[] = [];
     if (hasPhrasal) out.push({ id: 'phrasal_pack', title: '🧩 Phrasal Verbs (200)', desc: "Do'kondan olingan 200 ta phrasal verb", kind: 'open' as const, date: '', mode: 'extra' as const, order: 910, words: parseWordPack(PHRASAL_TEXT, 'pv', 'Phrasal Verbs', 'B1') });
-    if (hasIdioms) out.push({ id: 'idioms_pack', title: '💬 Idioms (150)', desc: "Do'kondan olingan 150 ta inglizcha idiom", kind: 'open' as const, date: '', mode: 'extra' as const, order: 920, words: parseWordPack(IDIOMS_TEXT, 'idm', 'Idioms', 'B2+') });
+    if (hasIdioms) out.push({ id: 'idioms_pack', title: '💬 Idioms (150)', desc: "Do'kondan olingan 150 ta inglizcha idiom", kind: 'open' as const, date: '', mode: 'extra' as const, order: 920, words: parseWordPack(IDIOMS_TEXT, 'idm', 'Idioms', 'B2') });
     return out;
   }, [hasPhrasal, hasIdioms]);
-  const packs = useMemo(() => [...cloudPacks, ...premiumPack, ...extraPacks, ...customAsPacks], [cloudPacks, premiumPack, extraPacks, customAsPacks]);
+  const allPacks = useMemo(() => [...cloudPacks, ...premiumPack, ...extraPacks, ...customAsPacks], [cloudPacks, premiumPack, extraPacks, customAsPacks]);
+  // Darajaga bog'langan to'plamlar faqat shu darajadagi foydalanuvchiga ko'rinadi (daraja ko'rsatilmagan — hammaga)
+  const packs = useMemo(() => allPacks.filter(p => !p.level || p.level === profile.level), [allPacks, profile.level]);
+  // Qidiruv/tarix uchun barcha to'plamlar so'zlari (oldin o'rganilgan so'z yo'qolmasin)
   const packWords = useMemo(() => {
     const seen = new Set<string>();
     const out: BankWord[] = [];
-    packs.forEach(p => p.words.forEach(w => { if (!seen.has(w.id)) { seen.add(w.id); out.push(w); } }));
+    allPacks.forEach(p => p.words.forEach(w => { if (!seen.has(w.id)) { seen.add(w.id); out.push(w); } }));
     return out;
-  }, [packs]);
+  }, [allPacks]);
   // Qidiruv uchun barcha so'zlar; foydalanuvchiga esa asosiy bank + o'rganilgan to'plam so'zlari ko'rsatiladi
   const bankMap = useMemo(() => new Map([...mainBank, ...packWords].map(w => [w.id, w])), [mainBank, packWords]);
 
-  // Foydalanuvchi tanlagan darajaga mos so'zlar: avval o'z darajasi, so'ng (so'z yetmasa) eng yaqin darajalar
+  // Foydalanuvchi tanlagan daraja: kunlik so'zlar FAQAT shu darajadagi so'zlardan (admin tartibida) olinadi
   const levelPref = LEVEL_PREF[profile.level] || LEVEL_PREF.B1;
-  const levelMain: BankWord[] = useMemo(() => {
-    const rank = (w: BankWord) => {
-      const i = levelPref.indexOf(w.level);
-      return i < 0 ? 9 : i;
-    };
-    return [...mainBank].sort((a, b) => rank(a) - rank(b)); // barqaror saralash: daraja ichida admin tartibi saqlanadi
-  }, [mainBank, levelPref]);
+  const levelMain: BankWord[] = useMemo(() => mainBank.filter(w => w.level === profile.level && w.published !== false), [mainBank, profile.level]);
   // Ko'rinadigan lug'at / o'yinlar / mashqlar banki: o'z darajasi + allaqachon o'rganilgan so'zlar (ma'lumot yo'qolmaydi)
   const bank: BankWord[] = useMemo(() => {
-    const ownCount = levelMain.filter(w => w.level === profile.level).length;
-    let fill = Math.max(0, MIN_LEVEL_WORDS - ownCount);
-    const list = levelMain.filter(w => {
-      if (w.level === profile.level || srs[w.id]) return true;
-      if (fill > 0) {
-        fill--;
-        return true;
-      }
-      return false;
-    });
-    return [...list, ...packWords.filter(w => srs[w.id])];
-  }, [levelMain, packWords, srs, profile.level]);
+    const seen = new Set<string>();
+    const out: BankWord[] = [];
+    const add = (w: BankWord) => { if (!seen.has(w.id)) { seen.add(w.id); out.push(w); } };
+    levelMain.forEach(add);
+    mainBank.forEach(w => { if (srs[w.id]) add(w); });
+    packWords.forEach(w => { if (srs[w.id]) add(w); });
+    // Zaxira: daraja deyarli bo'sh bo'lsa, o'yin variantlari yetishi uchun yaqin darajalardan to'ldiriladi
+    if (out.length < MIN_LEVEL_WORDS) {
+      const rank = (w: BankWord) => { const i = levelPref.indexOf(w.level); return i < 0 ? 9 : i; };
+      [...mainBank].filter(w => w.published !== false && !seen.has(w.id)).sort((a, b) => rank(a) - rank(b)).forEach(w => { if (out.length < MIN_LEVEL_WORDS) add(w); });
+    }
+    return out;
+  }, [levelMain, mainBank, packWords, srs, levelPref]);
 
   const games = useMemo(() => mergeGames(config?.games), [config]);
   const settings: Settings = useMemo(() => {
@@ -1378,6 +1386,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     return set;
   }, [srs, bankMap]);
+  // Yodlangan so'zlar (inglizcha matn bo'yicha): bir xil so'z ikki darajada bo'lsa ham qayta o'rgatilmaydi va daraja tugashini to'sib qo'ymaydi
+  const masteredEn = useMemo(() => {
+    const set = new Set<string>();
+    Object.entries(srs).forEach(([id, e]) => {
+      if (!e?.mastered) return;
+      const b = bankMap.get(id);
+      if (b) set.add(b.en.toLowerCase());
+    });
+    return set;
+  }, [srs, bankMap]);
+  const levelProgress = useMemo(() => {
+    const done = (w: BankWord) => !!srs[w.id]?.mastered || masteredEn.has(w.en.toLowerCase());
+    const seenEn = (w: BankWord) => !!srs[w.id] || learnedEn.has(w.en.toLowerCase());
+    return { total: levelMain.length, learned: levelMain.filter(seenEn).length, mastered: levelMain.filter(done).length };
+  }, [levelMain, srs, masteredEn, learnedEn]);
   const packProgress = (p: WordPack) => ({ learned: p.words.filter(w => srs[w.id] || learnedEn.has(w.en.toLowerCase())).length, total: p.words.length });
   const newQueue = useMemo(() => {
     // Bugungi to'plam (admin yuklagan) so'zlari birinchi; "replace" rejimida odatdagi kunlik so'zlar o'rniga o'rganiladi
@@ -1759,35 +1782,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [7, 14, 30].forEach(n => profile.streak >= n && list.push({ kind: 'streak', key: String(n), n }));
     [10, 25, 50].forEach(n => duelWins >= n && list.push({ kind: 'duel', key: String(n), n }));
     (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const).forEach(L => {
-      const ws = mainBank.filter(w => (w.level === L || (L === 'B2' && w.level === 'B2+')) && w.published !== false);
-      if (ws.length >= 20 && ws.every(w => srs[w.id]?.mastered)) list.push({ kind: 'level', key: L === 'B2' ? 'B2p' : L, level: L });
+      const ws = mainBank.filter(w => w.level === L && w.published !== false);
+      if (ws.length >= 20 && ws.every(w => srs[w.id]?.mastered || masteredEn.has(w.en.toLowerCase()))) list.push({ kind: 'level', key: L === 'B2' ? 'B2p' : L, level: L });
     });
     packs.forEach(p => {
       if (p.kind === 'open' && p.words.length >= 5 && p.words.every(w => srs[w.id]?.mastered)) list.push({ kind: 'pack', key: p.id.slice(0, 30), title: p.title });
     });
     return list;
-  }, [profile.streak, duelWins, mainBank, packs, srs]);
+  }, [profile.streak, duelWins, mainBank, packs, srs, masteredEn]);
 
-  // Foydalanuvchi joriy darajadagi lug'atlarni to'liq yodlab tugatganda avtomatik keyingi levelga o'tkazish
+  // Foydalanuvchi joriy darajadagi lug'atlarni to'liq yodlab tugatganda avtomatik keyingi (so'zlari bor) darajaga o'tadi
   const autoLevelChecked = useRef<string>('');
   useEffect(() => {
     if (!profile.hasCompletedOnboarding || !syncReady || !wordsSynced) return; // admin so'zlari to'liq kelmasdan turib daraja oshirilmasin
-    const curLevel = (profile.level === 'B2+' ? 'B2' : profile.level) as EnglishLevel;
+    const curLevel = profile.level;
     const curIdx = LEVEL_ORDER.indexOf(curLevel);
     if (curIdx < 0 || curIdx >= LEVEL_ORDER.length - 1) return; // Eng oxirgi C2 darajada
+    const wordsOf = (L: EnglishLevel) => mainBank.filter(w => w.level === L && w.published !== false);
+    const isDone = (w: BankWord) => !!srs[w.id]?.mastered || masteredEn.has(w.en.toLowerCase());
 
-    const curWords = mainBank.filter(w => ((w.level || 'B1') === curLevel || (curLevel === 'B2' && w.level === 'B2+')) && w.published !== false);
-    if (curWords.length < 5) return; // kamida 5 ta so'z bo'lsa
-
-    const allMastered = curWords.every(w => srs[w.id]?.mastered);
-    const key = `${curLevel}_${curWords.length}`;
-    if (allMastered && autoLevelChecked.current !== key) {
-      autoLevelChecked.current = key;
-      const nextLevel = LEVEL_ORDER[curIdx + 1];
-      setProfile(p => ({ ...p, level: nextLevel, updatedAt: nowMs() }));
-      pushNotice(`🏆 TABRIKLAYMIZ! Siz ${curLevel} darajasi lug'atlarini to'liq yodladingiz! Yangi darajangiz: ${nextLevel} 🚀`);
+    const curWords = wordsOf(curLevel);
+    if (curWords.length < 1 || !curWords.every(isDone)) return;
+    // So'zi bor va hali yodlanmagan eng yaqin keyingi daraja (bo'sh darajalar o'tkazib yuboriladi)
+    let nextLevel: EnglishLevel | null = null;
+    for (let i = curIdx + 1; i < LEVEL_ORDER.length; i++) {
+      if (wordsOf(LEVEL_ORDER[i]).some(w => !isDone(w))) { nextLevel = LEVEL_ORDER[i]; break; }
     }
-  }, [profile.level, profile.hasCompletedOnboarding, mainBank, srs, syncReady, wordsSynced]);
+    if (!nextLevel) return; // keyingi darajada hali so'z yo'q — joriy darajada qoladi, so'z yuklanganda o'zi o'tadi
+    const key = `${curLevel}_${curWords.length}_${nextLevel}`;
+    if (autoLevelChecked.current === key) return;
+    autoLevelChecked.current = key;
+    const goTo = nextLevel;
+    setProfile(p => (p.level === curLevel ? { ...p, level: goTo, updatedAt: nowMs() } : p));
+    pushNotice(`🏆 TABRIKLAYMIZ! Siz ${curLevel} darajasi lug'atlarini to'liq yodladingiz! Yangi darajangiz: ${goTo} 🚀`);
+  }, [profile.level, profile.hasCompletedOnboarding, mainBank, srs, masteredEn, syncReady, wordsSynced]);
   useEffect(() => {
     if (!realtimeEnabled || !syncReady || !profile.hasCompletedOnboarding || awardBusy.current || !awardCandidates.length) return;
     const done = new Set<string>(load<string[]>('lx_awards_v1', []));
@@ -2112,7 +2140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         profile, bank, bankFromCloud, srs, savedWords, masteredCount, dueWords, newQueue, introducedToday,
         dailyQuests, badges, games, settings, activeTab, setActiveTab, overlay, openLearn, openGame, closeOverlay,
-        goBack, canGoBack, packs, todayPacks, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
+        goBack, canGoBack, packs, todayPacks, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,

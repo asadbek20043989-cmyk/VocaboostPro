@@ -6,9 +6,9 @@ import { AURAS } from '../data/shopDefaults';
 
 type Rank = 1 | 2 | 3;
 const THEME: Record<Rank, { cls: string; label: string; text: string; bar: string; h: number; size: number }> = {
-  1: { cls: 'pd-gold', label: '1', text: 'text-amber-300', bar: 'from-amber-300 via-amber-400 to-amber-600', h: 78, size: 72 },
-  2: { cls: 'pd-silver', label: '2', text: 'text-sky-300', bar: 'from-sky-100 via-sky-300 to-sky-500', h: 56, size: 56 },
-  3: { cls: 'pd-bronze', label: '3', text: 'text-orange-400', bar: 'from-orange-200 via-orange-400 to-orange-600', h: 42, size: 56 },
+  1: { cls: 'pd-gold', label: '1', text: 'text-amber-300', bar: 'from-amber-300 via-amber-400 to-amber-600', h: 78, size: 58 },
+  2: { cls: 'pd-silver', label: '2', text: 'text-sky-300', bar: 'from-sky-100 via-sky-300 to-sky-500', h: 56, size: 46 },
+  3: { cls: 'pd-bronze', label: '3', text: 'text-orange-400', bar: 'from-orange-200 via-orange-400 to-orange-600', h: 42, size: 46 },
 };
 
 /** Tojsimon SVG (faqat 1-o'rin uchun) */
@@ -38,7 +38,7 @@ export const GlowAvatar: React.FC<{ rank: Rank; src?: string; name: string; size
   const t = THEME[rank];
   const px = size || t.size;
   return (
-    <div className={`pd-wrap ${t.cls}`} style={{ width: px, height: px, marginTop: rank === 1 ? 18 : 0 }}>
+    <div className={`pd-wrap ${t.cls}`} style={{ width: px, height: px, marginTop: rank === 1 ? 14 : 0 }}>
       {aura && <span className="absolute -inset-[9px] rounded-full vb-aura pointer-events-none" style={{ ['--au' as any]: aura.color }} />}
       <span className="pd-halo" />
       <span className="pd-ring" />
@@ -82,9 +82,9 @@ const STARS = [
 /** Podium bloki: old yuzasi, usti (3D) va yon tomoni; 1-o'rinda g'alaba zinapoyalari */
 const Block: React.FC<{ rank: Rank }> = ({ rank }) => {
   const t = THEME[rank];
-  const h = rank === 1 ? 104 : rank === 2 ? 76 : 58;
+  const h = rank === 1 ? 72 : rank === 2 ? 52 : 38;
   return (
-    <div className={`pd-block ${t.cls}`} style={{ height: h + 14 }}>
+    <div className={`pd-block ${t.cls}`} style={{ height: h + 10 }}>
       <div className="pd-block-top" />
       <div className="pd-block-front" style={{ height: h }}>
         <span className="pd-block-num">{t.label}</span>
@@ -134,7 +134,7 @@ export const Podium: React.FC<{
           const t = THEME[rank];
           return (
             <div key={rank} className={`pd-col pd-r${rank}`}>
-              <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 84 : 64} au={u.cos?.au} />
+              <GlowAvatar rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 64 : 50} au={u.cos?.au} />
               <span className="pd-name"><CosName name={u.name} cos={u.cos} showTitle className="pd-nm" /></span>
               {b && b.gold > 0 && <span className="pd-champ">🏆 {champLabel(b)}</span>}
               <span className={`pd-xp ${t.cls}`}>{u.xp.toLocaleString()} XP</span>

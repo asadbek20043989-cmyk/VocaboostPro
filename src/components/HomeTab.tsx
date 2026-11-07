@@ -91,9 +91,9 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     tint: "#e0f2fe",
   },
   B1: {
-    name: "B1 · Intermediate",
+    name: "B1 · Pre-Intermediate",
     ielts: "IELTS 4.5-5.0",
-    badge: "🔮 B1 · Intermediate",
+    badge: "🔮 B1 · Pre-Int",
     icon: "🔮",
     containerBg: "from-[#1a1438]/95 via-[#141228]/85 to-[#0E1524]",
     border: "border-indigo-500/40 shadow-indigo-950/40",
@@ -107,25 +107,9 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     tint: "#e0e7ff",
   },
   B2: {
-    name: "B2 · Upper-Intermediate",
+    name: "B2 · Intermediate",
     ielts: "IELTS 5.5-6.5",
-    badge: "🔥 B2 · Upper-Int",
-    icon: "🔥",
-    containerBg: "from-[#291708]/95 via-[#1d140e]/85 to-[#0E1524]",
-    border: "border-amber-500/40 shadow-amber-950/40",
-    iconBg: "from-amber-400 to-orange-500 text-slate-950 shadow-amber-500/30",
-    titleColor: "text-amber-400",
-    quote: "Professional ingliz tili va yuqori marralar sari 🔥",
-    btnBg: "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25",
-    statsBg: "bg-[#211409]/70 border-amber-500/25",
-    tagColor: "text-amber-300",
-    tagBg: "bg-amber-500/15 border-amber-500/30",
-    tint: "#fef3c7",
-  },
-  'B2+': {
-    name: "B2 · Upper-Intermediate",
-    ielts: "IELTS 5.5-6.5",
-    badge: "🔥 B2 · Upper-Int",
+    badge: "🔥 B2 · Intermediate",
     icon: "🔥",
     containerBg: "from-[#291708]/95 via-[#1d140e]/85 to-[#0E1524]",
     border: "border-amber-500/40 shadow-amber-950/40",
@@ -175,7 +159,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
 export const HomeTab: React.FC = () => {
   const {
     profile, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
-    openLearn, setActiveTab, levelIcons, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
+    openLearn, setActiveTab, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
@@ -224,9 +208,9 @@ export const HomeTab: React.FC = () => {
       {(() => {
         const curLvl = profile.level || 'B1';
         const lt = LEVEL_THEMES[curLvl] || LEVEL_THEMES.B1;
-        const levelWords = bank.filter(w => (w.level === curLvl || (curLvl === 'B2' && w.level === 'B2+')));
-        const levelMastered = levelWords.filter(w => srs[w.id]?.mastered).length;
-        const levelPct = levelWords.length ? Math.round((levelMastered / levelWords.length) * 100) : 0;
+        const levelWords = { length: levelProgress.total };
+        const levelMastered = levelProgress.mastered;
+        const levelPct = levelProgress.total ? Math.round((levelMastered / levelProgress.total) * 100) : 0;
 
         return (
           <section style={{ '--vb-tint': lt.tint } as React.CSSProperties} className={`vb-today rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-4 space-y-3 shadow-xl transition-all relative overflow-hidden`}>

@@ -29,6 +29,7 @@ import { Avatar } from './Avatar';
 import { DuelTab } from './DuelTab';
 import { ChallengesTab } from './ChallengesTab';
 import { Podium, GlowAvatar } from './Podium';
+import { levelLabel } from '../data/levels';
 import { HallOfHistory } from './HallOfHistory';
 import { loadHall, championCounts, champLabel } from '../services/hall';
 import { BANNERS } from '../data/shopDefaults';
@@ -612,6 +613,7 @@ export const LeaderboardTab: React.FC = () => {
                   </button>
                 ))}
               </div>
+              <p className="text-[11px] text-slate-400 px-0.5">{levelLabel(editLevel)}</p>
             </div>
 
             {/* Daily words */}

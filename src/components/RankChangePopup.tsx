@@ -78,7 +78,7 @@ export const RankChangePopup: React.FC<{
     played.current = true;
     try {
       if (up) {
-        sfx.win?.(true) || sfx.levelUp?.();
+        sfx.win(true);
         triggerHaptic('heavy');
         setTimeout(() => triggerHaptic('success'), 200);
       } else if (down) {

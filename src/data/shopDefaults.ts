@@ -162,7 +162,7 @@ export function parsePremium(text: string): BankWord[] {
   String(text || '').split('\n').forEach((ln, i) => {
     const c = ln.split('|').map(x => x.trim());
     if (c.length < 2 || !c[0] || !c[1]) return;
-    out.push({ id: `prem_${i}_${c[0].toLowerCase().replace(/[^a-z0-9]+/g, '')}`.slice(0, 60), en: c[0], uz: c[1], ex: c[2] || '', exUz: c[3] || '', ipa: '', pos: '', col: [], fam: [], hook: '', track: 'acad', topic: 'Premium', level: 'B2+', order: i });
+    out.push({ id: `prem_${i}_${c[0].toLowerCase().replace(/[^a-z0-9]+/g, '')}`.slice(0, 60), en: c[0], uz: c[1], ex: c[2] || '', exUz: c[3] || '', ipa: '', pos: '', col: [], fam: [], hook: '', track: 'acad', topic: 'Premium', level: 'B2', order: i });
   });
   return out;
 }

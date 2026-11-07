@@ -8,8 +8,8 @@ import { Logo, HeaderActions } from './Brand';
 const LEVELS: { id: EnglishLevel; t: string; d: string }[] = [
   { id: 'A1', t: 'Noldan boshlayapman', d: "A1 · Boshlang'ich (IELTS 2.0-3.0)" },
   { id: 'A2', t: 'Ozgina tushunaman', d: 'A2 · Elementary (IELTS 3.5-4.0)' },
-  { id: 'B1', t: "O'rtacha", d: 'B1 · Intermediate (IELTS 4.5-5.0)' },
-  { id: 'B2', t: 'Yaxshi bilaman', d: 'B2 · Upper-Intermediate (IELTS 5.5-6.5)' },
+  { id: 'B1', t: "O'rtacha", d: 'B1 · Pre-Intermediate (IELTS 4.5-5.0)' },
+  { id: 'B2', t: 'Yaxshi bilaman', d: 'B2 · Intermediate (IELTS 5.5-6.5)' },
   { id: 'C1', t: 'Erkin gapiraman', d: 'C1 · Advanced (IELTS 7.0-8.0)' },
   { id: 'C2', t: 'Mukammal daraja', d: 'C2 · Proficiency / Master (IELTS 8.5-9.0)' },
 ];

@@ -284,18 +284,27 @@ export const handler = async event => {
         const arrOf = v => (Array.isArray(v) ? v : String(v ?? '').split('|')).map(x => str(x, 80)).filter(Boolean).slice(0, 8);
         const upd = {};
         const errors = [];
+        const LV = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        const normLv = v => { const t = String(v ?? '').trim().toUpperCase(); const x = t === 'B2+' ? 'B2' : t; return LV.includes(x) ? x : 'B1'; };
+        // Mavjud so'zlar: bir xil inglizcha so'z boshqa darajada bo'lsa, u o'chib/ko'chib ketmasligi uchun alohida yozuv ochiladi
+        const existing = (await call('GET', 'words')) || {};
+        const levelAt = k => (upd[k] ? upd[k].level : existing[k] ? normLv(existing[k].level) : null);
         list.forEach((w, i) => {
           const en = str(w.en, 60), uz = str(w.uz, 120);
           if (!en || !uz) return errors.push(`${i + 1}-qator: inglizcha so'z va o'zbekcha ma'no kerak`);
-          const id = ID_RE.test(w.id || '') ? w.id : slug(en);
+          const lv = normLv(w.level);
+          let id = ID_RE.test(w.id || '') ? w.id : slug(en);
           if (!id) return errors.push(`${i + 1}-qator: so'z noto'g'ri`);
+          if (!ID_RE.test(w.id || '') && levelAt(id) && levelAt(id) !== lv) {
+            id = `${slug(en)}-${lv.toLowerCase()}`.slice(0, 60);
+          }
           upd[id] = {
             en, uz,
             ipa: str(w.ipa, 60), pos: str(w.pos, 20),
             ex: str(w.ex, 220), exUz: str(w.exUz, 260),
             col: arrOf(w.col), fam: arrOf(w.fam),
             hook: str(w.hook, 260), topic: str(w.topic, 40),
-            level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1',
+            level: lv,
             order: Number.isFinite(Number(w.order)) ? Number(w.order) : 100000 + i,
             published: w.published !== false,
           };
@@ -323,7 +332,7 @@ export const handler = async event => {
       // ---------- Daraja ikonkalari (admin rasm yuklaydi; brauzer 96x96 ga kichraytirib yuboradi) ----------
       case 'setLevelIcon': {
         const lvl = String(body.level || '');
-        if (!['A1', 'A2', 'B1', 'B2', 'B2+', 'C1', 'C2'].includes(lvl)) return json(400, { error: 'Daraja xato' });
+        if (!['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(lvl)) return json(400, { error: 'Daraja xato' });
         const key = lvl.replace('+', 'plus');
         const img = String(body.image || '');
         if (!img) {
@@ -1104,7 +1113,7 @@ export const handler = async event => {
       case 'listPacks': {
         const all = (await call('GET', 'packs')) || {};
         const items = Object.entries(all).map(([id, p]) => ({
-          id, title: p.title || '', desc: p.desc || '', kind: p.kind || 'open', date: p.date || '', mode: p.mode || 'replace',
+          id, title: p.title || '', desc: p.desc || '', kind: p.kind || 'open', date: p.date || '', mode: p.mode || 'replace', level: p.level || '',
           order: p.order ?? 0, published: p.published !== false, count: Object.keys(p.words || {}).length, createdAt: p.createdAt || 0,
         }));
         items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (a.order - b.order));
@@ -1124,6 +1133,7 @@ export const handler = async event => {
         const title = str(body.title, 80);
         if (!title) return json(400, { error: "To'plam nomini kiriting" });
         const kind = body.kind === 'daily' ? 'daily' : body.kind === 'topic' ? 'topic' : 'open';
+        const packLevel = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(body.level) ? body.level : ''; // bo'sh — hamma darajaga
         const date = str(body.date, 10);
         if (kind !== 'open' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(400, { error: 'Kunlik to\'plam / maxsus mavzu uchun sanani tanlang' });
         const packId = ID_RE.test(body.id || '') ? body.id : 'k' + Date.now().toString(36);
@@ -1140,12 +1150,12 @@ export const handler = async event => {
           words[id] = {
             en, uz, ipa: str(w.ipa, 60), pos: str(w.pos, 20), ex: str(w.ex, 220), exUz: str(w.exUz, 260),
             col: arrOf(w.col), fam: arrOf(w.fam), hook: str(w.hook, 260), topic: str(w.topic, 40),
-            level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1', order: i, published: true,
+            level: packLevel || (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(String(w.level).trim().toUpperCase()) ? String(w.level).trim().toUpperCase() : (String(w.level).trim() === 'B2+' ? 'B2' : 'B1')), order: i, published: true,
           };
         });
         const prev = await call('GET', `packs/${packId}/createdAt`);
         const meta = {
-          title, desc: str(body.desc, 240), kind, date: kind !== 'open' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace',
+          title, desc: str(body.desc, 240), kind, date: kind !== 'open' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace', level: packLevel,
           order: Number.isFinite(Number(body.order)) ? Number(body.order) : 0, published: body.published !== false, createdAt: prev || Date.now(),
         };
         if (list.length) {

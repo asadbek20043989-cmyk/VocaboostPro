@@ -72,7 +72,7 @@
     "hook": "SUS-TAIN-able: 'sustain' — davom ettirmoq; uzoq davom etadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 4
   },
   {
@@ -91,7 +91,7 @@
     "hook": "'Signal' — belgi; belgi beradigan darajada katta.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 5
   },
   {
@@ -148,7 +148,7 @@
     "hook": "RE (qayta) + NEW (yangi) + able: qayta yangilanadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 8
   },
   {
@@ -186,7 +186,7 @@
     "hook": "'Aprosh' — yaqinlashish: yaqinlashib kelayotgan yondashuv.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 10
   },
   {
@@ -338,7 +338,7 @@
     "hook": "'Kurrikulum' — ruscha 'куррикулум', o'quv rejasi.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 18
   },
   {
@@ -357,7 +357,7 @@
     "hook": "TU-ition: 'two' (ikki) — kontrakt to'lovi ikki baravar.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 19
   },
   {
@@ -376,7 +376,7 @@
     "hook": "'Impakt' — zarba; ta'sir kuchli bo'lsa, zarbadek.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 20
   },
   {
@@ -452,7 +452,7 @@
     "hook": "SCHOLAR (olim) + SHIP — olimlarga beriladigan yordam.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 24
   },
   {
@@ -471,7 +471,7 @@
     "hook": "MORE + OVER: yana ham ustiga.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 25
   },
   {
@@ -528,7 +528,7 @@
     "hook": "'Literatura' — adabiyot; o'qiy-yoza olish.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 28
   },
   {
@@ -547,7 +547,7 @@
     "hook": "'Innovatsiya' — o'zbekchada ham ishlatiladi.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 29
   },
   {
@@ -661,7 +661,7 @@
     "hook": "WHERE + AS: qarama-qarshilik qiyoslaydi.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 35
   },
   {
@@ -718,7 +718,7 @@
     "hook": "'Avtomat' — o'zi ishlaydigan; ruscha 'автоматизация'.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 38
   },
   {
@@ -737,7 +737,7 @@
     "hook": "'Private' — shaxsiy; privacy — shaxsiy holat.",
     "track": "ielts",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 39
   },
   {
@@ -756,7 +756,7 @@
     "hook": "CONSEQUENCE (oqibat) + ly.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 40
   },
   {
@@ -794,7 +794,7 @@
     "hook": "Per-SWADE: 'suv' ichirib ishontirdi — ko'ndirdi.",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 42
   },
   {
@@ -813,7 +813,7 @@
     "hook": "'Nutritsiya' — ruscha 'нутриция', ovqatlanish fani.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 43
   },
   {
@@ -832,7 +832,7 @@
     "hook": "'Obez' — ruscha 'ожирение'ga yaqin.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 44
   },
   {
@@ -851,7 +851,7 @@
     "hook": "NEVER + THE + LESS: hech kam emas — baribir.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 45
   },
   {
@@ -870,7 +870,7 @@
     "hook": "Re-LUK-tant: 'luk' — lug'at ochishga erinadigan odam.",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 46
   },
   {
@@ -946,7 +946,7 @@
     "hook": "FURTHER (yana uzoqroq) + MORE.",
     "track": "acad",
     "topic": "Bog'lovchi",
-    "level": "B2+",
+    "level": "B2",
     "order": 50
   },
   {
@@ -1022,7 +1022,7 @@
     "hook": "UN (yo'q) + EMPLOY (ish bermoq) + MENT.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 54
   },
   {
@@ -1098,7 +1098,7 @@
     "hook": "'Immigratsiya' — o'zbekchada ham shunday.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 58
   },
   {
@@ -1117,7 +1117,7 @@
     "hook": "IN (yo'q) + EQUAL (teng) + ITY.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 59
   },
   {
@@ -1136,7 +1136,7 @@
     "hook": "EVIDENT — ravshan; ravshan qilib ko'rsatadigan narsa.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 60
   },
   {
@@ -1231,7 +1231,7 @@
     "hook": "'Indikator' — ko'rsatkich; indicate — ko'rsatmoq.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 65
   },
   {
@@ -1307,7 +1307,7 @@
     "hook": "WORK + FORCE (kuch).",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 69
   },
   {
@@ -1326,7 +1326,7 @@
     "hook": "'Potentsial' — ruscha 'потенциал'.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 70
   },
   {
@@ -1478,7 +1478,7 @@
     "hook": "'Influenser' — ta'sir qiluvchi blogger.",
     "track": "ielts",
     "topic": "Media",
-    "level": "B2+",
+    "level": "B2",
     "order": 78
   },
   {
@@ -1516,7 +1516,7 @@
     "hook": "'Substantsiya' — mohiyat; katta, mohiyatli.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 80
   },
   {
@@ -1592,7 +1592,7 @@
     "hook": "HERIT-age: 'irs' (meros) — heir (voris) bilan bir ildiz.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 84
   },
   {
@@ -1668,7 +1668,7 @@
     "hook": "'Urban' — 'Urbanizatsiya' (shaharlashuv).",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 88
   },
   {
@@ -1877,7 +1877,7 @@
     "hook": "'Konsum' — iste'mol; CONSUME — yutib yubormoq.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 99
   },
   {
@@ -1896,7 +1896,7 @@
     "hook": "A-SUME: 'sum' (jami) — jamini o'zim hisoblab oldim.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 100
   },
   {
@@ -7862,7 +7862,7 @@
     "hook": "Abosrbent — singdiruvchi modda.",
     "track": "acad",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 414
   },
   {
@@ -7881,7 +7881,7 @@
     "hook": "Abstrakt — aniq shaklga ega bo'lmagan.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 415
   },
   {
@@ -7976,7 +7976,7 @@
     "hook": "Akvayring — bank kartalarini qabul qilish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 420
   },
   {
@@ -7995,7 +7995,7 @@
     "hook": "Adaptatsiya — yangi sharoitga ko'nikish.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 421
   },
   {
@@ -8014,7 +8014,7 @@
     "hook": "Adekvat — to'g'ri va yetarli.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 422
   },
   {
@@ -8299,7 +8299,7 @@
     "hook": "Apparat — ochiq-oydin ko'z oldida.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 437
   },
   {
@@ -8375,7 +8375,7 @@
     "hook": "Apropo — mavzuga to'la mos.",
     "track": "acad",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 441
   },
   {
@@ -8508,7 +8508,7 @@
     "hook": "Assesment — bilim darajasini tekshirish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 448
   },
   {
@@ -8565,7 +8565,7 @@
     "hook": "Assotsiatsiya — xotiradagi bog'lanish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 451
   },
   {
@@ -8641,7 +8641,7 @@
     "hook": "Avtoritet — so'zi o'tadigan kishi.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 455
   },
   {
@@ -8736,7 +8736,7 @@
     "hook": "Bio (hayot) + Diversity (xilma-xillik).",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 460
   },
   {
@@ -8793,7 +8793,7 @@
     "hook": "Baundari — o'tib bo'lmas chiziq.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 463
   },
   {
@@ -8964,7 +8964,7 @@
     "hook": "Kapasitet — ichiga sig'dirish kuchi.",
     "track": "ielts",
     "topic": "Kundalik",
-    "level": "B2+",
+    "level": "B2",
     "order": 472
   },
   {
@@ -9154,7 +9154,7 @@
     "hook": "Sivilizatsiya — yuksak jamiyat taraqqiyoti.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 482
   },
   {
@@ -9249,7 +9249,7 @@
     "hook": "Kollaboratsiya — birgalikdagi ish.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 487
   },
   {
@@ -9363,7 +9363,7 @@
     "hook": "Kommit — o'z so'zida turish mas'uliyati.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 493
   },
   {
@@ -9496,7 +9496,7 @@
     "hook": "Komponent — butunning bir bo'lagi.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 500
   },
   {
@@ -9534,7 +9534,7 @@
     "hook": "Konseptsiya — asosiy qarashlar tizimi.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 502
   },
   {
@@ -9572,7 +9572,7 @@
     "hook": "Xulosa qilib xotima yasash.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 504
   },
   {
@@ -9629,7 +9629,7 @@
     "hook": "Konduktor boshqargandek jarayonni olib borish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 507
   },
   {
@@ -9667,7 +9667,7 @@
     "hook": "Konsikvens — qilingan ishning ortidan kelgan natija.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 509
   },
   {
@@ -9686,7 +9686,7 @@
     "hook": "Konservatsiya — saqlab qolish.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 510
   },
   {
@@ -9705,7 +9705,7 @@
     "hook": "Katta e'tiborga arzigulik hajm.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 511
   },
   {
@@ -9724,7 +9724,7 @@
     "hook": "Konsistent — o'zgaruvchan emas, qat'iy bir maromda.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 512
   },
   {
@@ -9762,7 +9762,7 @@
     "hook": "Konstruksiya — qurilish asoslari.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 514
   },
   {
@@ -9857,7 +9857,7 @@
     "hook": "Kontemporari — bugungi davr ruhi.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 519
   },
   {
@@ -9914,7 +9914,7 @@
     "hook": "Kontributsiya — hissa qo'shish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 522
   },
   {
@@ -9933,7 +9933,7 @@
     "hook": "Katta hissa va xizmat.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 523
   },
   {
@@ -9971,7 +9971,7 @@
     "hook": "Kryushal — barcha natijani belgilovchi burilish nuqtasi.",
     "track": "ielts",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 525
   },
   {
@@ -10104,7 +10104,7 @@
     "hook": "Deklinatsiya — pastga qarab tushish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 532
   },
   {
@@ -10218,7 +10218,7 @@
     "hook": "Demonstratsiya — ko'rgazmali namoyish.",
     "track": "acad",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 538
   },
   {
@@ -10294,7 +10294,7 @@
     "hook": "Derivativ — hosila narsa.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 542
   },
   {
@@ -10313,7 +10313,7 @@
     "hook": "Detektiv sirni fosh etadi.",
     "track": "acad",
     "topic": "Texnologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 543
   },
   {
@@ -10370,7 +10370,7 @@
     "hook": "3D format — 3 o'lchamli makon.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 546
   },
   {
@@ -10465,7 +10465,7 @@
     "hook": "Diskriminatsiya — huquqlarni poymol qilish.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 551
   },
   {
@@ -10503,7 +10503,7 @@
     "hook": "Dismis — hisobdan chiqarib yuborish.",
     "track": "comm",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 553
   },
   {
@@ -10522,7 +10522,7 @@
     "hook": "Order (tartib) ning buzilishi.",
     "track": "ielts",
     "topic": "Salomatlik",
-    "level": "B2+",
+    "level": "B2",
     "order": 554
   },
   {
@@ -10560,7 +10560,7 @@
     "hook": "Disput — ochiq bahs-munozara.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 556
   },
   {
@@ -10598,7 +10598,7 @@
     "hook": "Distinktiv — ajralib turuvchi xususiyat.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 558
   },
   {
@@ -10617,7 +10617,7 @@
     "hook": "Distribyutor — mahsulotni tarqatuvchi.",
     "track": "acad",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 559
   },
   {
@@ -10636,7 +10636,7 @@
     "hook": "Dayvers — turli xil rang-baranglik.",
     "track": "ielts",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 560
   },
   {
@@ -10655,7 +10655,7 @@
     "hook": "Dayversiti — barcha qatlamlarning uyg'unligi.",
     "track": "ielts",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 561
   },
   {
@@ -10712,7 +10712,7 @@
     "hook": "Dominantlik — yetakchi mavqega ega bo'lish.",
     "track": "ielts",
     "topic": "Ish",
-    "level": "B2+",
+    "level": "B2",
     "order": 564
   },
   {
@@ -10769,7 +10769,7 @@
     "hook": "Dramatik o'zgarish — ko'zga yaqqol tashlanadigan.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 567
   },
   {
@@ -10788,7 +10788,7 @@
     "hook": "Dravt — yomg'irsiz, qurib qolgan yer.",
     "track": "ielts",
     "topic": "Ekologiya",
-    "level": "B2+",
+    "level": "B2",
     "order": 568
   },
   {
@@ -10845,7 +10845,7 @@
     "hook": "Dinamika — to'xtovsiz rivojlanish.",
     "track": "acad",
     "topic": "Akademik",
-    "level": "B2+",
+    "level": "B2",
     "order": 571
   },
   {
@@ -10902,7 +10902,7 @@
     "hook": "Serob va mo'l-ko'l",
     "track": "comm",
     "topic": "Tabiat",
-    "level": "B2+",
+    "level": "B2",
     "order": 574
   },
   {
@@ -10921,7 +10921,7 @@
     "hook": "Haddidan oshish",
     "track": "comm",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 575
   },
   {
@@ -10940,7 +10940,7 @@
     "hook": "Akselerator pedali",
     "track": "comm",
     "topic": "Harakat",
-    "level": "B2+",
+    "level": "B2",
     "order": 576
   },
   {
@@ -10997,7 +10997,7 @@
     "hook": "Akkumulyator kabi energiya yig'ish",
     "track": "comm",
     "topic": "Fan",
-    "level": "B2+",
+    "level": "B2",
     "order": 579
   },
   {
@@ -11035,7 +11035,7 @@
     "hook": "Bilish va tan olish",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 581
   },
   {
@@ -11130,7 +11130,7 @@
     "hook": "Himoya qilmoq",
     "track": "comm",
     "topic": "Jamiyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 586
   },
   {
@@ -11168,7 +11168,7 @@
     "hook": "Samimiy mehr",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 588
   },
   {
@@ -11358,7 +11358,7 @@
     "hook": "Taqsimlab ajratmoq",
     "track": "comm",
     "topic": "Reja",
-    "level": "B2+",
+    "level": "B2",
     "order": 598
   },
   {
@@ -11377,7 +11377,7 @@
     "hook": "Birlashgan do'st",
     "track": "comm",
     "topic": "Siyosat",
-    "level": "B2+",
+    "level": "B2",
     "order": 599
   },
   {
@@ -11567,7 +11567,7 @@
     "hook": "Oldindan his qilmoq",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 609
   },
   {
@@ -11738,7 +11738,7 @@
     "hook": "Kelib chiqmoq",
     "track": "comm",
     "topic": "Holat",
-    "level": "B2+",
+    "level": "B2",
     "order": 618
   },
   {
@@ -11776,7 +11776,7 @@
     "hook": "Zirhli himoya",
     "track": "comm",
     "topic": "Tarix",
-    "level": "B2+",
+    "level": "B2",
     "order": 620
   },
   {
@@ -11814,7 +11814,7 @@
     "hook": "Tuyg'u uyg'otish",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 622
   },
   {
@@ -11928,7 +11928,7 @@
     "hook": "Tiniq va ravon gapirish",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 628
   },
   {
@@ -12004,7 +12004,7 @@
     "hook": "Yurakdagi orzu",
     "track": "comm",
     "topic": "Hayot",
-    "level": "B2+",
+    "level": "B2",
     "order": 632
   },
   {
@@ -12023,7 +12023,7 @@
     "hook": "Bo'laklardan yig'ish",
     "track": "comm",
     "topic": "Harakat",
-    "level": "B2+",
+    "level": "B2",
     "order": 633
   },
   {
@@ -12042,7 +12042,7 @@
     "hook": "Katta yig'in",
     "track": "comm",
     "topic": "Ta'lim",
-    "level": "B2+",
+    "level": "B2",
     "order": 634
   },
   {
@@ -12061,7 +12061,7 @@
     "hook": "O'zini ko'rsatmoq",
     "track": "comm",
     "topic": "Muloqot",
-    "level": "B2+",
+    "level": "B2",
     "order": 635
   },
   {
@@ -12099,7 +12099,7 @@
     "hook": "Foyda keltiruvchi mulk",
     "track": "comm",
     "topic": "Iqtisod",
-    "level": "B2+",
+    "level": "B2",
     "order": 637
   },
   {
@@ -12175,7 +12175,7 @@
     "hook": "Taxminiy fikr",
     "track": "comm",
     "topic": "Fan",
-    "level": "B2+",
+    "level": "B2",
     "order": 641
   },
   {
@@ -12194,7 +12194,7 @@
     "hook": "Juda qattiq hayratlantirmoq",
     "track": "comm",
     "topic": "Tuyg'ular",
-    "level": "B2+",
+    "level": "B2",
     "order": 642
   },
   {
@@ -12308,7 +12308,7 @@
     "hook": "Zahmat bilan yetishmoq",
     "track": "comm",
     "topic": "Yutuq",
-    "level": "B2+",
+    "level": "B2",
     "order": 648
   },
   {
@@ -12422,7 +12422,7 @@
     "hook": "Sababini bog'lash",
     "track": "comm",
     "topic": "Fikr",
-    "level": "B2+",
+    "level": "B2",
     "order": 654
   },
   {
@@ -12441,7 +12441,7 @@
     "hook": "Asl nusxa",
     "track": "comm",
     "topic": "Madaniyat",
-    "level": "B2+",
+    "level": "B2",
     "order": 655
   },
   {
