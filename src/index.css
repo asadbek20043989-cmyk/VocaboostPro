@@ -448,7 +448,7 @@ html.light .vb-today .text-rose-300, html.light .vb-today .text-rose-400 { color
   position:relative; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:1rem; display:flex; align-items:center; justify-content:center;
   border:1px solid var(--hb-bd); background:linear-gradient(160deg,var(--hb-a),var(--hb-b));
   box-shadow:0 0 14px var(--hb-glow), inset 0 1px 0 rgb(255 255 255 / .14); transition:transform .15s, box-shadow .2s, border-color .2s; }
-.vb-hbtn--sm { width:2.5rem; height:2.5rem; border-radius:.95rem; }
+.vb-hbtn--sm { width:2.4rem; height:2.4rem; border-radius:.9rem; }
 .vb-hbtn svg { width:1.3rem; height:1.3rem; stroke-width:2; flex:none; }
 .vb-hbtn:hover { box-shadow:0 0 20px var(--hb-glow), inset 0 1px 0 rgb(255 255 255 / .2); }
 .vb-hbtn:active { transform:scale(.92); }
@@ -471,7 +471,7 @@ html.light .vb-logo-ring img { background:#fff; }
 .vb-verified { flex:none; color:#38bdf8; fill:rgb(56 189 248 / .22); animation:vb-verified-glow 2.6s ease-in-out infinite; }
 html.light .vb-verified { color:#0284C7; fill:rgb(2 132 199 / .15); }
 @keyframes vb-verified-glow { 0%,100% { filter:drop-shadow(0 0 3px rgb(56 189 248 / .55)); } 50% { filter:drop-shadow(0 0 9px rgb(56 189 248 / 1)); } }
-.vb-coin-chip { height:2.75rem; border-radius:1rem; padding:0 .85rem; border:1px solid rgb(251 191 36 / .55); background:linear-gradient(160deg,rgb(120 70 10 / .55),rgb(60 35 5 / .55));
+.vb-coin-chip { height:2.4rem; border-radius:1rem; padding:0 .85rem; border:1px solid rgb(251 191 36 / .55); background:linear-gradient(160deg,rgb(120 70 10 / .55),rgb(60 35 5 / .55));
   box-shadow:0 0 14px rgb(251 191 36 / .25), inset 0 1px 0 rgb(255 255 255 / .12); }
 html.light .vb-coin-chip { background:linear-gradient(160deg,#FFFBEB,#FEF3C7); border-color:#FCD34D; box-shadow:0 2px 8px rgb(245 158 11 / .22), inset 0 1px 0 #fff; }
 @media (prefers-reduced-motion: reduce) { .vb-hbtn::after, .vb-verified { animation:none; } }
@@ -517,3 +517,24 @@ html.light .keep-dark.to-\[\#0E1524\] { --tw-gradient-to: #0E1524; }
 html.light .keep-dark [class*="bg-[#0B0F17]"], html.light .keep-dark [class*="bg-[#151C28]"], html.light .keep-dark [class*="bg-[#0E1524]"] { background-color: rgb(15 23 42 / 0.6); }
 html.light .keep-dark .bg-black\/70, html.light .keep-dark .bg-black\/30 { background-color: rgb(0 0 0 / 0.3); }
 html.light .keep-dark [class*="border-slate-"] { border-color: rgb(148 163 184 / 0.3); }
+
+/* =====================================================================
+   "Shaxsiy to'plamlarim" — alohida premium tugma
+   ===================================================================== */
+.vb-premium-tab { position:relative; overflow:hidden; color:#FDE68A; border:1px solid rgb(251 191 36 / .55);
+  background:linear-gradient(135deg,#2a1253 0%,#4a1d7a 55%,#6b2480 100%);
+  box-shadow:0 0 16px rgb(168 85 247 / .35), inset 0 1px 0 rgb(255 255 255 / .18); }
+.vb-premium-tab::after { content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgb(255 255 255 / .28) 50%,transparent 65%); background-size:250% 100%; background-position:150% 0;
+  animation:vb-hb-shine 4.2s ease-in-out infinite; }
+.vb-premium-tab.is-on { color:#2b1600; border-color:#FDE68A;
+  background:linear-gradient(135deg,#FBBF24 0%,#F59E0B 45%,#F472B6 100%);
+  box-shadow:0 0 20px rgb(251 191 36 / .5), inset 0 1px 0 rgb(255 255 255 / .5); }
+.vb-premium-tab.is-on span { color:inherit; }
+.vb-premium-ico { position:relative; z-index:1; width:1.35rem; height:1.35rem; border-radius:.5rem; display:flex; align-items:center; justify-content:center;
+  background:rgb(0 0 0 / .28); color:#FCD34D; }
+.vb-premium-tab.is-on .vb-premium-ico { background:rgb(43 22 0 / .18); color:#2b1600; }
+html.light .vb-premium-tab { color:#6B21A8; border-color:#D8B4FE; background:linear-gradient(135deg,#F5F3FF,#FAE8FF 60%,#FEF3C7); box-shadow:0 2px 10px rgb(168 85 247 / .25), inset 0 1px 0 #fff; }
+html.light .vb-premium-ico { background:rgb(124 58 237 / .12); color:#B45309; }
+html.light .vb-premium-tab.is-on { color:#431407; border-color:#F59E0B; background:linear-gradient(135deg,#FDE68A,#FBBF24 50%,#F9A8D4); }
+@media (prefers-reduced-motion: reduce) { .vb-premium-tab::after { animation:none; } }

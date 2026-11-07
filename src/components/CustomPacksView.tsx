@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
   FolderPlus, Plus, Trash2, ArrowUp, ArrowDown, Edit3, Play,
-  Sparkles, Clipboard, Check, X, BookOpen, AlertCircle
+  Sparkles, Clipboard, Check, X, BookOpen, AlertCircle, Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CustomWordPack, BankWord } from '../types';
 import { triggerHaptic } from '../services/telegram';
-import { enrichCustomWord, parseBulkWords, CustomWordInput } from '../services/customVocab';
+import { enrichCustomWord, parseBulkWords, isKnownWord, CustomWordInput } from '../services/customVocab';
+import { aiEnrichWords } from '../services/ai';
 
 export const CustomPacksView: React.FC = () => {
   const { customPacks, saveCustomPack, deleteCustomPack, openLearn, packProgress } = useApp();
@@ -188,6 +189,7 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Jadval qatorlari (1 dan 50 tagacha)
   const [rows, setRows] = useState<CustomWordInput[]>(() => {
@@ -247,7 +249,11 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
   const handleChangeRow = (index: number, field: keyof CustomWordInput, value: string) => {
     setRows(prev => {
       const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: value };
+      const cur = copy[index];
+      // Inglizcha so'z o'zgarsa, avval to'ldirilgan talaffuz/misol/kalit eskirgan bo'ladi — AI qayta to'ldiradi
+      copy[index] = field === 'en' && cur.en.trim() !== value.trim()
+        ? { en: value, uz: cur.uz }
+        : { ...cur, [field]: value };
       return copy;
     });
   };
@@ -298,7 +304,8 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
     setTimeout(() => setMsg(null), 3000);
   };
 
-  const handleSave = (startPractice = false) => {
+  const handleSave = async (startPractice = false) => {
+    if (saving) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) {
       setMsg("Iltimos, to'plamga nom bering!");
@@ -311,18 +318,49 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
       return;
     }
 
-    const packId = initialPack?.id || `cp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const words: BankWord[] = validRows.map((r, i) => enrichCustomWord(r, i, packId));
+    setSaving(true);
+    setMsg(null);
+    try {
+      // Faqat inglizcha so'z (va ixtiyoriy tarjima) kiritiladi — qolganini AI to'ldiradi.
+      // Tayyor lug'atda bor so'zlar AI'siz, aniq ma'lumot bilan to'ldiriladi.
+      const need: number[] = [];
+      validRows.forEach((r, i) => {
+        if (!isKnownWord(r.en) && (!r.ipa?.trim() || !r.ex?.trim() || !r.hook?.trim() || !r.uz?.trim())) need.push(i);
+      });
+      let filled = validRows;
+      if (need.length) {
+        const ai = await aiEnrichWords(need.map(i => ({ en: validRows[i].en.trim(), uz: validRows[i].uz?.trim() || '' })));
+        filled = validRows.map((r, i) => {
+          const k = need.indexOf(i);
+          const a = k >= 0 ? ai[k] : undefined;
+          if (!a) return r;
+          return {
+            en: r.en,
+            uz: r.uz?.trim() || a.uz || undefined,
+            ipa: r.ipa?.trim() || a.ipa || undefined,
+            pos: r.pos?.trim() || a.pos || undefined,
+            ex: r.ex?.trim() || a.ex || undefined,
+            exUz: r.exUz?.trim() || a.exUz || undefined,
+            hook: r.hook?.trim() || a.hook || undefined,
+          };
+        });
+      }
 
-    const saved = saveCustomPack({
-      id: initialPack?.id,
-      title: cleanTitle,
-      desc: desc.trim() || undefined,
-      words,
-    });
+      const packId = initialPack?.id || `cp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const words: BankWord[] = filled.map((r, i) => enrichCustomWord(r, i, packId));
 
-    triggerHaptic('success');
-    onSave(saved, startPractice);
+      const saved = saveCustomPack({
+        id: initialPack?.id,
+        title: cleanTitle,
+        desc: desc.trim() || undefined,
+        words,
+      });
+
+      triggerHaptic('success');
+      onSave(saved, startPractice);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -335,7 +373,7 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
               <BookOpen className="w-5 h-5 text-amber-400" />
               {initialPack ? "To'plamni tahrirlash" : "Yangi so'zlar to'plami (50 tagacha)"}
             </h3>
-            <p className="text-[11px] text-slate-400">Jadvalga so&apos;zlarni kiriting yoki matndan nusxa oling</p>
+            <p className="text-[11px] text-slate-400">Faqat inglizcha so&apos;z kiriting. Tarjima ixtiyoriy — bo&apos;sh qolsa AI tarjima qiladi</p>
           </div>
           <button
             type="button"
@@ -403,13 +441,9 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
                 <Clipboard className="w-3.5 h-3.5" /> Matndan ko&apos;chirish
               </button>
             </div>
-            <button
-              type="button"
-              onClick={handleAutoFill}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Avtomatik to&apos;ldirish
-            </button>
+            <span className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Qolganini AI to&apos;ldiradi
+            </span>
           </div>
 
           {/* Bulk Paste Box */}
@@ -440,114 +474,44 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
             </div>
           )}
 
-          {/* Jadval: ustunlar va qatorlar */}
+          {/* Ixcham ro'yxat: faqat inglizcha so'z va (ixtiyoriy) tarjima */}
           <div className="border border-slate-800 rounded-2xl overflow-hidden bg-[#151C28]/50">
-            <div className="overflow-x-auto max-h-[380px]">
-              <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                <thead className="bg-[#151C28] text-slate-300 sticky top-0 z-10 border-b border-slate-800">
-                  <tr>
-                    <th className="p-2.5 w-10 text-center text-slate-500">№</th>
-                    <th className="p-2.5 w-36">Inglizcha so&apos;z *</th>
-                    <th className="p-2.5 w-36">O&apos;zbekcha tarjimasi</th>
-                    <th className="p-2.5 w-28">Talaffuz (IPA)</th>
-                    <th className="p-2.5 w-48">Misol gap (EN)</th>
-                    <th className="p-2.5 w-48">Misol tarjimasi (UZ)</th>
-                    <th className="p-2.5 w-48">Mnemotexnika / Kalit</th>
-                    <th className="p-2.5 w-20 text-center">Amallar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {rows.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="p-2 text-center text-slate-500 font-mono text-[11px]">{idx + 1}</td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.en}
-                          onChange={e => handleChangeRow(idx, 'en', e.target.value)}
-                          placeholder="masalan: achieve"
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.uz || ''}
-                          onChange={e => handleChangeRow(idx, 'uz', e.target.value)}
-                          placeholder="erishmoq (yoki avto)"
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-emerald-300 focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.ipa || ''}
-                          onChange={e => handleChangeRow(idx, 'ipa', e.target.value)}
-                          placeholder="/əˈtʃiːv/"
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-400 font-mono focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.ex || ''}
-                          onChange={e => handleChangeRow(idx, 'ex', e.target.value)}
-                          placeholder="She achieved her goal."
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.exUz || ''}
-                          onChange={e => handleChangeRow(idx, 'exUz', e.target.value)}
-                          placeholder="U o'z maqsadiga erishdi."
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5">
-                        <input
-                          type="text"
-                          value={row.hook || ''}
-                          onChange={e => handleChangeRow(idx, 'hook', e.target.value)}
-                          placeholder="💡 Eslab qolish kaliti..."
-                          className="w-full bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-amber-200/90 focus:outline-none focus:border-amber-500"
-                        />
-                      </td>
-                      <td className="p-1.5 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleMoveUp(idx)}
-                            disabled={idx === 0}
-                            title="Yuqoriga surish"
-                            className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-20"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleMoveDown(idx)}
-                            disabled={idx === rows.length - 1}
-                            title="Pastga surish"
-                            className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-20"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveRow(idx)}
-                            title="Qatorni o'chirish"
-                            className="p-1 rounded text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-[1.75rem_1fr_1fr_1.75rem] gap-2 px-2.5 py-2 bg-[#151C28] border-b border-slate-800 text-[11px] font-bold text-slate-300">
+              <span className="text-center text-slate-500">№</span>
+              <span>Inglizcha so&apos;z *</span>
+              <span>Tarjima <span className="font-normal text-slate-500">(ixtiyoriy)</span></span>
+              <span />
+            </div>
+            <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-800/60">
+              {rows.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-[1.75rem_1fr_1fr_1.75rem] gap-2 items-center px-2.5 py-1.5">
+                  <span className="text-center text-slate-500 font-mono text-[11px]">{idx + 1}</span>
+                  <input
+                    type="text"
+                    value={row.en}
+                    onChange={e => handleChangeRow(idx, 'en', e.target.value)}
+                    placeholder="achieve"
+                    autoCapitalize="none"
+                    className="w-full min-w-0 bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-2 text-sm text-white font-semibold focus:outline-none focus:border-amber-500"
+                  />
+                  <input
+                    type="text"
+                    value={row.uz || ''}
+                    onChange={e => handleChangeRow(idx, 'uz', e.target.value)}
+                    placeholder="avto (AI)"
+                    className="w-full min-w-0 bg-[#0E1524] border border-slate-700/80 rounded-lg px-2.5 py-2 text-sm text-emerald-300 focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRow(idx)}
+                    title="Qatorni o'chirish"
+                    aria-label="Qatorni o'chirish"
+                    className="p-1 rounded text-rose-400 hover:text-rose-300 justify-self-center"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="p-2.5 bg-[#151C28] border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
@@ -579,14 +543,16 @@ const CustomPackEditorModal: React.FC<EditorModalProps> = ({ initialPack, onClos
             <button
               type="button"
               onClick={() => handleSave(false)}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold active:scale-95 transition-all"
+              disabled={saving}
+              className="flex-1 sm:flex-none disabled:opacity-60 px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold active:scale-95 transition-all"
             >
-              Saqlash
+              {saving ? <span className="inline-flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> AI to&apos;ldirmoqda…</span> : 'Saqlash'}
             </button>
             <button
               type="button"
               onClick={() => handleSave(true)}
-              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-extrabold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-amber-500/20"
+              disabled={saving}
+              className="flex-1 sm:flex-none disabled:opacity-60 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-extrabold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-amber-500/20"
             >
               <Play className="w-4 h-4 fill-slate-950" /> Saqlash va Mashq qilish
             </button>

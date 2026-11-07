@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search, X, Sparkles, PenLine, BookOpenText, BookOpen, FolderOpen } from 'lucide-react';
+import { Search, X, Sparkles, PenLine, BookOpenText, BookOpen, FolderOpen, Crown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { WordCard } from './Learn';
 import { ClozeTest, VocabStory, WritingPractice } from './Learning';
@@ -43,7 +43,7 @@ export const WordsTab: React.FC = () => {
       </div>
 
       {/* Asosiy lug'at va Shaxsiy to'plamlar switcheri */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-[#151C28] border border-slate-800 rounded-2xl">
+      <div className="grid grid-cols-[1fr_1.35fr] gap-2 p-1 bg-[#151C28] border border-slate-800 rounded-2xl">
         <button
           type="button"
           onClick={() => { triggerHaptic('selection'); setSubTab('bank'); }}
@@ -56,15 +56,12 @@ export const WordsTab: React.FC = () => {
         <button
           type="button"
           onClick={() => { triggerHaptic('selection'); setSubTab('custom'); }}
-          className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
-            subTab === 'custom' ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' : 'text-slate-400 hover:text-white'
-          }`}
+          className={`vb-premium-tab ${subTab === 'custom' ? 'is-on' : ''} py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all`}
         >
-          <FolderOpen className="w-4 h-4" /> Shaxsiy to‘plamlarim
+          <span className="vb-premium-ico"><Crown className="w-3.5 h-3.5" /></span>
+          <span className="relative z-[1]">Shaxsiy to‘plamlarim</span>
           {customPacks.length > 0 && (
-            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-              subTab === 'custom' ? 'bg-slate-950 text-amber-300' : 'bg-slate-800 text-slate-300'
-            }`}>
+            <span className="relative z-[1] text-[10px] font-black px-1.5 rounded-full bg-black/35 text-amber-200 border border-amber-300/40">
               {customPacks.length}
             </span>
           )}

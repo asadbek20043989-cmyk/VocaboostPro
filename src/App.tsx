@@ -174,13 +174,14 @@ const MainScreen: React.FC = () => {
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col justify-between selection:bg-amber-500/20 selection:text-amber-300">
       <div className="flex-1 max-w-md w-full mx-auto px-4 pt-3 pb-24">
         {/* Yuqori panel: logotip (chapda) va tovush/sovg'a/baholash/promokod tugmalari (o'ngda) */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <BrandMark />
           <button type="button" data-nosfx onClick={() => setActiveTab('shop')} className="vb-coin-chip shrink-0 text-amber-300 text-sm font-extrabold tabular-nums flex items-center gap-1.5 active:scale-95" title="Tangalar — do'kon">🪙 {coins.toLocaleString()}</button>
         </div>
-        <div className="mb-3">
+        <div className="mb-2.5">
           <HeaderActions
             spread
+            small
             showGift={activeTab === 'home'}
             onGiftClick={() => setShowWheelModal(true)}
             spinsCount={totalSpinsLeft}

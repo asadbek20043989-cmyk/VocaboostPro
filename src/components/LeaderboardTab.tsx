@@ -143,29 +143,7 @@ export const LeaderboardTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-8 max-w-md mx-auto">
-      {/* Top Bar with Settings Icon */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Reyting va Profil</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Ligada bellashing va yutuqlaringizni kuzating
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            setShowSettingsModal(true);
-          }}
-          className="w-10 h-10 rounded-xl bg-[#151C28] hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-300 transition-colors"
-          title="Sozlamalar"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-      </div>
-
+    <div className="space-y-3 pb-8 max-w-md mx-auto">
       {/* Segmented Sub-Tab Switcher */}
       <div className="flex items-center gap-1 p-1 bg-[#151C28] rounded-xl border border-slate-800">
         <button
@@ -223,6 +201,18 @@ export const LeaderboardTab: React.FC = () => {
           }`}
         >
           👤 Profil
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('light');
+            setShowSettingsModal(true);
+          }}
+          className="shrink-0 w-8 h-8 rounded-lg text-slate-300 hover:bg-slate-800 flex items-center justify-center transition-colors"
+          title="Sozlamalar"
+          aria-label="Sozlamalar"
+        >
+          <Settings className="w-4 h-4" />
         </button>
       </div>
 

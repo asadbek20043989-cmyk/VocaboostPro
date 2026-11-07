@@ -46,6 +46,11 @@ function approximateIPA(word: string): string {
   return `/${ipa}/`;
 }
 
+/** So'z tayyor lug'atda bormi (shunda AI kerak emas) */
+export function isKnownWord(en: string): boolean {
+  return getLookupMap().has(en.trim().toLowerCase());
+}
+
 export interface CustomWordInput {
   en: string;
   uz?: string;

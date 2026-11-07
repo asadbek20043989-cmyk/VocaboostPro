@@ -1,5 +1,5 @@
 // AI yordamchi (Google Gemini). Netlify env: GEMINI_API_KEY, BOT_TOKEN, (ixtiyoriy) GEMINI_MODEL
-// Amallar: vocabStory, xray, checkSentence
+// Amallar: vocabStory, xray, checkSentence, enrichWords
 // Xavfsizlik: Telegram initData tekshiruvi va server-side kunlik kvota (25 ta so'rov) bilan himoyalangan.
 import { verifyInitData, makeDb, tashkentDay } from '../lib/tg.mjs';
 
@@ -163,6 +163,33 @@ export const handler = async event => {
           grammarUz: "Ushbu gap zamoni va tuzilishi to'g'ri shakllantirilgan. So'zlarning joylashuvi va ma'no uyg'unligi ta'minlangan.",
           chunks: [{ en: sentence.slice(0, 30), uz: "Iborali birikma" }]
         });
+      }
+    }
+
+    // Shaxsiy to'plam: foydalanuvchi faqat inglizcha so'z (va ixtiyoriy tarjima) kiritadi, qolganini AI to'ldiradi
+    if (b.action === 'enrichWords') {
+      const list = (Array.isArray(b.words) ? b.words : [])
+        .map(w => ({ en: clean(w && w.en, 60), uz: clean(w && w.uz, 100) }))
+        .filter(w => w.en)
+        .slice(0, 10);
+      if (!list.length) return json(400, { error: 'So‘z kerak' });
+      try {
+        const r = await gemini(
+          `You help an Uzbek learner of English. For each English word/phrase below return: uz = short natural Uzbek translation (keep the given one if provided, otherwise translate; Latin script), ipa = IPA pronunciation with slashes, pos = part of speech (noun, verb, adjective, adverb, phrase...), ex = one simple natural English example sentence (level ${level}), exUz = Uzbek translation of that sentence, hook = a short Uzbek memory trick (mnemonic) starting with an emoji. Keep the same order. Words: ${JSON.stringify(list)}`,
+          '{"items":[{"en":"...","uz":"...","ipa":"/.../","pos":"noun","ex":"...","exUz":"...","hook":"💡 ..."}]}'
+        );
+        const items = (Array.isArray(r.items) ? r.items : []).slice(0, list.length).map((it, i) => ({
+          en: list[i].en,
+          uz: list[i].uz || clean(it && it.uz, 100),
+          ipa: clean(it && it.ipa, 60),
+          pos: clean(it && it.pos, 20),
+          ex: clean(it && it.ex, 200),
+          exUz: clean(it && it.exUz, 240),
+          hook: clean(it && it.hook, 240),
+        }));
+        return json(200, { items });
+      } catch (aiErr) {
+        return json(200, { items: [] }); // mijoz zaxira (lokal) to'ldirishga o'tadi
       }
     }
 
