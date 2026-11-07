@@ -33,7 +33,7 @@ export const handler = async event => {
         lang: clean(user.language_code, 8),
         wa: !!user.allows_write_to_pm,
         remind,
-        level: ['A1', 'A2', 'B1', 'B2+'].includes(body.level) ? body.level : null,
+        level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(body.level) ? (body.level === 'B2+' ? 'B2' : body.level) : null,
         wpd: Math.max(0, Math.min(100, Number(body.wordsPerDay) || 0)) || null,
         lastSeen: Date.now(),
         ts: Date.now(),

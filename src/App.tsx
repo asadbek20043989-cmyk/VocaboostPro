@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Megaphone, ExternalLink } from 'lucide-react';
+import { Megaphone, ExternalLink, ClipboardList, Sparkles } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Onboarding } from './components/Onboarding';
 import { BottomNav } from './components/BottomNav';
@@ -19,6 +19,11 @@ import { LuckyWheel } from './components/LuckyWheel';
 import { BrandMark, Logo, HeaderActions } from './components/Brand';
 import { installGlobalClickSound } from './services/sound';
 import { WeatherFx } from './components/WeatherFx';
+import { RatingModal } from './components/RatingModal';
+import { PromoModal } from './components/PromoModal';
+import { SurveyModal, SurveyData } from './components/SurveyModal';
+import { GiftReceivedModal } from './components/GiftReceivedModal';
+import { getTelegramWebApp } from './services/telegram';
 
 /** E'lon matnidagi havolalarni (http, https, t.me) avtomatik ko'k rangda bosiladigan qiluvchi komponent */
 const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
@@ -61,13 +66,61 @@ const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
 };
 
 const MainScreen: React.FC = () => {
-  const { profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady, realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf, leagueUsers, leagueLive } = useApp();
+  const {
+    profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady,
+    realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf, leagueUsers, leagueLive,
+    receivedGrants, setReceivedGrants
+  } = useApp();
   const [showWheelModal, setShowWheelModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoCodeToClaim, setPromoCodeToClaim] = useState('');
+  const [activeSurvey, setActiveSurvey] = useState<SurveyData | null>(null);
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [rankDelta, setRankDelta] = useState<RankDelta | null>(null);
 
   // Ilovadagi har bir tugmaga qisqa "ping" tovushi
   useEffect(() => {
     installGlobalClickSound();
+  }, []);
+
+  // URL yoki Telegram start_param orqali promokod kelganligini tekshirish
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pCode = urlParams.get('promo') || urlParams.get('gift');
+      const tgApp = getTelegramWebApp();
+      const startParam = tgApp?.initDataUnsafe?.start_param || '';
+      const promoFromTg = startParam.startsWith('promo_') ? startParam.replace('promo_', '') : '';
+      const targetCode = pCode || promoFromTg;
+      if (targetCode) {
+        setPromoCodeToClaim(targetCode);
+        setShowPromoModal(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Faol so'rovnomani tekshirish
+  useEffect(() => {
+    fetch('/api/fn/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'getActiveSurvey' }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.survey && d.survey.active !== false) {
+          try {
+            const alreadyDone = localStorage.getItem(`vb_survey_done_${d.survey.id}`);
+            if (!alreadyDone) setActiveSurvey(d.survey);
+          } catch {
+            setActiveSurvey(d.survey);
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Faqat BIRINCHI kirishda «Xush kelibsiz» oynasi. Avval ro'yxatdan o'tgan (eski) foydalanuvchilarga ko'rsatilmaydi.
@@ -120,7 +173,7 @@ const MainScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col justify-between selection:bg-amber-500/20 selection:text-amber-300">
       <div className="flex-1 max-w-md w-full mx-auto px-4 pt-3 pb-24">
-        {/* Yuqori panel: logotip (chapda) va tovush/sovg'a/tema tugmalari (o'ngda) */}
+        {/* Yuqori panel: logotip (chapda) va tovush/sovg'a/baholash/promokod tugmalari (o'ngda) */}
         <div className="flex items-center justify-between mb-3">
           <BrandMark />
           <button type="button" data-nosfx onClick={() => setActiveTab('shop')} className="ml-auto mr-2 px-2.5 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-sm font-extrabold tabular-nums flex items-center gap-1 active:scale-95" title="Tangalar — do'kon">🪙 {coins.toLocaleString()}</button>
@@ -128,9 +181,39 @@ const MainScreen: React.FC = () => {
             showGift={activeTab === 'home'}
             onGiftClick={() => setShowWheelModal(true)}
             spinsCount={totalSpinsLeft}
+            onRateClick={() => setShowRatingModal(true)}
+            onPromoClick={() => {
+              setPromoCodeToClaim('');
+              setShowPromoModal(true);
+            }}
           />
         </div>
         {announcement && <AnnouncementBanner text={announcement.text} />}
+
+        {/* Faol so'rovnoma taklif kartasi */}
+        {activeSurvey && activeTab === 'home' && (
+          <div className="mb-3.5 p-3 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-blue-950/50 to-indigo-950/60 border border-cyan-500/40 shadow-lg flex items-center justify-between gap-3">
+            <div className="min-w-0 flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center shrink-0">
+                <ClipboardList className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-xs font-black text-white truncate">{activeSurvey.title}</div>
+                <div className="text-[10px] text-cyan-300 font-bold flex items-center gap-1 mt-0.5">
+                  <Sparkles className="w-3 h-3" /> Fikringizni bildiring va sovg&apos;a oling
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSurveyModal(true)}
+              className="px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-black shrink-0 active:scale-95 transition-all shadow-md"
+            >
+              Qatnashish
+            </button>
+          </div>
+        )}
+
         {activeTab === 'home' && <HomeTab />}
         {activeTab === 'words' && <WordsTab />}
         {activeTab === 'games' && <GamesTab />}
@@ -141,8 +224,44 @@ const MainScreen: React.FC = () => {
       {activeTab !== 'home' && <LofiMini />}
       {certificate}
       {toast}
+
       {/* Tepa paneldagi sovg'acha bosilganda baraban ochiladi */}
       {showWheelModal && <LuckyWheel onClose={() => setShowWheelModal(false)} />}
+
+      {/* Botni baholash oynasi */}
+      {showRatingModal && <RatingModal onClose={() => setShowRatingModal(false)} />}
+
+      {/* Promokod kiritish oynasi */}
+      {showPromoModal && (
+        <PromoModal
+          initialCode={promoCodeToClaim}
+          onClose={() => {
+            setShowPromoModal(false);
+            setPromoCodeToClaim('');
+          }}
+        />
+      )}
+
+      {/* So'rovnomada ishtirok oynasi */}
+      {showSurveyModal && activeSurvey && (
+        <SurveyModal
+          survey={activeSurvey}
+          onClose={() => setShowSurveyModal(false)}
+          onCompleted={() => {
+            setActiveSurvey(null);
+            setShowSurveyModal(false);
+          }}
+        />
+      )}
+
+      {/* Sovg'a berilganda avtomatik chiqadigan qutlov oynasi */}
+      {receivedGrants && receivedGrants.length > 0 && (
+        <GiftReceivedModal
+          items={receivedGrants}
+          onClose={() => setReceivedGrants(null)}
+        />
+      )}
+
       {/* Streak oynasi: mashq/o'yin tugab, bosh sahifaga qaytilganda ko'rinadi */}
       <StreakPopup />
       {/* Reyting o'zgarishi (birinchi kirishdan tashqari) */}

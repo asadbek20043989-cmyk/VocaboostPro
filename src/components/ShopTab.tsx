@@ -10,6 +10,7 @@ import { triggerHaptic } from '../services/telegram';
 import { CosAvatar, CosName } from './Cosmetics';
 import { Avatar } from './Avatar';
 import { TagBadge } from './TagBadge';
+import { SpeakBtn } from './SpeakBtn';
 import { nowMs } from '../services/time';
 
 const Modal: React.FC<{ onClose: () => void; children: React.ReactNode; title?: string }> = ({ onClose, children, title }) => (
@@ -280,7 +281,7 @@ export const ShopTab: React.FC = () => {
                 <div className="text-sm font-extrabold text-white leading-tight">{i + 1}. {g.title}</div>
                 {g.formula && <div className="mt-1.5 inline-block px-2 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-bold text-indigo-200 font-mono">{g.formula}</div>}
                 <p className="text-[11.5px] text-slate-300 mt-1.5 leading-snug">{g.text}</p>
-                {g.ex && <p className="text-[11.5px] text-emerald-300 mt-1 italic leading-snug">{g.ex}</p>}
+                {g.ex && <p className="text-[11.5px] text-emerald-300 mt-1 italic leading-snug flex items-start gap-2"><SpeakBtn text={g.ex} className="mt-px" /><span>{g.ex}</span></p>}
               </div>
             ))}
           </div>

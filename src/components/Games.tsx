@@ -5,6 +5,7 @@ import { BankWord } from '../types';
 import { GameDef } from '../data/games';
 import { TagBadge } from './TagBadge';
 import { Shell, QuestionView } from './Learn';
+import { SpeakBtn } from './SpeakBtn';
 import { makeQuestion, shuffle, checkTyped, QKind } from '../services/srs';
 import { speakEnglish, prefetchEnglish, startListening, isRecognitionAvailable, compareSpeech } from '../services/speech';
 import { triggerHaptic } from '../services/telegram';
@@ -514,6 +515,7 @@ const SentenceGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
       <div className="rounded-3xl bg-[#151C28] border border-slate-800 px-4 py-4">
         <div className="text-[11px] text-slate-500 mb-1">O‘zbekcha tarjimasi</div>
         <div className="text-base font-bold text-white leading-snug">{w.exUz || w.uz}</div>
+        {(state === 'ok' || state === 'reveal') && w.ex && <div className="mt-2 flex justify-center"><SpeakBtn text={w.ex} /></div>}
       </div>
       <div className={`min-h-[84px] rounded-2xl border-2 border-dashed p-2 flex flex-wrap gap-2 items-start content-start justify-center transition-colors ${state === 'ok' ? 'border-emerald-500 bg-emerald-500/10' : state === 'bad' ? 'border-rose-500 bg-rose-500/10' : 'border-slate-700 bg-[#0E1524]'}`}>
         {state === 'reveal' ? (

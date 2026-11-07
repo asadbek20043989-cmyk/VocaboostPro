@@ -603,8 +603,8 @@ export const LeaderboardTab: React.FC = () => {
             {/* English Level Selection */}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-300">Ingliz tili darajangiz</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {(['A1', 'A2', 'B1', 'B2+'] as EnglishLevel[]).map(lvl => (
+              <div className="grid grid-cols-6 gap-1.5">
+                {(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as EnglishLevel[]).map(lvl => (
                   <button
                     key={lvl}
                     type="button"

@@ -25,6 +25,7 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
   .stat{background:#0E1524;border:1px solid var(--line);border-radius:12px;padding:12px}.stat b{font-size:22px;display:block}
+  .gaFilterBtn.on{background:var(--gold);color:#111}
   .tabs{display:flex;gap:6px;overflow-x:auto;margin:14px 0}.tabs button{background:#1B2335;color:var(--mut);white-space:nowrap}.tabs button.on{background:var(--gold);color:#111}
   table{width:100%;border-collapse:collapse}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{color:var(--mut);font-size:12px}
   td img{width:32px;height:32px;border-radius:50%;background:#222;vertical-align:middle}
@@ -97,6 +98,8 @@
       <button data-t="league">🏆 Liga</button>
       <button data-t="inbox">✉️ Xabarlar <span id="inboxBadge" class="tag d" style="display:none"></span></button>
       <button data-t="certs">🎓 Sertifikat</button>
+      <button data-t="survey">⭐ Baholar & So'rovnoma</button>
+      <button data-t="promo">🎟️ Promokodlar</button>
       <button data-t="gifts">🎁 Sovg'alar</button>
       <button data-t="shop">🛒 Do'kon</button>
       <button data-t="refs">📣 Taklif</button>
@@ -126,7 +129,7 @@
           <div><label>O'zbekcha ma'no *</label><input id="e_uz" /></div>
           <div><label>Transkripsiya</label><input id="e_ipa" placeholder="/əˈfɔːd/" /></div>
           <div><label>So'z turi</label><input id="e_pos" placeholder="verb / noun / adj" /></div>
-          <div><label>Daraja</label><select id="e_level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2+</option></select></div>
+          <div><label>Daraja (IELTS)</label><select id="e_level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
           <div><label>Mavzu</label><input id="e_topic" placeholder="Ish, Sayohat..." /></div>
           <div><label>Tartib raqami</label><input id="e_order" type="number" /></div>
         </div>
@@ -139,9 +142,35 @@
       </div>
       <div class="card">
         <h2>Ommaviy qo'shish (Excel / Google Sheets'dan nusxalab qo'yish)</h2>
-        <p class="small">Har bir qator — bitta so'z. Ustunlar tartibi (Tab bilan ajratilgan, Sheets'dan nusxalaganda avtomatik): <b>en, uz, ipa, pos, ex, exUz, col (| bilan), hook, topic, level (A1/A2/B1/B2+), order</b>. Barcha so'zlar bir xil — eng muhim so'zlar sifatida qaraladi (muloqot/IELTS bo'linmaydi). Faqat birinchi ikkitasi majburiy. Bir marta ko'pi bilan 300 qator.</p>
+        <p class="small">Har bir qator — bitta so'z. Ustunlar tartibi (Tab bilan ajratilgan, Sheets'dan nusxalaganda avtomatik): <b>en, uz, ipa, pos, ex, exUz, col (| bilan), hook, topic, level (A1/A2/B1/B2/C1/C2), order</b>. Barcha so'zlar bir xil — eng muhim so'zlar sifatida qaraladi (muloqot/IELTS bo'linmaydi). Faqat birinchi ikkitasi majburiy. Bir marta ko'pi bilan 300 qator.</p>
         <textarea id="bulk" style="min-height:140px" placeholder="afford&#9;xarajatini ko'tara olmoq&#9;/əˈfɔːd/&#9;verb&#9;I can not afford a car.&#9;Men mashina ololmayman.&#9;can afford to&#9;A-FORD: Ford ...&#9;Pul&#9;B1&#9;101"></textarea>
         <div class="row" style="margin-top:8px"><button id="bulkBtn">Yuklash</button><span class="small" id="bulkInfo"></span></div>
+      </div>
+      <div class="card">
+        <h2>📁 Darajalar bo'yicha .txt fayldan yuklash (IELTS: A1, A2, B1, B2, C1, C2)</h2>
+        <p class="small">Har qanday <b>.txt</b> matn faylini tanlang yoki matnni pastdagi maydonga joylang. Qatorlar avtomatik tanlangan IELTS darajasiga moslab yuklanadi. Qabul qilinadigan formatlar: <code>word - tarjima</code> yoki <code>word : tarjima</code> yoki <code>word \t tarjima</code> yoki <code>word | tarjima | misol | misol tarjimasi</code>.</p>
+        <div class="row" style="margin-bottom:8px">
+          <div style="flex:1;max-width:280px">
+            <label>Qaysi darajaga yuklanadi?</label>
+            <select id="txtLevel">
+              <option value="A1">A1 · Beginner (IELTS 2.0-3.0)</option>
+              <option value="A2">A2 · Elementary (IELTS 3.5-4.0)</option>
+              <option value="B1" selected>B1 · Intermediate (IELTS 4.5-5.0)</option>
+              <option value="B2">B2 · Upper-Intermediate (IELTS 5.5-6.5)</option>
+              <option value="C1">C1 · Advanced (IELTS 7.0-8.0)</option>
+              <option value="C2">C2 · Proficiency / Master (IELTS 8.5-9.0)</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label>.txt faylni tanlang</label>
+            <input type="file" id="txtFile" accept=".txt,.tsv,.csv" style="padding:6px" />
+          </div>
+        </div>
+        <textarea id="txtContent" style="min-height:130px" placeholder="abandon - tark etmoq&#10;ability - qobiliyat&#10;abroad - chet elda&#10;cautious - ehtiyotkor&#10;...yoki .txt faylni tanlang"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="txtUploadBtn">🚀 .txt faylni daraja bo'yicha yuklash</button>
+          <span class="small" id="txtInfo"></span>
+        </div>
       </div>
     </section>
 
@@ -150,7 +179,7 @@
         <h2>🗓 Kunlik reja — daraja bo'yicha so'zlar <span class="small" id="plCount"></span></h2>
         <p class="small">Har bir foydalanuvchi ilovaga kirganda o'z darajasini tanlaydi va faqat <b>shu darajadagi</b> so'zlar uning mashqlari, lug'ati va o'yinlariga qo'shiladi. Har kuni u tanlagan miqdorda (kuniga nechta so'z) <b>yangi</b> so'zlar navbat bilan beriladi: 1-kun — ro'yxatdagi dastlabki so'zlar, 2-kun — keyingilari va hokazo. Kun o'zgarganda yangi to'plam avtomatik chiqadi. Quyida daraja bo'yicha kunlik to'plamlar ko'rinadi: so'zlarni <b>↑ ↓</b> bilan surib kunlarni o'zgartiring, <b>Tahrir</b> bilan so'zni almashtiring yoki yangisini qo'shing — o'zgarishlar foydalanuvchilarga bir necha soniyada yetib boradi. (Foydalanuvchilar yig'gan XP, streak va o'rganilgan so'zlar o'zgarmaydi.)</p>
         <div class="row">
-          <select id="plLevel" style="max-width:130px"><option>A1</option><option>A2</option><option selected>B1</option><option>B2+</option></select>
+          <select id="plLevel" style="max-width:130px"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select>
           <select id="plPer" style="max-width:200px"><option value="5">Kuniga 5 ta so'z</option><option value="10" selected>Kuniga 10 ta so'z</option><option value="15">Kuniga 15 ta so'z</option><option value="20">Kuniga 20 ta so'z</option><option value="30">Kuniga 30 ta so'z</option></select>
           <button id="plAdd">+ Shu darajaga so'z qo'shish</button>
         </div>
@@ -505,8 +534,14 @@
         <p class="small">Bu yerda botga faqat <b>/start</b> bosgan, lekin ilovaga <b>hech qachon kirmagan</b> foydalanuvchilar ko'rinadi. Sovg'a yuborilgach ularga bot orqali «Sizga … nomli sovg'a berildi» xabari <b>🚀 Ilovani ochish</b> tugmasi bilan boradi. Foydalanuvchi ilovani birinchi marta ochganda sovg'a avtomatik qo'llanadi (muddati o'tib yo'qolmaydi), sertifikat esa shu chatga rasm bo'lib keladi.</p>
         <div id="gaInfo" class="small" style="margin-bottom:8px"></div>
         <input id="gaSearch" placeholder="Ism, @username yoki ID bo'yicha qidirish..." />
+        <div class="row" style="margin:8px 0;gap:6px;flex-wrap:wrap">
+          <button type="button" class="sec gaFilterBtn on" id="gaF_all" data-f="all">Barchasi (<span id="gaCntAll">0</span>)</button>
+          <button type="button" class="sec gaFilterBtn" id="gaF_un" data-f="un" style="border-color:#f59e0b">🎁 Sovg'a olmaganlar (<span id="gaCntUn">0</span>)</button>
+          <button type="button" class="sec gaFilterBtn" id="gaF_gi" data-f="gi" style="border-color:#10b981">✅ Sovg'a olganlar (<span id="gaCntGi">0</span>)</button>
+          <button type="button" id="gaSelectUngifted" style="margin-left:auto;font-size:11px;padding:6px 12px;background:#f59e0b;color:#000;font-weight:bold">✨ Sovg'a olmaganlarni belgilash</button>
+        </div>
         <div class="row" style="margin:8px 0"><label class="chk"><input type="checkbox" id="gaAll"> Ko'rinayotganlarning hammasini tanlash</label><span class="small" id="gaSelInfo"></span></div>
-        <div class="scroll" style="max-height:320px"><table><thead><tr><th style="width:34px"></th><th>Foydalanuvchi</th><th>/start bosgan</th></tr></thead><tbody id="gaBody"></tbody></table></div>
+        <div class="scroll" style="max-height:320px"><table><thead><tr><th style="width:34px"></th><th>Foydalanuvchi</th><th>Holat</th><th>/start bosgan</th></tr></thead><tbody id="gaBody"></tbody></table></div>
       </div>
       <div class="card">
         <h2>Nima yuboramiz?</h2>
@@ -529,6 +564,7 @@
         <label>Sovg'a nomi (xabarda ko'rinadi; bo'sh qoldirsangiz avtomatik)</label><input id="ga_name" maxlength="100" placeholder="" />
         <label>Xabar matni (ixtiyoriy). <code>{name}</code> — ism, <code>{gift}</code> — sovg'a nomi, <code>{id}</code> — sertifikat raqami. Bo'sh = standart</label>
         <textarea id="ga_text" placeholder="🎁 Sizga sovg'a berildi!&#10;&#10;Hurmatli {name}, sizga «{gift}» nomli sovg'a berildi.&#10;&#10;Uni olish uchun ilovani oching 👇"></textarea>
+        <label class="chk" style="margin-top:10px;font-weight:bold"><input type="checkbox" id="ga_notify" checked /> 🤖 Telegram bot orqali xabar yuborilsin (o'chirilsa, bot xabar yubormaydi, lekin ilovani ochganda sovg'a avtomatik ko'rinadi va beriladi)</label>
         <div class="row" style="margin-top:10px"><button id="gaSend">Yuborish 🎁</button><button class="sec hide" id="gaStop">To'xtatish</button></div>
         <div class="bar hide" id="gaBarBox" style="margin-top:12px"><i id="gaBar" style="width:0%"></i></div>
         <div class="small" id="gaProg"></div>
@@ -586,6 +622,7 @@
           <div style="flex:1;display:none" id="sg_itemBox"><label>Mahsulot</label><select id="sg_item"></select></div>
           <div style="flex:1"><label>Izoh (ixtiyoriy)</label><input id="sg_note" maxlength="80" /></div>
         </div>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="sg_notify" checked /> 🤖 Telegram bot orqali xabar yuborilsin (o'chirilsa, bot xabar bermaydi, ilovaga kirganda avtomatik beriladi)</label>
         <div class="row" style="margin-top:10px"><button id="sgSend">Yuborish 🎁</button></div>
       </div>
       <div class="card">
@@ -648,7 +685,132 @@
         <h2>Foydalanuvchiga sovg'a</h2>
         <label>Foydalanuvchi ID (Liga bo'limidan)</label><input id="gUser" placeholder="tg_123456789" />
         <div class="row"><div style="flex:1"><label>Tur</label><select id="gType"><option value="spins">Baraban aylantirish</option><option value="vip">VIP (soat)</option><option value="xp">XP</option></select></div><div style="flex:1"><label>Miqdor</label><input id="gAmt" type="number" min="1" value="1" /></div><div style="flex:1" id="gValidBox"><label>Amal qilish muddati (aylantirish uchun)</label><select id="gValid"><option value="24">Shu kuni (24 soat)</option><option value="72">3 kun</option><option value="168">7 kun</option><option value="0">Foydalanilguncha</option></select></div></div><p class="small">Sovg'a faqat bir marta, berilgan miqdorcha qo'llanadi (har kuni emas). Aylantirish sovg'asi muddati tugagach qolgan qismi yonib ketadi.</p>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="gNotify" checked /> 🤖 Telegram bot orqali xabar yuborilsin (o'chirilsa, bot xabar bermaydi, ilovaga kirganda avtomatik beriladi)</label>
         <div class="row" style="margin-top:10px"><button id="gSend">Yuborish 🎁</button></div>
+      </div>
+    </section>
+
+    <section id="t-survey" class="hide">
+      <!-- Ratings & Reviews Card -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2>⭐ Botni baholash va foydalanuvchilar fikrlari <span class="small" id="fbCount"></span></h2>
+          <button class="sec" id="fbRefresh">Yangilash 🔄</button>
+        </div>
+        <p class="small">Ilova ichidagi <b>⭐ Botni baholash</b> tugmasi orqali foydalanuvchilar qoldirgan 5 ballik baholar, mezonlar (dizayn, lug'at, o'yinlar, tezlik) va yozma taklif-shikoyatlar.</p>
+        <div class="grid" style="margin:12px 0">
+          <div class="stat"><b id="fbAvg" style="color:#facc15">0.0</b><span class="small">O'rtacha baho (5.0 dan)</span></div>
+          <div class="stat"><b id="fbTotal" style="color:#38bdf8">0</b><span class="small">Jami baholaganlar</span></div>
+          <div class="stat"><b id="fb5" style="color:#4ade80">0</b><span class="small">5 yulduz (A'lo)</span></div>
+          <div class="stat"><b id="fb4" style="color:#a3e635">0</b><span class="small">4 yulduz (Yaxshi)</span></div>
+          <div class="stat"><b id="fbLow" style="color:#f87171">0</b><span class="small">1-3 yulduz (Kamchilik)</span></div>
+        </div>
+        <div class="scroll" style="max-height:400px">
+          <table>
+            <thead>
+              <tr><th>Foydalanuvchi</th><th>Baho</th><th>Kriteriyalar</th><th>Yoqqan jihatlar</th><th>Taklif & Shikoyat</th><th>Vaqt</th><th></th></tr>
+            </thead>
+            <tbody id="fbBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Survey Creator Card -->
+      <div class="card" style="margin-top:14px">
+        <h2>📋 Ilova ichidagi qisqa so'rovnoma konstruktori</h2>
+        <p class="small">Foydalanuvchilar uchun ilova ichida chiqadigan qisqa so'rovnoma. Admin savollarni, variantlarni yoki yozma taklif/shikoyat maydonlarini kiritishi mumkin.</p>
+        <div class="grid">
+          <div style="grid-column:span 2"><label>So'rovnoma sarlavhasi *</label><input id="svTitle" placeholder="Masalan: VocaBoost ilovasini birgalikda yaxshilaymiz!" /></div>
+          <div><label>Ishtirok uchun bonus XP</label><input id="svReward" type="number" min="0" value="50" /></div>
+          <div><label>Ishtirok uchun bonus tanga</label><input id="svRewardCoins" type="number" min="0" value="0" /></div>
+        </div>
+        <label>Tavsif / Izoh</label>
+        <textarea id="svDesc" style="min-height:70px" placeholder="Fikringiz biz uchun juda muhim! 2 daqiqangizni ajrating va 50 XP bonusga ega bo'ling."></textarea>
+        <label class="chk" style="margin:10px 0"><input type="checkbox" id="svActive" checked /> 🚀 So'rovnomani ilovada ko'rsatish (Faol)</label>
+        <label class="chk" style="margin:10px 0"><input type="checkbox" id="svNew" /> 🆕 Yangi so'rovnoma sifatida e'lon qilish (hamma foydalanuvchiga qaytadan chiqadi, eski javoblar alohida saqlanadi). Belgilanmasa — joriy so'rovnoma tahrirlanadi.</label>
+
+        <h3 style="margin:14px 0 6px;font-size:14px">❓ Savollar ro'yxati (<span id="svQCount">0</span> ta)</h3>
+        <div id="svQuestionsList"></div>
+        <div class="row" style="margin-top:10px">
+          <button type="button" class="sec" id="svAddChoice">+ Variantli savol (Tanlov)</button>
+          <button type="button" class="sec" id="svAddText">+ Yozma savol (Taklif / Shikoyat)</button>
+        </div>
+
+        <div class="row" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+          <button id="svSave">💾 So'rovnomani saqlash va e'lon qilish</button>
+        </div>
+      </div>
+
+      <!-- Survey Responses Card -->
+      <div class="card" style="margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <h2>📊 So'rovnoma natijalari va javoblar <span class="small" id="svResCount"></span></h2>
+          <button class="sec" id="svRefreshResponses">Javoblarni yangilash 🔄</button>
+        </div>
+        <div class="scroll" style="max-height:450px">
+          <table>
+            <thead>
+              <tr><th>Foydalanuvchi</th><th>Javoblar</th><th>Vaqt</th><th></th></tr>
+            </thead>
+            <tbody id="svResponsesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="t-promo" class="hide">
+      <!-- Create Promo Card -->
+      <div class="card">
+        <h2>🎟️ Yangi Promokod va Maxsus Havola yaratish</h2>
+        <p class="small">Telegram kanalingizga yoki ilova ichiga joylashtirish uchun promokod yarating. Foydalanuvchilar kodni ilovada kiritishi yoki maxsus havolani bosishi bilan belgilangan sovg'alarni avtomatik tarzda qo'lga kiritadilar. Ishtirokchilar sonini 1 ta (eng tezkor kishi uchun) yoki ko'proq qilib belgilashingiz mumkin.</p>
+        
+        <div class="grid">
+          <div>
+            <label>Promokod kodi * (lotin harflarida)</label>
+            <div class="row"><input id="pmCode" placeholder="Masalan: IELTS2026, GIFT500" style="text-transform:uppercase" /><button type="button" class="sec" id="pmGenCode">🎲 Tasodifiy</button></div>
+          </div>
+          <div>
+            <label>Nechta kishi ishlata olsin? (0 = cheksiz, 1 = faqat 1-kishi)</label>
+            <input id="pmMaxUses" type="number" min="0" value="1" />
+          </div>
+          <div>
+            <label>Tugash sanasi (ixtiyoriy)</label>
+            <input id="pmExpiry" type="datetime-local" />
+          </div>
+          <div>
+            <label>Izoh / Kampaniya nomi</label>
+            <input id="pmDesc" placeholder="Masalan: Telegram kanalimiz a'zolari uchun" />
+          </div>
+        </div>
+
+        <h3 style="margin:16px 0 8px;font-size:14px;color:var(--gold)">🎁 Promokod beradigan sovg'alar (o'zingiz belgilang):</h3>
+        <div class="grid">
+          <div><label>💎 XP miqdori</label><input id="pmXp" type="number" min="0" value="100" /></div>
+          <div><label>🪙 Tangalar miqdori</label><input id="pmCoins" type="number" min="0" value="50" /></div>
+          <div><label>🎡 Baraban aylantirish</label><input id="pmSpins" type="number" min="0" value="3" /></div>
+          <div><label>👑 VIP muddati (soat)</label><input id="pmVip" type="number" min="0" value="24" /></div>
+          <div><label>❄️ Streak himoyasi (muzlatgich)</label><input id="pmSaver" type="number" min="0" value="1" /></div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button id="pmSave">🚀 Promokodni yaratish va e'lon qilish</button>
+        </div>
+      </div>
+
+      <!-- Promos List Card -->
+      <div class="card" style="margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <h2>📋 Mavjud promokodlar ro'yxati <span class="small" id="pmCount"></span></h2>
+          <button class="sec" id="pmRefresh">Yangilash 🔄</button>
+        </div>
+        <div class="scroll" style="max-height:450px">
+          <table>
+            <thead>
+              <tr><th>Promokod</th><th>Mukofotlar</th><th>Ishlatildi / Limit</th><th>Havola</th><th>Amal qilish</th><th>Holat</th><th></th></tr>
+            </thead>
+            <tbody id="pmBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </div>
@@ -697,7 +859,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderNavBadges(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); }
+function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderNavBadges(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); loadPromos(); loadSurvey(); loadFeedback(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -760,6 +922,99 @@ $('bulkBtn').onclick = guard(async () => {
   if (!errs.length) $('bulk').value = '';
   await load();
 });
+
+/* ---------- .txt faylni daraja bo'yicha yuklash ---------- */
+if ($('txtFile')) {
+  $('txtFile').onchange = () => {
+    const file = $('txtFile').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      $('txtContent').value = e.target.result || '';
+      $('txtInfo').textContent = `Fayl tanlandi: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+}
+
+if ($('txtUploadBtn')) {
+  $('txtUploadBtn').onclick = guard(async () => {
+    const raw = ($('txtContent').value || '').trim();
+    if (!raw) return flash('.txt faylni tanlang yoki matn maydoniga so\'zlarni kiriting', false);
+    const targetLevel = $('txtLevel').value || 'B1';
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    if (!lines.length) return flash('Hech qanday so\'z topilmadi', false);
+
+    const list = [];
+    let currentOrder = Math.max(0, ...words.map(x => +x.order || 0)) + 1;
+
+    for (const line of lines) {
+      let en = '', uz = '', ex = '', exUz = '', pos = '', ipa = '', topic = '';
+      if (line.includes('|')) {
+        const parts = line.split('|').map(s => s.trim());
+        en = parts[0] || '';
+        uz = parts[1] || '';
+        ex = parts[2] || '';
+        exUz = parts[3] || '';
+        topic = parts[4] || '';
+      } else if (line.includes('\t')) {
+        const parts = line.split('\t').map(s => s.trim());
+        en = parts[0] || '';
+        uz = parts[1] || '';
+        ipa = parts[2] || '';
+        pos = parts[3] || '';
+        ex = parts[4] || '';
+        exUz = parts[5] || '';
+      } else if (line.includes(' - ')) {
+        const parts = line.split(' - ').map(s => s.trim());
+        en = parts[0] || '';
+        uz = parts.slice(1).join(' - ') || '';
+      } else if (line.includes(' — ')) {
+        const parts = line.split(' — ').map(s => s.trim());
+        en = parts[0] || '';
+        uz = parts.slice(1).join(' — ') || '';
+      } else if (line.includes(':')) {
+        const parts = line.split(':').map(s => s.trim());
+        en = parts[0] || '';
+        uz = parts.slice(1).join(':') || '';
+      } else {
+        const parts = line.split(',');
+        en = parts[0] ? parts[0].trim() : '';
+        uz = parts.slice(1).join(',').trim() || '';
+      }
+
+      if (en && uz) {
+        list.push({
+          en,
+          uz,
+          ipa,
+          pos,
+          ex,
+          exUz,
+          topic: topic || `${targetLevel} Vocabulary`,
+          level: targetLevel,
+          published: true,
+          order: currentOrder++
+        });
+      }
+    }
+
+    if (!list.length) return flash("Qatorlardan so'z va tarjima ajratib bo'lmadi. Format: apple - olma", false);
+
+    $('txtInfo').textContent = `${list.length} ta so'z ${targetLevel} darajasiga yuklanmoqda...`;
+    let saved = 0, errs = [];
+    for (let i = 0; i < list.length; i += 200) {
+      const r = await api('saveWords', { words: list.slice(i, i + 200) });
+      saved += r.saved || 0;
+      errs = errs.concat(r.errors || []);
+    }
+    flash(`Muvaffaqiyatli: ${saved} ta so'z ${targetLevel} darajasiga yuklandi ✅`);
+    $('txtInfo').textContent = `${saved} ta so'z saqlandi (${targetLevel})`;
+    $('txtContent').value = '';
+    if ($('txtFile')) $('txtFile').value = '';
+    await load();
+  });
+}
 
 
 /* ---------- kunlik reja (daraja bo'yicha) ---------- */
@@ -834,8 +1089,7 @@ if ($('nbSave')) {
   $('nbSave').onclick = guard(async () => {
     const games = ($('nb_games').value || '').trim().slice(0, 12);
     const shop = ($('nb_shop').value || '').trim().slice(0, 12);
-    const curShop = data.config?.shop || {};
-    await api('setConfig', { key: 'shop', value: { ...curShop, navBadges: { games, shop } } });
+    await api('setConfig', { key: 'shop', value: { navBadges: { games, shop } } });
     flash('Pastki menyu nishonlari saqlandi ✅');
     await load();
   });
@@ -1289,7 +1543,7 @@ function renderUsers() {
   const all = userRows(), q = $('uSearch').value.toLowerCase();
   const rows = all.filter(u => !q || u.name.toLowerCase().includes(q) || u.un.toLowerCase().includes(q) || u.id.toLowerCase().includes(q)).sort((a,b) => (b.joined||'').localeCompare(a.joined||'') || b.xp - a.xp);
   $('uCount').textContent = `(${rows.length} / ${all.length})`;
-  const lv = ['A1','A2','B1','B2+'].map(l => [l, all.filter(u => u.level === l).length]);
+  const lv = ['A1','A2','B1','B2','C1','C2'].map(l => [l, all.filter(u => u.level === l || (l === 'B2' && u.level === 'B2+')).length]);
   const perDay = [...new Set([5,10,15,20,...all.map(u => u.wpd).filter(Boolean)])].sort((a,b)=>a-b).map(n => [n + ' ta so\'z / kun', all.filter(u => u.wpd === n).length]);
   $('uDist').innerHTML = distBlock('Ingliz tili darajasi', lv, all.length) + distBlock("Kuniga nechta so'z", perDay, all.length);
   $('uBody').innerHTML = rows.slice(0, 500).map(u => `<tr><td><b>${esc(u.name)}</b><br><span class="small">${u.un ? '@' + esc(u.un) + ' · ' : ''}${esc(u.id)}</span></td><td>${u.level ? `<span class="tag">${esc(u.level)}</span>` : '—'}</td><td>${u.wpd || '—'}</td><td>${u.learned} <span class="small">(${u.mastered} yodlangan)</span></td><td>${u.xp}</td><td class="small">${esc(u.joined || '—')}</td><td class="small">${esc(u.bot || '—')}</td></tr>`).join('') || '<tr><td colspan="7" class="small">Hozircha foydalanuvchi yo\'q</td></tr>';
@@ -1455,7 +1709,7 @@ function renderSettings() {
 }
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
-$('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value }, giftNameOf(type, amt)); flash(grantMsg(r)); });
+$('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value, notify = $('gNotify') ? $('gNotify').checked : true; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value, notify }, giftNameOf(type, amt)); flash(grantMsg(r)); });
 
 /* ---------- 🛒 Do'kon ---------- */
 const SHOP_DEF = [
@@ -1516,23 +1770,27 @@ $('sg_aud').onchange = $('sg_type').onchange = sgUi; sgUi();
 const giftNameOf = (type, amt, itemTitle) => type === 'spins' ? `${amt} ta baraban aylantirish` : type === 'vip' ? `${amt} soatlik VIP` : type === 'xp' ? `${amt} XP` : type === 'coins' ? `${Number(amt).toLocaleString('en-US').replace(/,/g, ' ')} tanga` : (itemTitle || "Do'kon mahsuloti");
 /* Sovg'a beradi va foydalanuvchiga bot orqali xabar yuboradi (ko'pchilikka — 30 tadan bo'lib) */
 async function grantNotified(payload, giftName) {
-  const r = await api('grant', { ...payload, giftName, notify: true });
+  const notify = payload.notify !== false;
+  const r = await api('grant', { ...payload, giftName, notify });
   let sent = r.notified ? 1 : 0, blocked = 0;
   const ids = r.ids || [];
-  for (let i = 0; i < ids.length; i += 30) {
-    $('sync').textContent = `Xabar yuborilmoqda: ${Math.min(i, ids.length)} / ${ids.length}`;
-    const n = await api('giftNotify', { ids: ids.slice(i, i + 30), giftName });
-    sent += n.sent || 0; blocked += n.blocked || 0;
+  if (notify && ids.length) {
+    for (let i = 0; i < ids.length; i += 30) {
+      $('sync').textContent = `Xabar yuborilmoqda: ${Math.min(i, ids.length)} / ${ids.length}`;
+      const n = await api('giftNotify', { ids: ids.slice(i, i + 30), giftName });
+      sent += n.sent || 0; blocked += n.blocked || 0;
+    }
   }
   $('sync').textContent = 'Yangilandi: ' + new Date().toLocaleTimeString();
-  return { count: r.count, sent, blocked };
+  return { count: r.count, sent, blocked, notify };
 }
-const grantMsg = r => `Yuborildi 🎁 (${r.count} ta foydalanuvchi). Botga xabar: ${r.sent} ta${r.blocked ? `, bloklaganlar: ${r.blocked}` : ''}. Ilovani ochganda qo'llanadi`;
+const grantMsg = r => `Yuborildi 🎁 (${r.count} ta foydalanuvchi). ${r.notify ? `Botga xabar: ${r.sent} ta${r.blocked ? `, bloklaganlar: ${r.blocked}` : ''}. ` : 'Bot orqali xabar yuborilmadi. '}Ilovani ochganda qo'llanadi`;
 $('sgSend').onclick = guard(async () => {
   const aud = $('sg_aud').value, type = $('sg_type').value;
   if (aud !== 'one' && !confirm(aud === 'all' ? 'Hamma foydalanuvchilarga yuborilsinmi?' : "Do'st taklif qilgan foydalanuvchilarga yuborilsinmi?")) return;
   const it = $('sg_item').selectedOptions[0];
-  const r = await grantNotified({ userId: $('sg_user').value.trim(), audience: aud === 'one' ? '' : aud, minRefs: +$('sg_min').value, type, amount: +$('sg_amt').value, itemId: $('sg_item').value, note: $('sg_note').value }, giftNameOf(type, +$('sg_amt').value, it && it.textContent));
+  const notify = $('sg_notify') ? $('sg_notify').checked : true;
+  const r = await grantNotified({ userId: $('sg_user').value.trim(), audience: aud === 'one' ? '' : aud, minRefs: +$('sg_min').value, type, amount: +$('sg_amt').value, itemId: $('sg_item').value, note: $('sg_note').value, notify }, giftNameOf(type, +$('sg_amt').value, it && it.textContent));
   flash(grantMsg(r));
 });
 let orders = [];
@@ -1633,7 +1891,7 @@ document.querySelectorAll('textarea.emo').forEach(ta => { const b = document.cre
 document.querySelectorAll('[data-emo="id"]').forEach(inp => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sec emoBtn'; b.textContent = '💎 Tanlash'; b.onclick = e => { e.stopPropagation(); openPop(b, inp, 'id'); }; inp.parentNode.appendChild(b); });
 
 /* ---------- 🎁 Sovg'alar: botga /start bosgan, lekin ilovaga kirmaganlar ---------- */
-let gaItems = [], gaSel = new Set(), gaTpl = 'gold', gaBusy = false, gaStop = false, gaLoaded = false;
+let gaItems = [], gaSel = new Set(), gaTpl = 'gold', gaBusy = false, gaStop = false, gaLoaded = false, gaFilter = 'all';
 const gaGifted = {};
 const GA_TPLS = ['bronze','silver','gold','marathon','thanks','growth','wisdom','consistent','weekly'];
 const gaSleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1642,9 +1900,19 @@ async function loadGiftAudience() {
   gaItems = r.items || []; gaLoaded = true;
   const ids = new Set(gaItems.map(x => x.id)); gaSel = new Set([...gaSel].filter(id => ids.has(id)));
   $('gaInfo').innerHTML = `Ilovaga kirmaganlar: <b>${gaItems.length}</b> ta${r.blocked ? ` · botni bloklaganlar (xabar yetmaydi): ${r.blocked} ta` : ''}${r.truncated ? ' · <b>faqat birinchi 5000 tasi ko\'rsatilmoqda</b>' : ''}`;
+  if ($('gaCntAll')) $('gaCntAll').textContent = gaItems.length;
+  if ($('gaCntUn')) $('gaCntUn').textContent = r.unGiftedCount ?? gaItems.filter(u => !u.hasGift).length;
+  if ($('gaCntGi')) $('gaCntGi').textContent = r.giftedCount ?? gaItems.filter(u => u.hasGift).length;
   renderGifts();
 }
-const gaFiltered = () => { const q = $('gaSearch').value.toLowerCase(); return gaItems.filter(u => !q || u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.id.includes(q)); };
+const gaFiltered = () => {
+  const q = $('gaSearch').value.toLowerCase();
+  return gaItems.filter(u => {
+    if (gaFilter === 'un' && u.hasGift) return false;
+    if (gaFilter === 'gi' && !u.hasGift) return false;
+    return !q || (u.name || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q) || u.id.includes(q);
+  });
+};
 function gaSelInfo() {
   const all = $('gaTarget').value === 'all';
   $('gaSelInfo').textContent = all ? `Yuboriladi: hammaga (${gaItems.length} ta)` : `Tanlangan: ${gaSel.size} ta`;
@@ -1652,13 +1920,37 @@ function gaSelInfo() {
 function renderGifts() {
   const rows = gaFiltered();
   $('gaCount').textContent = `(${rows.length} / ${gaItems.length})`;
-  $('gaBody').innerHTML = rows.slice(0, 500).map(u => `<tr><td><input type="checkbox" style="width:auto" data-id="${esc(u.id)}" ${gaSel.has(u.id) ? 'checked' : ''} /></td><td><b>${esc(u.name || '—')}</b>${gaGifted[u.id] ? ` <span class="tag h">🎁 ${esc(gaGifted[u.id])}</span>` : ''}<br><span class="small">${u.username ? '@' + esc(u.username) + ' · ' : ''}${esc(u.id)}</span></td><td class="small">${u.joined ? new Date(u.joined).toISOString().slice(0, 10) : '—'}</td></tr>`).join('') || `<tr><td colspan="3" class="small">${gaLoaded ? 'Ilovaga kirmagan foydalanuvchi yo\'q 🎉' : 'Yuklanmoqda...'}</td></tr>`;
+  $('gaBody').innerHTML = rows.slice(0, 500).map(u => {
+    const isGifted = u.hasGift || gaGifted[u.id];
+    const giftLabel = u.giftName || gaGifted[u.id] || "Sovg'a";
+    const statusHtml = isGifted
+      ? `<span class="tag" style="background:#064e3b;color:#34d399">✅ Berilgan (${esc(giftLabel)})</span>`
+      : `<span class="tag d" style="background:#451a03;color:#fbbf24">🎁 Sovg'a olmagan</span>`;
+    return `<tr><td><input type="checkbox" style="width:auto" data-id="${esc(u.id)}" ${gaSel.has(u.id) ? 'checked' : ''} /></td><td><b>${esc(u.name || '—')}</b><br><span class="small">${u.username ? '@' + esc(u.username) + ' · ' : ''}${esc(u.id)}</span></td><td>${statusHtml}</td><td class="small">${u.joined ? new Date(u.joined).toISOString().slice(0, 10) : '—'}</td></tr>`;
+  }).join('') || `<tr><td colspan="4" class="small">${gaLoaded ? 'Mos keluvchi foydalanuvchi topilmadi 🎉' : 'Yuklanmoqda...'}</td></tr>`;
   $('gaBody').querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => { c.checked ? gaSel.add(c.dataset.id) : gaSel.delete(c.dataset.id); gaSelInfo(); });
   gaSelInfo();
 }
 $('gaSearch').oninput = renderGifts;
 $('gaAll').onchange = () => { gaFiltered().slice(0, 500).forEach(u => $('gaAll').checked ? gaSel.add(u.id) : gaSel.delete(u.id)); renderGifts(); };
 $('gaReload').onclick = guard(loadGiftAudience);
+document.querySelectorAll('.gaFilterBtn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.gaFilterBtn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    gaFilter = btn.dataset.f;
+    renderGifts();
+  };
+});
+if ($('gaSelectUngifted')) {
+  $('gaSelectUngifted').onclick = () => {
+    gaSel.clear();
+    gaItems.filter(u => !u.hasGift).forEach(u => gaSel.add(u.id));
+    gaSelInfo();
+    renderGifts();
+    flash(`${gaSel.size} ta sovg'a olmagan foydalanuvchi tanlandi ✨`);
+  };
+}
 document.querySelector('#tabs button[data-t="gifts"]').addEventListener('click', () => { if (!gaLoaded) guard(loadGiftAudience)(); });
 function gaTplDraw() {
   $('gaTpls').innerHTML = Object.entries(TPL).filter(([k]) => GA_TPLS.includes(k)).map(([k,[n,c]]) => `<div class="tplb ${gaTpl === k ? 'on' : ''}" data-k="${k}" style="border-left:6px solid ${c}">${n}</div>`).join('');
@@ -1693,17 +1985,18 @@ $('gaSend').onclick = guard(async () => {
   if (!isCert && type !== 'item' && !(gift.amount > 0)) return flash('Miqdorni kiriting', false);
   if (type === 'item' && !gift.itemId) return flash("Do'kon mahsulotini tanlang (Do'kon bo'limi yuklangan bo'lishi kerak)", false);
   const name = $('ga_name').value.trim() || gaAutoName();
-  if (!confirm(`«${name}» ${isCert ? 'sertifikati' : 'sovg\'asi'} ${ids.length} ta foydalanuvchiga yuborilsinmi?\nHar biriga botdan xabar boradi.`)) return;
+  const notify = $('ga_notify') ? $('ga_notify').checked : true;
+  if (!confirm(`«${name}» ${isCert ? 'sertifikati' : 'sovg\'asi'} ${ids.length} ta foydalanuvchiga yuborilsinmi?${notify ? '\nHar biriga botdan xabar boradi.' : ''}`)) return;
   const cid = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
   const tot = { sent: 0, blocked: 0, failed: 0, skipped: 0 }; let pos = 0, fails = 0, lastErr = '';
   gaBusy = true; gaStop = false; $('gaSend').disabled = true; $('gaStop').disabled = false; $('gaStop').classList.remove('hide'); $('gaBarBox').classList.remove('hide');
-  const show = () => { $('gaBar').style.width = Math.round(pos / ids.length * 100) + '%'; $('gaProg').textContent = `${Math.min(pos, ids.length)} / ${ids.length} · xabar yuborildi: ${tot.sent} · bloklagan: ${tot.blocked} · xato: ${tot.failed}${tot.skipped ? ` · allaqachon berilgan: ${tot.skipped}` : ''}`; };
+  const show = () => { $('gaBar').style.width = Math.round(pos / ids.length * 100) + '%'; $('gaProg').textContent = `${Math.min(pos, ids.length)} / ${ids.length} · xabar: ${tot.sent} · bloklagan: ${tot.blocked} · xato: ${tot.failed}${tot.skipped ? ` · allaqachon berilgan: ${tot.skipped}` : ''}`; };
   try {
     while (pos < ids.length && !gaStop) {
       const chunk = ids.slice(pos, pos + (isCert ? 12 : 30));
       let r;
-      try { r = await api('giftSend', { cid, ids: chunk, gift, giftName: name, text: $('ga_text').value }); fails = 0; }
-      catch (e) { lastErr = e.message; if (++fails >= 3) throw e; await gaSleep(2000); continue; } // qayta urinish xavfsiz: kampaniya ID si ikki marta berilishiga yo'l qo'ymaydi
+      try { r = await api('giftSend', { cid, ids: chunk, gift, giftName: name, text: $('ga_text').value, notify }); fails = 0; }
+      catch (e) { lastErr = e.message; if (++fails >= 3) throw e; await gaSleep(2000); continue; }
       if (!r.processed) { if (++fails >= 3) throw new Error(r.lastError || 'Server javob bermadi'); await gaSleep(2000); continue; }
       chunk.slice(0, r.processed).forEach(id => { gaGifted[id] = name.slice(0, 24); });
       pos += r.processed; ['sent', 'blocked', 'failed', 'skipped'].forEach(k => tot[k] += r[k] || 0); if (r.lastError) lastErr = r.lastError;
@@ -1716,6 +2009,347 @@ $('gaSend').onclick = guard(async () => {
   renderGifts();
   if (isCert) await load();
 });
+
+/* ---------- ⭐ Baholar & So'rovnoma ---------- */
+let surveyData = { active: true, title: '', desc: '', rewardXp: 50, questions: [], responses: [] };
+let feedbackList = [];
+let surveyResponses = [];
+
+const CRIT_LABELS = { vocab: "Lug'at va talaffuz", games: "O'yinlar", srs: 'SRS takrorlash', design: 'Tezlik va interfeys' };
+async function loadFeedback() {
+  try {
+    const r = await api('listFeedback');
+    feedbackList = r.ratings || [];
+    surveyResponses = r.surveys || [];
+    if (r.survey && !surveyData.questions?.length) surveyData.questions = r.survey.questions || [];
+    renderFeedback();
+    drawSurveyResponses();
+  } catch (e) {
+    flash(e.message, false);
+  }
+}
+
+function renderFeedback() {
+  if (!$('fbBody')) return;
+  const count = feedbackList.length;
+  $('fbCount').textContent = `(${count} ta)`;
+  if (!count) {
+    $('fbAvg').textContent = '0.0';
+    $('fbTotal').textContent = '0';
+    $('fb5').textContent = '0';
+    $('fb4').textContent = '0';
+    $('fbLow').textContent = '0';
+    $('fbBody').innerHTML = '<tr><td colspan="7" class="small">Hozircha baholashlar yo\'q</td></tr>';
+    return;
+  }
+  const sum = feedbackList.reduce((acc, f) => acc + (+f.rating || 0), 0);
+  $('fbAvg').textContent = (sum / count).toFixed(2);
+  $('fbTotal').textContent = count;
+  $('fb5').textContent = feedbackList.filter(f => f.rating === 5).length;
+  $('fb4').textContent = feedbackList.filter(f => f.rating === 4).length;
+  $('fbLow').textContent = feedbackList.filter(f => f.rating <= 3).length;
+
+  $('fbBody').innerHTML = feedbackList.map(f => {
+    const stars = '⭐'.repeat(Math.max(1, Math.min(5, f.rating || 1)));
+    const crit = f.criteria && Object.keys(f.criteria).length ? Object.entries(f.criteria).map(([k, v]) => `${CRIT_LABELS[k] || k}: ${v}/5`).join('<br>') : '—';
+    return `<tr>
+      <td><b>${esc(f.name || 'Foydalanuvchi')}</b><br><span class="small">${f.username ? '@' + esc(f.username) + ' · ' : ''}${esc(f.uid || f.id || '')}</span></td>
+      <td><b style="color:#facc15">${stars}</b> (${+f.rating}/5)</td>
+      <td class="small">${crit}</td>
+      <td class="small">${esc(f.liked || '—')}</td>
+      <td><b>${esc(f.text || '—')}</b></td>
+      <td class="small">${f.ts ? new Date(f.ts).toLocaleString() : '—'}</td>
+      <td><button class="bad" data-fb-del="${esc(f.id)}">×</button></td>
+    </tr>`;
+  }).join('');
+
+  $('fbBody').querySelectorAll('[data-fb-del]').forEach(b => {
+    b.onclick = guard(async () => {
+      if (!confirm("Ushbu baholashni o'chirishni xohlaysizmi?")) return;
+      await api('deleteFeedback', { id: b.dataset.fbDel, type: 'rating' });
+      await loadFeedback();
+    });
+  });
+}
+if ($('fbRefresh')) $('fbRefresh').onclick = guard(loadFeedback);
+
+async function loadSurvey() {
+  try {
+    const r = await api('getSurvey');
+    surveyData = r.survey || { active: true, title: '', desc: '', rewardXp: 50, rewardCoins: 0, questions: [] };
+    if ($('svNew')) $('svNew').checked = !r.survey;
+    renderSurvey();
+  } catch (e) {
+    console.warn('loadSurvey error:', e);
+  }
+}
+
+function renderSurvey() {
+  if (!$('svTitle')) return;
+  $('svTitle').value = surveyData.title || '';
+  $('svDesc').value = surveyData.desc || '';
+  $('svReward').value = surveyData.rewardXp ?? 50;
+  if ($('svRewardCoins')) $('svRewardCoins').value = surveyData.rewardCoins ?? 0;
+  $('svActive').checked = surveyData.active !== false;
+  drawSurveyQuestions();
+  drawSurveyResponses();
+}
+
+/* Savol maydonlaridagi hozirgi matnlarni xotiraga o'tkazadi (savol qo'shilganda/o'chirilganda yozilgani yo'qolmasin) */
+function syncQuestionsFromDom() {
+  document.querySelectorAll('#svQuestionsList [data-q-idx]').forEach(el => {
+    const idx = +el.dataset.qIdx, q = surveyData.questions[idx];
+    if (!q) return;
+    q.text = el.querySelector(`[data-q-text="${idx}"]`).value;
+    const o = el.querySelector(`[data-q-opts="${idx}"]`);
+    if (o) q.options = o.value.split(/[\n,]/).map(x => x.trim()).filter(Boolean);
+  });
+}
+function drawSurveyQuestions() {
+  const qs = surveyData.questions || [];
+  $('svQCount').textContent = qs.length;
+  $('svQuestionsList').innerHTML = qs.map((q, idx) => `
+    <div style="background:#131d27;border:1px solid #1f2e3d;border-radius:10px;padding:12px;margin:8px 0" data-q-idx="${idx}">
+      <div class="row" style="justify-content:space-between">
+        <b>${idx + 1}-savol: ${q.type === 'choice' ? '🔘 Variantli (Tanlov)' : '✍️ Yozma (Taklif/Fikr)'}</b>
+        <button type="button" class="bad" data-del-q="${idx}" style="padding:2px 8px;font-size:12px">O'chirish</button>
+      </div>
+      <div style="margin-top:6px">
+        <label>Savol matni *</label>
+        <input data-q-text="${idx}" value="${esc(q.text || '')}" placeholder="Savolni kiriting..." />
+      </div>
+      ${q.type === 'choice' ? `
+        <div style="margin-top:6px">
+          <label>Variantlar (har birini yangi qatordan yoki vergul bilan yozing):</label>
+          <textarea data-q-opts="${idx}" style="min-height:60px" placeholder="Ajoyib&#10;Yaxshi&#10;O'rtacha&#10;Yaxshilash kerak">${esc((q.options || []).join('\n'))}</textarea>
+        </div>
+      ` : `
+        <div class="small" style="color:#94a3b8;margin-top:4px">Foydalanuvchi bu savolga o'z taklif, shikoyat yoki erkin fikrini yozib qoldiradi.</div>
+      `}
+    </div>
+  `).join('') || '<div class="small" style="margin:8px 0;color:#94a3b8">Hozircha savollar qo\'shilmagan. Quyidagi tugmalar orqali savol qo\'shing.</div>';
+
+  $('svQuestionsList').querySelectorAll('[data-del-q]').forEach(b => {
+    b.onclick = () => {
+      syncQuestionsFromDom();
+      surveyData.questions.splice(+b.dataset.delQ, 1);
+      drawSurveyQuestions();
+    };
+  });
+}
+
+if ($('svAddChoice')) {
+  $('svAddChoice').onclick = () => {
+    syncQuestionsFromDom();
+    surveyData.questions = surveyData.questions || [];
+    surveyData.questions.push({
+      id: 'q' + Date.now().toString(36),
+      type: 'choice',
+      text: '',
+      options: ["A'lo darajada", "Yaxshi", "O'rtacha", "Yaxshilash kerak"]
+    });
+    drawSurveyQuestions();
+  };
+}
+
+if ($('svAddText')) {
+  $('svAddText').onclick = () => {
+    syncQuestionsFromDom();
+    surveyData.questions = surveyData.questions || [];
+    surveyData.questions.push({
+      id: 'q' + Date.now().toString(36),
+      type: 'text',
+      text: "Qanday taklif yoki shikoyatlaringiz bor?",
+      options: []
+    });
+    drawSurveyQuestions();
+  };
+}
+
+function drawSurveyResponses() {
+  if (!$('svResponsesBody')) return;
+  const res = surveyResponses || [];
+  $('svResCount').textContent = `(${res.length} ta)`;
+  const qText = {}; (surveyData.questions || []).forEach(q => { qText[q.id] = q.text; });
+  $('svResponsesBody').innerHTML = res.map(r => {
+    const answersText = Object.entries(r.answers || {}).map(([qid, ans]) => `<b>${esc(qText[qid] || qid)}:</b> ${esc(Array.isArray(ans) ? ans.join(', ') : ans)}`).join('<br>');
+    return `<tr>
+      <td><b>${esc(r.name || 'Foydalanuvchi')}</b><br><span class="small">${r.username ? '@' + esc(r.username) + ' · ' : ''}${esc(r.uid || r.id || '')}</span></td>
+      <td>${answersText || '—'}</td>
+      <td class="small">${r.ts ? new Date(r.ts).toLocaleString() : '—'}</td>
+      <td><button class="bad" data-sv-del="${esc(r.id)}" data-sv-sid="${esc(r.survId)}">×</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" class="small">Hozircha so\'rovnoma javoblari yo\'q</td></tr>';
+  $('svResponsesBody').querySelectorAll('[data-sv-del]').forEach(b => {
+    b.onclick = guard(async () => {
+      if (!confirm("Ushbu javobni o'chirishni xohlaysizmi?")) return;
+      await api('deleteFeedback', { id: b.dataset.svDel, type: 'survey', survId: b.dataset.svSid });
+      await loadFeedback();
+    });
+  });
+}
+
+if ($('svSave')) {
+  $('svSave').onclick = guard(async () => {
+    const qs = [];
+    document.querySelectorAll('#svQuestionsList [data-q-idx]').forEach(el => {
+      const idx = +el.dataset.qIdx;
+      const text = el.querySelector(`[data-q-text="${idx}"]`).value.trim();
+      const orig = surveyData.questions[idx] || {};
+      const type = orig.type || 'choice';
+      let options = [];
+      if (type === 'choice') {
+        const optsRaw = el.querySelector(`[data-q-opts="${idx}"]`).value;
+        options = optsRaw.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+      }
+      if (text) {
+        qs.push({ id: orig.id || ('q_' + idx), type, text, options });
+      }
+    });
+
+    if (!qs.length) return flash("Kamida bitta savol qo'shing (variantli savolda kamida 2 ta variant)", false);
+    const payload = {
+      id: $('svNew') && $('svNew').checked ? undefined : surveyData.id,
+      active: $('svActive').checked,
+      title: $('svTitle').value.trim(),
+      desc: $('svDesc').value.trim(),
+      rewardXp: +$('svReward').value || 0,
+      rewardCoins: $('svRewardCoins') ? (+$('svRewardCoins').value || 0) : 0,
+      questions: qs
+    };
+    await api('saveSurvey', { survey: payload });
+    flash("So'rovnoma saqlandi va e'lon qilindi ✅");
+    await loadSurvey();
+    await loadFeedback();
+  });
+}
+if ($('svRefreshResponses')) $('svRefreshResponses').onclick = guard(loadFeedback);
+
+/* ---------- 🎟️ Promokodlar ---------- */
+let promosList = [];
+
+async function loadPromos() {
+  try {
+    const r = await api('listPromos');
+    promosList = r.items || [];
+    renderPromos();
+  } catch (e) {
+    console.warn('loadPromos error:', e);
+  }
+}
+
+function renderPromos() {
+  if (!$('pmBody')) return;
+  $('pmCount').textContent = `(${promosList.length} ta)`;
+  const botUser = (data.config?.referral?.botUsername || '').replace(/^@/, '');
+
+  $('pmBody').innerHTML = promosList.map(p => {
+    const link = botUser ? `https://t.me/${botUser}?start=promo_${p.code}` : '';
+    const rewards = [];
+    if (p.xp) rewards.push(`💎 ${p.xp} XP`);
+    if (p.coins) rewards.push(`🪙 ${p.coins} tanga`);
+    if (p.spins) rewards.push(`🎡 ${p.spins} spin`);
+    if (p.vipHours) rewards.push(`👑 ${p.vipHours}h VIP`);
+    if (p.streakSaver) rewards.push(`❄️ ${p.streakSaver} himoya`);
+
+    const usedCount = p.usedCount || 0;
+    const maxUsesStr = p.maxUses > 0 ? `${usedCount} / ${p.maxUses}` : `${usedCount} / cheksiz`;
+    const isExpired = p.expiresAt && new Date(p.expiresAt).getTime() < Date.now();
+    const isExhausted = p.maxUses > 0 && usedCount >= p.maxUses;
+    const isOff = p.active === false;
+    const statusTag = isOff
+      ? '<span class="tag d">O\'chirilgan</span>'
+      : isExpired
+      ? '<span class="tag d">Muddati o\'tgan</span>'
+      : isExhausted
+      ? '<span class="tag h">Tugagan</span>'
+      : '<span class="tag">Faol</span>';
+
+    return `<tr>
+      <td><b>${esc(p.code)}</b>${p.desc ? `<br><span class="small">${esc(p.desc)}</span>` : ''}</td>
+      <td><b>${rewards.join(', ') || '—'}</b></td>
+      <td><b>${maxUsesStr}</b></td>
+      <td>
+        ${link ? `<button class="sec" data-copy-link="${esc(link)}" style="font-size:11px;padding:4px 8px">🔗 Havolani nusxalash</button>` : '<span class="small">Havola uchun «Taklif» bo\'limida bot username kiriting</span>'}
+        <button class="sec" data-copy-link="${esc(p.code)}" style="font-size:11px;padding:4px 8px;margin-top:4px">📋 Kodni nusxalash</button>
+      </td>
+      <td class="small">${p.expiresAt ? new Date(p.expiresAt).toLocaleString() : 'Cheksiz'}</td>
+      <td>${statusTag}</td>
+      <td><button class="bad" data-del-promo="${esc(p.code)}">×</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="small">Hozircha promokodlar yo\'q. Yangi promokod yarating!</td></tr>';
+
+  $('pmBody').querySelectorAll('[data-copy-link]').forEach(b => {
+    b.onclick = () => {
+      navigator.clipboard && navigator.clipboard.writeText(b.dataset.copyLink).then(() => {
+        flash('Nusxalandi: ' + b.dataset.copyLink);
+      });
+    };
+  });
+
+  $('pmBody').querySelectorAll('[data-del-promo]').forEach(b => {
+    b.onclick = guard(async () => {
+      if (!confirm("Ushbu promokodni o'chirmoqchimisiz?")) return;
+      await api('deletePromo', { code: b.dataset.delPromo });
+      flash("Promokod o'chirildi");
+      await loadPromos();
+    });
+  });
+}
+
+if ($('pmRefresh')) $('pmRefresh').onclick = guard(loadPromos);
+
+if ($('pmGenCode')) {
+  $('pmGenCode').onclick = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let res = 'VB-';
+    for (let i = 0; i < 6; i++) res += chars[Math.floor(Math.random() * chars.length)];
+    $('pmCode').value = res;
+  };
+}
+
+if ($('pmSave')) {
+  $('pmSave').onclick = guard(async () => {
+    const code = ($('pmCode').value || '').trim().toUpperCase();
+    if (!code) return flash('Promokod kodini kiriting', false);
+
+    const promo = {
+      code,
+      desc: $('pmDesc').value.trim(),
+      maxUses: +$('pmMaxUses').value || 0,
+      expiresAt: $('pmExpiry').value ? new Date($('pmExpiry').value).getTime() : 0,
+      xp: +$('pmXp').value || 0,
+      coins: +$('pmCoins').value || 0,
+      spins: +$('pmSpins').value || 0,
+      vipHours: +$('pmVip').value || 0,
+      streakSaver: +$('pmSaver').value || 0,
+      enabled: true
+    };
+    if ($('pmExpiry').value && promo.expiresAt < Date.now()) return flash('Tugash sanasi o\'tib ketgan', false);
+
+    if (!(promo.xp || promo.coins || promo.spins || promo.vipHours || promo.streakSaver)) {
+      return flash('Kamida bitta sovg\'a miqdorini kiriting (XP, tanga, spin, VIP yoki streak saver)', false);
+    }
+
+    await api('savePromo', { promo });
+    flash(`«${code}» promokodi muvaffaqiyatli saqlandi va faollashtirildi ✅`);
+    $('pmCode').value = '';
+    $('pmDesc').value = '';
+    await loadPromos();
+  });
+}
+
+if (document.querySelector('#tabs button[data-t="survey"]')) {
+  document.querySelector('#tabs button[data-t="survey"]').addEventListener('click', () => {
+    loadSurvey();
+    loadFeedback();
+  });
+}
+if (document.querySelector('#tabs button[data-t="promo"]')) {
+  document.querySelector('#tabs button[data-t="promo"]').addEventListener('click', () => {
+    loadPromos();
+  });
+}
 </script>
 </body>
 </html>

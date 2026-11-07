@@ -1,4 +1,4 @@
-export type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2+';
+export type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'B2+';
 export type DailyGoalMinutes = number;
 export type Track = 'comm' | 'ielts' | 'both';
 export type WordTrack = 'comm' | 'ielts' | 'acad';

@@ -136,7 +136,7 @@ export const handler = async event => {
         tpl = 'consistent';
         title = `${n} kunlik uzluksiz streak`;
         reason = `Har kuni mashq qilib, ${n} kun ketma-ket o'z maqsadingizdan chekinmadingiz`;
-      } else if (kind === 'level' && ['A1', 'A2', 'B1', 'B2+'].includes(String(body.level))) {
+      } else if (kind === 'level' && ['A1', 'A2', 'B1', 'B2', 'B2+', 'C1', 'C2'].includes(String(body.level))) {
         if (Number(lb.mastered) < 20) return json(409, { error: "Yodlangan so'zlar hali kam", retry: true });
         tpl = 'wisdom';
         title = `${body.level} darajasi to'liq yodlandi`;

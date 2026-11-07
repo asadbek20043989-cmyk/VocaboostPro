@@ -313,7 +313,7 @@ export const statsFromLb = lb => {
   if (!lb || typeof lb !== 'object') return undefined;
   const words = Math.max(Number(lb.mastered) || 0, 0) || Math.max(Number(lb.learned) || 0, 0);
   const streak = Math.max(0, Number(lb.streak) || 0);
-  const lvl = ['A1', 'A2', 'B1', 'B2', 'B2+', 'C1'].includes(String(lb.level)) ? String(lb.level) : '';
+  const lvl = ['A1', 'A2', 'B1', 'B2', 'B2+', 'C1', 'C2'].includes(String(lb.level)) ? String(lb.level) : '';
   if (!words && !streak && !lvl) return undefined;
   return { ...(lvl ? { lvl } : {}), ...(words ? { words } : {}), ...(streak ? { streak } : {}) };
 };

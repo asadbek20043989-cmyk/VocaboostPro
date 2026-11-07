@@ -40,9 +40,133 @@ const WheelArt: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+interface LevelTheme {
+  name: string;
+  ielts: string;
+  badge: string;
+  icon: string;
+  containerBg: string;
+  border: string;
+  iconBg: string;
+  titleColor: string;
+  quote: string;
+  btnBg: string;
+  statsBg: string;
+  tagColor: string;
+  tagBg: string;
+}
+
+const LEVEL_THEMES: Record<string, LevelTheme> = {
+  A1: {
+    name: "A1 · Boshlang'ich",
+    ielts: "IELTS 2.0-3.0",
+    badge: "🌱 A1 · Beginner",
+    icon: "🌱",
+    containerBg: "from-[#092218]/95 via-[#0e1c18]/85 to-[#0E1524]",
+    border: "border-emerald-500/40 shadow-emerald-950/40",
+    iconBg: "from-emerald-400 to-teal-500 text-slate-950 shadow-emerald-500/30",
+    titleColor: "text-emerald-400",
+    quote: "Katta maqsadlar birinchi so'zlardan boshlanadi 🌱",
+    btnBg: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25",
+    statsBg: "bg-[#091f16]/70 border-emerald-500/25",
+    tagColor: "text-emerald-300",
+    tagBg: "bg-emerald-500/15 border-emerald-500/30",
+  },
+  A2: {
+    name: "A2 · Elementary",
+    ielts: "IELTS 3.5-4.0",
+    badge: "⚡ A2 · Elementary",
+    icon: "⚡",
+    containerBg: "from-[#081e33]/95 via-[#0b1928]/85 to-[#0E1524]",
+    border: "border-sky-500/40 shadow-sky-950/40",
+    iconBg: "from-sky-400 to-blue-500 text-slate-950 shadow-sky-500/30",
+    titleColor: "text-sky-400",
+    quote: "Har kuni yangi iboralar bilan tezligingiz ortmoqda ⚡",
+    btnBg: "bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-sky-500/25",
+    statsBg: "bg-[#091b2c]/70 border-sky-500/25",
+    tagColor: "text-sky-300",
+    tagBg: "bg-sky-500/15 border-sky-500/30",
+  },
+  B1: {
+    name: "B1 · Intermediate",
+    ielts: "IELTS 4.5-5.0",
+    badge: "🔮 B1 · Intermediate",
+    icon: "🔮",
+    containerBg: "from-[#1a1438]/95 via-[#141228]/85 to-[#0E1524]",
+    border: "border-indigo-500/40 shadow-indigo-950/40",
+    iconBg: "from-indigo-400 to-purple-500 text-slate-950 shadow-indigo-500/30",
+    titleColor: "text-indigo-400",
+    quote: "Erkin muloqot va mustaqil fikrlash bosqichidasiz 🔮",
+    btnBg: "bg-indigo-500 hover:bg-indigo-400 text-white shadow-indigo-500/25",
+    statsBg: "bg-[#16122e]/70 border-indigo-500/25",
+    tagColor: "text-indigo-300",
+    tagBg: "bg-indigo-500/15 border-indigo-500/30",
+  },
+  B2: {
+    name: "B2 · Upper-Intermediate",
+    ielts: "IELTS 5.5-6.5",
+    badge: "🔥 B2 · Upper-Int",
+    icon: "🔥",
+    containerBg: "from-[#291708]/95 via-[#1d140e]/85 to-[#0E1524]",
+    border: "border-amber-500/40 shadow-amber-950/40",
+    iconBg: "from-amber-400 to-orange-500 text-slate-950 shadow-amber-500/30",
+    titleColor: "text-amber-400",
+    quote: "Professional ingliz tili va yuqori marralar sari 🔥",
+    btnBg: "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25",
+    statsBg: "bg-[#211409]/70 border-amber-500/25",
+    tagColor: "text-amber-300",
+    tagBg: "bg-amber-500/15 border-amber-500/30",
+  },
+  'B2+': {
+    name: "B2 · Upper-Intermediate",
+    ielts: "IELTS 5.5-6.5",
+    badge: "🔥 B2 · Upper-Int",
+    icon: "🔥",
+    containerBg: "from-[#291708]/95 via-[#1d140e]/85 to-[#0E1524]",
+    border: "border-amber-500/40 shadow-amber-950/40",
+    iconBg: "from-amber-400 to-orange-500 text-slate-950 shadow-amber-500/30",
+    titleColor: "text-amber-400",
+    quote: "Professional ingliz tili va yuqori marralar sari 🔥",
+    btnBg: "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25",
+    statsBg: "bg-[#211409]/70 border-amber-500/25",
+    tagColor: "text-amber-300",
+    tagBg: "bg-amber-500/15 border-amber-500/30",
+  },
+  C1: {
+    name: "C1 · Advanced",
+    ielts: "IELTS 7.0-8.0",
+    badge: "💎 C1 · Advanced",
+    icon: "💎",
+    containerBg: "from-[#2e0b1d]/95 via-[#1e0d19]/85 to-[#0E1524]",
+    border: "border-rose-500/40 shadow-rose-950/40",
+    iconBg: "from-rose-400 to-pink-500 text-slate-950 shadow-rose-500/30",
+    titleColor: "text-rose-400",
+    quote: "Akademik so'z boyligi va nozik grammatik mahorat 💎",
+    btnBg: "bg-rose-500 hover:bg-rose-400 text-white shadow-rose-500/25",
+    statsBg: "bg-[#240b19]/70 border-rose-500/25",
+    tagColor: "text-rose-300",
+    tagBg: "bg-rose-500/15 border-rose-500/30",
+  },
+  C2: {
+    name: "C2 · Proficiency / Master",
+    ielts: "IELTS 8.5-9.0",
+    badge: "👑 C2 · Master",
+    icon: "👑",
+    containerBg: "from-[#092233]/95 via-[#1f0e2e]/85 to-[#0E1524]",
+    border: "border-fuchsia-500/40 shadow-fuchsia-950/40",
+    iconBg: "from-cyan-300 via-fuchsia-400 to-amber-300 text-slate-950 shadow-fuchsia-500/30",
+    titleColor: "text-fuchsia-300",
+    quote: "Ingliz tili cho'qqisi — ona tili darajasidagi mahorat 👑",
+    btnBg: "bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 text-slate-950 shadow-fuchsia-500/25",
+    statsBg: "bg-[#1a0c28]/70 border-fuchsia-500/25",
+    tagColor: "text-fuchsia-300",
+    tagBg: "bg-fuchsia-500/15 border-fuchsia-500/30",
+  },
+};
+
 export const HomeTab: React.FC = () => {
   const {
-    profile, bank, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
+    profile, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
     openLearn, setActiveTab, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
@@ -98,47 +222,100 @@ export const HomeTab: React.FC = () => {
         <ChevronRight className="w-5 h-5 text-violet-400 shrink-0" />
       </button>
 
-      {/* Bugungi mashq */}
-      <section className="rounded-3xl bg-gradient-to-br from-[#1B2433] to-[#121822] border border-slate-800 p-5 space-y-4 shadow-xl shadow-black/20">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="keep-dark w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 text-slate-950 flex items-center justify-center shadow-md shadow-amber-500/30 shrink-0"><Target className="w-5 h-5" /></span>
-            <div className="min-w-0">
-              <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-amber-400">Kunlik reja · {profile.level}</div>
-              <h2 className="text-lg font-extrabold leading-tight text-white">Bugungi mashq</h2>
+      {/* Bugungi mashq — Har bir daraja uchun o'ziga xos dizayn va motivatsiya */}
+      {(() => {
+        const curLvl = profile.level || 'B1';
+        const lt = LEVEL_THEMES[curLvl] || LEVEL_THEMES.B1;
+        const levelWords = bank.filter(w => (w.level === curLvl || (curLvl === 'B2' && w.level === 'B2+')));
+        const levelMastered = levelWords.filter(w => srs[w.id]?.mastered).length;
+        const levelPct = levelWords.length ? Math.round((levelMastered / levelWords.length) * 100) : 0;
+
+        return (
+          <section className={`rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-5 space-y-4 shadow-xl transition-all relative overflow-hidden`}>
+            {/* Orqa fon nur effekti */}
+            <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${lt.iconBg} flex items-center justify-center text-xl shadow-md shrink-0`}>
+                  {lt.icon}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase border ${lt.tagBg} ${lt.tagColor}`}>
+                      {lt.badge}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">· {lt.ielts}</span>
+                  </div>
+                  <h2 className="text-lg font-black leading-tight text-white mt-1">Bugungi mashq</h2>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-2xl font-black text-white tabular-nums leading-none">{introducedToday}</div>
+                <div className="text-[10px] text-slate-400 mt-1">bugun o&apos;rganildi</div>
+              </div>
             </div>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="text-xl font-black text-white tabular-nums leading-none">{introducedToday}</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">bugun o&apos;rganildi</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-[#0E1524] border border-slate-800 p-3">
-            <div className="text-2xl font-extrabold text-sky-400 tabular-nums">{newQueue.length}</div>
-            <div className="text-[11px] text-slate-400">yangi so&apos;z</div>
-          </div>
-          <div className="rounded-2xl bg-[#0E1524] border border-slate-800 p-3">
-            <div className="text-2xl font-extrabold text-emerald-400 tabular-nums">{dueWords.length}</div>
-            <div className="text-[11px] text-slate-400">takrorlash kerak</div>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => { triggerHaptic('medium'); openLearn(); }}
-          disabled={allDone}
-          className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-400 text-slate-950 font-extrabold text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all"
-        >
-          {allDone ? <><CheckCircle2 className="w-5 h-5" /> Bugungi reja bajarildi</> : <><Play className="w-5 h-5 fill-slate-950" /> Mashqni boshlash</>}
-        </button>
-        {todayPacks.length > 0 && (
-          <div className="flex items-center gap-2 rounded-xl bg-sky-500/10 border border-sky-500/30 px-3 py-2 text-[11px] text-sky-300">
-            <BookMarked className="w-4 h-4 shrink-0" />
-            <span className="truncate">Bugungi lug‘at: <b>{todayPacks.map(p => p.title).join(', ')}</b></span>
-          </div>
-        )}
-        {allDone && <p className="text-[11px] text-slate-400 text-center">Ajoyib! O&apos;yinlar bo&apos;limida so&apos;zlarni mustahkamlang yoki ertaga qayting.</p>}
-      </section>
+
+            {/* Daraja bo'yicha motivatsion shior */}
+            <div className="relative px-3 py-1.5 rounded-xl bg-black/25 border border-white/5 text-[11px] text-slate-300 flex items-center gap-2">
+              <span className="text-sm shrink-0">✨</span>
+              <span className="truncate">{lt.quote}</span>
+            </div>
+
+            {/* Daraja so'zlarini to'liq yodlash progressi */}
+            {levelWords.length > 0 && (
+              <div className="relative rounded-2xl p-3 bg-black/30 border border-white/10 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium">
+                    {curLvl} darajasi lug&apos;ati: <b className="text-white">{levelMastered} / {levelWords.length}</b> yodlandi
+                  </span>
+                  <span className={`font-extrabold ${lt.titleColor}`}>{levelPct}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-black/50 overflow-hidden">
+                  <div className={`h-full bg-gradient-to-r ${lt.iconBg} transition-all duration-500`} style={{ width: `${levelPct}%` }} />
+                </div>
+                {levelMastered >= levelWords.length && levelWords.length >= 5 ? (
+                  <div className="text-[10px] text-amber-300 font-bold flex items-center gap-1 pt-0.5">
+                    🎉 Ushbu daraja to&apos;liq yakunlandi! Keyingi levelga o&apos;tiladi.
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-slate-400">
+                    Barcha so&apos;zlarni to&apos;liq yodlaganingizda darajangiz avtomatik oshiriladi!
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="relative grid grid-cols-2 gap-3">
+              <div className={`rounded-2xl border p-3 ${lt.statsBg}`}>
+                <div className="text-2xl font-extrabold text-sky-400 tabular-nums">{newQueue.length}</div>
+                <div className="text-[11px] text-slate-400">yangi so&apos;z</div>
+              </div>
+              <div className={`rounded-2xl border p-3 ${lt.statsBg}`}>
+                <div className="text-2xl font-extrabold text-emerald-400 tabular-nums">{dueWords.length}</div>
+                <div className="text-[11px] text-slate-400">takrorlash kerak</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { triggerHaptic('medium'); openLearn(); }}
+              disabled={allDone}
+              className={`w-full h-14 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2 shadow-lg disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98] transition-all ${lt.btnBg}`}
+            >
+              {allDone ? <><CheckCircle2 className="w-5 h-5" /> Bugungi reja bajarildi</> : <><Play className="w-5 h-5 fill-current" /> Mashqni boshlash</>}
+            </button>
+
+            {todayPacks.length > 0 && (
+              <div className="flex items-center gap-2 rounded-xl bg-sky-500/10 border border-sky-500/30 px-3 py-2 text-[11px] text-sky-300">
+                <BookMarked className="w-4 h-4 shrink-0" />
+                <span className="truncate">Bugungi lug‘at: <b>{todayPacks.map(p => p.title).join(', ')}</b></span>
+              </div>
+            )}
+            {allDone && <p className="text-[11px] text-slate-400 text-center">Ajoyib! O&apos;yinlar bo&apos;limida so&apos;zlarni mustahkamlang yoki ertaga qayting.</p>}
+          </section>
+        );
+      })()}
 
       <LofiPlayer />
 

@@ -4,7 +4,7 @@
 //   FIREBASE_DB_URL       — https://<project>-default-rtdb.firebaseio.com
 //   FIREBASE_DB_SECRET    — Realtime Database "Database secret" (Project settings > Service accounts > Database secrets)
 import { timingSafeEqual } from 'node:crypto';
-import { tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
+import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -48,25 +48,28 @@ export const handler = async event => {
   const now = Date.now();
   const attempt = loginAttempts.get(clientIp);
 
-  if (attempt && attempt.lockedUntil > now) {
-    const minsLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
-    return json(429, { error: `Ko'p xato urinishlar! Iltimos, ${minsLeft} daqiqadan so'ng qayta urinib ko'ring.` });
-  }
-
-  if (!safeEq(body.code || '', ADMIN_CODE)) {
-    const curCount = (attempt?.count || 0) + 1;
-    if (curCount >= 5) {
-      loginAttempts.set(clientIp, { count: curCount, lockedUntil: now + 15 * 60 * 1000 });
-      return json(429, { error: "Xavfsizlik: 5 marta xato kod kiritildi. Tizim 15 daqiqaga bloklandi." });
-    } else {
-      loginAttempts.set(clientIp, { count: curCount, lockedUntil: 0 });
+  const PUBLIC_ACTIONS = new Set(['claimPromo', 'submitRating', 'submitSurvey', 'getActiveSurvey']);
+  if (!PUBLIC_ACTIONS.has(body.action)) {
+    if (attempt && attempt.lockedUntil > now) {
+      const minsLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
+      return json(429, { error: `Ko'p xato urinishlar! Iltimos, ${minsLeft} daqiqadan so'ng qayta urinib ko'ring.` });
     }
-    await new Promise(r => setTimeout(r, 1000));
-    return json(401, { error: `Admin kodi noto'g'ri (${5 - curCount} ta urinish qoldi)` });
-  }
 
-  // To'g'ri kod kiritilganda hisoblagichni tozalaymiz
-  loginAttempts.delete(clientIp);
+    if (!safeEq(body.code || '', ADMIN_CODE)) {
+      const curCount = (attempt?.count || 0) + 1;
+      if (curCount >= 5) {
+        loginAttempts.set(clientIp, { count: curCount, lockedUntil: now + 15 * 60 * 1000 });
+        return json(429, { error: "Xavfsizlik: 5 marta xato kod kiritildi. Tizim 15 daqiqaga bloklandi." });
+      } else {
+        loginAttempts.set(clientIp, { count: curCount, lockedUntil: 0 });
+      }
+      await new Promise(r => setTimeout(r, 1000));
+      return json(401, { error: `Admin kodi noto'g'ri (${5 - curCount} ta urinish qoldi)` });
+    }
+
+    // To'g'ri kod kiritilganda hisoblagichni tozalaymiz
+    loginAttempts.delete(clientIp);
+  }
 
   const DB = FIREBASE_DB_URL.replace(/\/$/, '');
   const call = async (method, path, data) => {
@@ -292,7 +295,7 @@ export const handler = async event => {
             ex: str(w.ex, 220), exUz: str(w.exUz, 260),
             col: arrOf(w.col), fam: arrOf(w.fam),
             hook: str(w.hook, 260), topic: str(w.topic, 40),
-            level: ['A1', 'A2', 'B1', 'B2+'].includes(w.level) ? w.level : 'B1',
+            level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1',
             order: Number.isFinite(Number(w.order)) ? Number(w.order) : 100000 + i,
             published: w.published !== false,
           };
@@ -320,9 +323,16 @@ export const handler = async event => {
       // ---------- O'yinlar / baraban / umumiy sozlamalar ----------
       case 'setConfig': {
         const key = body.key;
-        if (!['games', 'wheel', 'settings', 'reminder'].includes(key)) return json(400, { error: 'Kalit xato' });
+        if (!['games', 'wheel', 'settings', 'reminder', 'shop'].includes(key)) return json(400, { error: 'Kalit xato' });
         const v = body.value;
         if (!v || typeof v !== 'object' || JSON.stringify(v).length > 40000) return json(400, { error: "Qiymat noto'g'ri yoki juda katta" });
+        if (key === 'shop') {
+          // Pastki menyu nishonlari (O'yinlar / Do'kon). Faqat navBadges yoziladi; do'kon sozlamalari (setShop) buzilmaydi.
+          const nb = v.navBadges && typeof v.navBadges === 'object' ? v.navBadges : {};
+          const clean = { games: String(nb.games || '').trim().slice(0, 12), shop: String(nb.shop || '').trim().slice(0, 12) };
+          await call('PUT', 'config/shop/navBadges', clean);
+          return json(200, { ok: true });
+        }
         if (key === 'wheel') {
           const prizes = Array.isArray(v.prizes) ? v.prizes : [];
           const active = prizes.filter(p => p && p.enabled !== false && Number(p.weight) > 0);
@@ -561,7 +571,7 @@ export const handler = async event => {
         for (let i = 0; i < targets.length; i += 200) {
           const upd = {};
           targets.slice(i, i + 200).forEach(uid => {
-            upd[`grants/${uid}/${newGid()}`] = { type, amount: n, validHours, ...(type === 'item' ? { itemId } : {}), note: String(note || '').slice(0, 80), ts, ...(notify ? { keep: true } : {}) };
+            upd[`grants/${uid}/${newGid()}`] = { type, amount: n, validHours, ...(type === 'item' ? { itemId } : {}), note: String(note || '').slice(0, 80), ts, keep: true };
             upd[`leaderboard/${uid}/hasGrant`] = true;
           });
           if (targets.length === 1 && !(await call('GET', `leaderboard/${targets[0]}/ts`))) {
@@ -616,23 +626,35 @@ export const handler = async event => {
         const items = [];
         let total = 0;
         let blocked = 0;
+        let giftedCount = 0;
         for (const [id, u] of Object.entries(tgu || {})) {
           if (!u || typeof u !== 'object' || !/^\d{3,15}$/.test(id)) continue;
           const e = lb?.[`tg_${id}`];
           if ((e && e.ts) || u.lastSeen) continue; // ilovaga kirgan
           total++;
           if (u.blocked) { blocked++; continue; }
-          items.push({ id, name: String(u.name || ''), username: String(u.username || ''), joined: Number(u.joined || u.ts) || 0 });
+          const hasGift = !!u.giftGiven || !!u.hasGift;
+          if (hasGift) giftedCount++;
+          items.push({
+            id,
+            name: String(u.name || ''),
+            username: String(u.username || ''),
+            joined: Number(u.joined || u.ts) || 0,
+            hasGift,
+            giftTime: u.giftTime || null,
+            giftName: u.giftName || '',
+          });
         }
         items.sort((a, b) => b.joined - a.joined);
-        return json(200, { items: items.slice(0, 5000), total, blocked, truncated: items.length > 5000 });
+        return json(200, { items: items.slice(0, 5000), total, blocked, giftedCount, unGiftedCount: items.length - giftedCount, truncated: items.length > 5000 });
       }
 
       // Tanlangan (yoki hamma) foydalanuvchilarga sovg'a yoki sertifikat + bot xabari. Admin panel ro'yxatni bo'laklab chaqiradi.
       // `cid` — yuborish kampaniyasi ID si: qayta urinishda bir kishiga ikki marta berilmaydi (adminState/gifts/<cid>/<tgId>).
       case 'giftSend': {
         const token = process.env.BOT_TOKEN;
-        if (!token) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const notify = body.notify !== false; // Admin belgilaydi: telegram bot orqali xabar borishi kerakmi yoki yo'q
+        if (notify && !token) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
         const cid = String(body.cid || '');
         if (!/^[A-Za-z0-9_\-]{6,40}$/.test(cid)) return json(400, { error: 'Kampaniya ID xato' });
         const g = body.gift && typeof body.gift === 'object' ? body.gift : {};
@@ -684,35 +706,45 @@ export const handler = async event => {
                   [`adminState/gifts/${cid}/${id}`]: { ts },
                 });
               }
+              // Foydalanuvchini sovg'a olgan deb belgilaymiz (alohida ajratish uchun)
+              await call('PATCH', `tgusers/${id}`, { giftGiven: true, giftTime: ts, giftName }).catch(() => {});
             } catch (e) {
               r.failed++;
               lastError = String(e.message || e);
               continue;
             }
           }
-          try {
-            await notifyGift(token, Number(id), { name: u.name, gift: giftName, id: certId, text, kind: isCert ? 'cert' : 'gift' });
+          if (notify && token) {
+            try {
+              await notifyGift(token, Number(id), { name: u.name, gift: giftName, id: certId, text, kind: isCert ? 'cert' : 'gift' });
+              r.sent++;
+              await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: true }).catch(() => {});
+            } catch (e) {
+              if (e.code === 403 || /blocked|deactivated|chat not found/i.test(String(e.message))) {
+                r.blocked++;
+                await call('PATCH', `tgusers/${id}`, { blocked: true }).catch(() => {});
+                await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: 'blocked' }).catch(() => {});
+              } else {
+                r.failed++;
+                lastError = String(e.message || e);
+              }
+            }
+          } else {
+            // Xabar yuborish o'chirilgan, faqat sovg'a berildi
             r.sent++;
             await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: true }).catch(() => {});
-          } catch (e) {
-            if (e.code === 403 || /blocked|deactivated|chat not found/i.test(String(e.message))) {
-              r.blocked++;
-              await call('PATCH', `tgusers/${id}`, { blocked: true }).catch(() => {});
-              await call('PATCH', `adminState/gifts/${cid}/${id}`, { notified: 'blocked' }).catch(() => {});
-            } else {
-              r.failed++;
-              lastError = String(e.message || e);
-            }
           }
           await new Promise(r2 => setTimeout(r2, 40));
         }
-        return json(200, { ok: true, processed, ...r, lastError });
+        return json(200, { ok: true, processed, lastError, ...r });
       }
 
       // ---------- Do'kon va taklif sozlamalari ----------
       case 'setShop': {
         const v = body.value;
         if (!v || typeof v !== 'object' || JSON.stringify(v).length > 90000) return json(400, { error: "Qiymat noto'g'ri yoki juda katta" });
+        const prevNb = await call('GET', 'config/shop/navBadges').catch(() => null);
+        if (prevNb && typeof prevNb === 'object' && !v.navBadges) v.navBadges = prevNb; // nishonlar do'kon saqlanganda o'chib ketmasin
         await call('PUT', 'config/shop', v);
         return json(200, { ok: true });
       }
@@ -1093,7 +1125,7 @@ export const handler = async event => {
           words[id] = {
             en, uz, ipa: str(w.ipa, 60), pos: str(w.pos, 20), ex: str(w.ex, 220), exUz: str(w.exUz, 260),
             col: arrOf(w.col), fam: arrOf(w.fam), hook: str(w.hook, 260), topic: str(w.topic, 40),
-            level: ['A1', 'A2', 'B1', 'B2+'].includes(w.level) ? w.level : 'B1', order: i, published: true,
+            level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1', order: i, published: true,
           };
         });
         const prev = await call('GET', `packs/${packId}/createdAt`);
@@ -1126,6 +1158,217 @@ export const handler = async event => {
         return json(200, { ok: true });
       }
 
+      // ---------- Promokodlar & Havolalar ----------
+      // Panel formati: { promo: { code, desc, maxUses (0 = cheksiz), expiresAt, xp, coins, spins, vipHours, streakSaver } }
+      case 'listPromos': {
+        const promos = (await call('GET', 'promos')) || {};
+        const items = Object.entries(promos).filter(([, p]) => p && typeof p === 'object').map(([code, p]) => {
+          const g = p.gifts || {};
+          return {
+            id: code, code, desc: p.note || '', maxUses: Number(p.maxUses) || 0, usedCount: Number(p.usedCount) || 0,
+            expiresAt: Number(p.expiresAt) || 0, active: p.active !== false, createdAt: p.createdAt || 0,
+            xp: g.xp || 0, coins: g.coins || 0, spins: g.spins || 0, vipHours: g.vipHours || 0, streakSaver: g.streakSaver || 0,
+            usersCount: Object.keys(p.users || {}).length,
+          };
+        });
+        items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        return json(200, { items });
+      }
+
+      case 'savePromo': {
+        const src = body.promo && typeof body.promo === 'object' ? body.promo : body;
+        const code = String(src.code || '').trim().toUpperCase().slice(0, 32);
+        if (!/^[A-Z0-9_\-]{3,32}$/.test(code)) return json(400, { error: "Promokod faqat lotin harflari, raqam, '-' va '_' dan iborat bo'lishi kerak (3-32 belgi)" });
+        const maxUses = Math.max(0, Math.min(1000000, Math.round(Number(src.maxUses)) || 0)); // 0 = cheksiz
+        const gs = src.gifts && typeof src.gifts === 'object' ? src.gifts : src;
+        const cleanGifts = {
+          xp: Math.max(0, Math.min(100000, Math.round(Number(gs.xp)) || 0)),
+          spins: Math.max(0, Math.min(50, Math.round(Number(gs.spins)) || 0)),
+          vipHours: Math.max(0, Math.min(720, Math.round(Number(gs.vipHours)) || 0)),
+          coins: Math.max(0, Math.min(100000000, Math.round(Number(gs.coins)) || 0)),
+          streakSaver: Math.max(0, Math.min(10, Math.round(Number(gs.streakSaver)) || 0)),
+        };
+        if (!Object.values(cleanGifts).some(x => x > 0)) return json(400, { error: 'Kamida bitta sovg\'a miqdorini kiriting' });
+        const expTs = src.expiresAt ? Date.parse(src.expiresAt) || Number(src.expiresAt) || 0 : 0;
+        const prev = (await call('GET', `promos/${code}`)) || {};
+        const promoData = {
+          code, maxUses, usedCount: Number(prev.usedCount) || 0, gifts: cleanGifts,
+          active: src.enabled !== false && src.active !== false,
+          note: String(src.desc ?? src.note ?? '').trim().slice(0, 100),
+          expiresAt: expTs > 0 ? expTs : 0,
+          createdAt: prev.createdAt || Date.now(), updatedAt: Date.now(),
+          ...(prev.users ? { users: prev.users } : {}),
+        };
+        await call('PUT', `promos/${code}`, promoData);
+        return json(200, { ok: true, code });
+      }
+
+      case 'deletePromo': {
+        const code = String(body.code || body.id || '').trim().toUpperCase();
+        if (!/^[A-Z0-9_\-]{3,32}$/.test(code)) return json(400, { error: 'Promokod kiritilmadi' });
+        await call('DELETE', `promos/${code}`);
+        return json(200, { ok: true });
+      }
+
+      // Foydalanuvchi promokodni kiritadi / havolani bosadi (ochiq amal: admin kodi shart emas, lekin Telegram imzosi tekshiriladi)
+      case 'claimPromo': {
+        const code = String(body.code || '').trim().toUpperCase().slice(0, 32);
+        const uid = String(body.uid || '').trim();
+        const name = String(body.name || "O'quvchi").trim().slice(0, 40);
+        if (!/^[A-Z0-9_\-]{3,32}$/.test(code)) return json(400, { error: "Promokod noto'g'ri kiritilgan" });
+        const bad = verifyUid(uid, body.initData);
+        if (bad) return bad;
+
+        // Atomik band qilish (ETag): "birinchi 1 kishi" bir vaqtda bosilganda ham faqat belgilangan son kishiga beriladi
+        const url = `${DB}/promos/${code}.json?auth=${encodeURIComponent(FIREBASE_DB_SECRET)}`;
+        let promo = null;
+        let reserved = false;
+        for (let attempt = 0; attempt < 8 && !reserved; attempt++) {
+          const r = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' } });
+          if (!r.ok) throw new Error(`DB xatosi ${r.status}`);
+          const etag = r.headers.get('etag');
+          promo = await r.json();
+          if (!promo || typeof promo !== 'object' || promo.active === false) return json(404, { error: 'Promokod topilmadi yoki o\'chirilgan' });
+          if (promo.expiresAt && Number(promo.expiresAt) < Date.now()) return json(400, { error: 'Promokod muddati tugagan' });
+          if (promo.users && promo.users[uid]) return json(400, { error: 'Siz ushbu promokodni oldin ishlatgansiz' });
+          const used = Number(promo.usedCount) || 0;
+          if (Number(promo.maxUses) > 0 && used >= Number(promo.maxUses)) return json(400, { error: 'Afsus, bu promokodni ulgurib olishdi — limit tugagan' });
+          const next = { ...promo, usedCount: used + 1, users: { ...(promo.users || {}), [uid]: { name, ts: Date.now() } } };
+          const w = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify(next) });
+          if (w.status === 412) continue; // boshqa kishi bir vaqtda yozdi — qayta tekshiramiz
+          if (!w.ok) throw new Error(`DB xatosi ${w.status}`);
+          reserved = true;
+        }
+        if (!reserved) return json(503, { error: "Server band, bir ozdan so'ng qayta urinib ko'ring" });
+
+        const ts = Date.now();
+        const gifts = promo.gifts || {};
+        const upd = {};
+        const note = `Promokod: ${code}`;
+        if (gifts.xp > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'xp', amount: gifts.xp, note, ts, keep: true };
+        if (gifts.spins > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'spins', amount: gifts.spins, validHours: 168, note, ts, keep: true };
+        if (gifts.vipHours > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'vip', amount: gifts.vipHours, note, ts, keep: true };
+        if (gifts.coins > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'coins', amount: gifts.coins, note, ts, keep: true };
+        for (let i = 0; i < (Number(gifts.streakSaver) || 0); i++) upd[`grants/${uid}/${newGid()}`] = { type: 'item', amount: 1, itemId: 'streak_saver', note, ts, keep: true };
+        await call('PATCH', '', upd);
+        await flagGrant(uid);
+        return json(200, { ok: true, code, gifts, message: 'Promokod muvaffaqiyatli qabul qilindi! 🎉' });
+      }
+
+      // ---------- So'rovnoma & Baholashlar ----------
+      case 'getSurvey': {
+        const survey = (await call('GET', 'config/survey')) || null;
+        return json(200, { survey });
+      }
+
+      case 'saveSurvey': {
+        const s = body.survey && typeof body.survey === 'object' ? body.survey : {};
+        const old = (await call('GET', 'config/survey')) || {};
+        const wantId = String(s.id || '');
+        const surveyData = {
+          id: /^[A-Za-z0-9_\-]{3,40}$/.test(wantId) ? wantId : 'surv_' + Date.now().toString(36),
+          title: String(s.title || '').trim().slice(0, 150),
+          desc: String(s.desc || '').trim().slice(0, 300),
+          active: s.active !== false,
+          rewardXp: Math.max(0, Math.min(1000, Math.round(Number(s.rewardXp)) || 0)),
+          rewardCoins: Math.max(0, Math.min(10000, Math.round(Number(s.rewardCoins)) || 0)),
+          questions: (Array.isArray(s.questions) ? s.questions : []).slice(0, 15).map((q, idx) => ({
+            id: /^[A-Za-z0-9_\-]{1,30}$/.test(String(q.id || '')) ? String(q.id) : `q_${idx + 1}`,
+            text: String(q.text || '').trim().slice(0, 250),
+            type: q.type === 'choice' ? 'choice' : 'text',
+            options: q.type === 'choice' && Array.isArray(q.options) ? q.options.map(o => String(o || '').trim().slice(0, 80)).filter(Boolean).slice(0, 12) : [],
+          })).filter(q => q.text && (q.type === 'text' || q.options.length >= 2)),
+          createdAt: old.id === wantId && old.createdAt ? old.createdAt : Date.now(),
+          updatedAt: Date.now(),
+        };
+        if (!surveyData.title) return json(400, { error: "So'rovnoma sarlavhasini kiriting" });
+        if (!surveyData.questions.length) return json(400, { error: "Kamida bitta savol kerak (variantli savolda kamida 2 ta variant)" });
+        await call('PUT', 'config/survey', surveyData);
+        return json(200, { ok: true, survey: surveyData });
+      }
+
+      case 'getActiveSurvey': {
+        const survey = (await call('GET', 'config/survey')) || null;
+        if (!survey || survey.active === false || !Array.isArray(survey.questions) || !survey.questions.length) return json(200, { survey: null });
+        return json(200, { survey });
+      }
+
+      case 'submitSurvey': {
+        const uid = String(body.uid || '').trim();
+        const surveyId = String(body.surveyId || '').trim();
+        const bad = verifyUid(uid, body.initData);
+        if (bad) return bad;
+        const survey = await call('GET', 'config/survey');
+        if (!survey || survey.active === false || survey.id !== surveyId) return json(400, { error: "So'rovnoma faol emas yoki yangilangan" });
+        const prev = await call('GET', `surveys/responses/${surveyId}/${uid}/ts`);
+        if (prev) return json(409, { error: "Siz bu so'rovnomada allaqachon qatnashgansiz", already: true });
+        const raw = body.answers && typeof body.answers === 'object' ? body.answers : {};
+        const answers = {};
+        for (const q of survey.questions || []) {
+          const v = String(raw[q.id] ?? '').trim().slice(0, 600);
+          if (v) answers[q.id] = v;
+        }
+        if (!Object.keys(answers).length) return json(400, { error: 'Kamida bitta savolga javob bering' });
+        const ts = Date.now();
+        await call('PUT', `surveys/responses/${surveyId}/${uid}`, {
+          uid, name: String(body.name || "O'quvchi").slice(0, 40), username: String(body.username || '').slice(0, 40), answers, ts,
+        });
+        if (survey.rewardXp > 0 || survey.rewardCoins > 0) {
+          const upd = {};
+          if (survey.rewardXp > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'xp', amount: survey.rewardXp, note: "So'rovnomada qatnashish bonusi", ts, keep: true };
+          if (survey.rewardCoins > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'coins', amount: survey.rewardCoins, note: "So'rovnoma bonusi", ts, keep: true };
+          await call('PATCH', '', upd);
+          await flagGrant(uid);
+        }
+        return json(200, { ok: true, message: "Fikringiz uchun rahmat! So'rovnoma qabul qilindi." });
+      }
+
+      case 'submitRating': {
+        const uid = String(body.uid || '').trim();
+        const bad = verifyUid(uid, body.initData);
+        if (bad) return bad;
+        const rating = Math.round(Number(body.rating));
+        if (!(rating >= 1 && rating <= 5)) return json(400, { error: 'Baho 1 dan 5 gacha bo\'lishi kerak' });
+        const criteria = {};
+        for (const k of ['vocab', 'games', 'srs', 'design']) {
+          const n = Math.round(Number(body.criteria?.[k]));
+          if (n >= 1 && n <= 5) criteria[k] = n;
+        }
+        await call('PUT', `ratings/${uid}`, {
+          uid, name: String(body.name || "O'quvchi").slice(0, 40), username: String(body.username || '').slice(0, 40),
+          rating, criteria,
+          liked: String(body.liked || '').trim().slice(0, 300),
+          text: String(body.text || '').trim().slice(0, 1000),
+          ts: Date.now(),
+        });
+        return json(200, { ok: true, message: 'Baholashingiz uchun katta rahmat! ⭐' });
+      }
+
+      case 'listFeedback': {
+        const [ratings, responses, survey] = await Promise.all([call('GET', 'ratings'), call('GET', 'surveys/responses'), call('GET', 'config/survey')]);
+        const rList = Object.entries(ratings || {}).filter(([, r]) => r && typeof r === 'object').map(([id, r]) => ({ id, ...r }));
+        rList.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        const sList = [];
+        for (const [survId, users] of Object.entries(responses || {})) {
+          if (users && typeof users === 'object') for (const [uid, resp] of Object.entries(users)) if (resp && typeof resp === 'object') sList.push({ survId, id: uid, ...resp });
+        }
+        sList.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        return json(200, { ratings: rList.slice(0, 2000), surveys: sList.slice(0, 2000), survey: survey || null });
+      }
+
+      case 'deleteFeedback': {
+        const id = String(body.id || '').trim();
+        if (!ID_RE.test(id)) return json(400, { error: 'ID xato' });
+        if (body.type === 'survey') {
+          const sid = String(body.survId || '');
+          if (!ID_RE.test(sid)) return json(400, { error: 'ID xato' });
+          await call('DELETE', `surveys/responses/${sid}/${id}`);
+        } else {
+          await call('DELETE', `ratings/${id}`);
+        }
+        return json(200, { ok: true });
+      }
+
       default:
         return json(400, { error: "Noma'lum amal" });
     }
@@ -1133,3 +1376,13 @@ export const handler = async event => {
     return json(500, { error: String(e.message || e) });
   }
 };
+
+/** Ochiq (foydalanuvchi) amallari uchun: Telegram imzosini tekshiradi, boshqa odam nomidan yuborib bo'lmaydi */
+function verifyUid(uid, initData) {
+  if (!ID_RE.test(uid)) return json(400, { error: 'Hisob ID xato' });
+  if (uid.startsWith('tg_') && process.env.BOT_TOKEN) {
+    const user = verifyInitData(initData, process.env.BOT_TOKEN);
+    if (!user || `tg_${user.id}` !== uid) return json(401, { error: 'Telegram imzosi tasdiqlanmadi' });
+  }
+  return null;
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Sun, Moon } from 'lucide-react';
+import { Volume2, VolumeX, Sun, Moon, Star, Ticket } from 'lucide-react';
 import { useSfx } from '../services/sound';
 import { useTheme } from '../services/theme';
 
@@ -63,9 +63,44 @@ export const ThemeButton: React.FC<{ className?: string }> = ({ className = '' }
   );
 };
 
-/** Tepa o'ng burchakdagi tugmalar: sovg'a (faqat bosh sahifada) + tema + tovush */
-export const HeaderActions: React.FC<{ small?: boolean; showGift?: boolean; onGiftClick?: () => void; spinsCount?: number }> = ({ small, showGift, onGiftClick, spinsCount }) => (
-  <div className="flex items-center gap-2 shrink-0">
+/** Tepa o'ng burchakdagi tugmalar: promokod + baholash + sovg'a + tema + tovush */
+export const HeaderActions: React.FC<{
+  small?: boolean;
+  showGift?: boolean;
+  onGiftClick?: () => void;
+  spinsCount?: number;
+  onRateClick?: () => void;
+  onPromoClick?: () => void;
+}> = ({ small, showGift, onGiftClick, spinsCount, onRateClick, onPromoClick }) => (
+  <div className="flex items-center gap-1.5 shrink-0">
+    {onPromoClick && (
+      <button
+        type="button"
+        data-nosfx
+        onClick={onPromoClick}
+        aria-label="Promokod"
+        title="Promokod kiritish"
+        className={`w-10 h-10 rounded-xl bg-[#151C28] border border-amber-500/30 hover:border-amber-400 text-amber-400 flex items-center justify-center active:scale-90 transition-all ${
+          small ? 'w-9 h-9' : ''
+        }`}
+      >
+        <Ticket className="w-4 h-4" />
+      </button>
+    )}
+    {onRateClick && (
+      <button
+        type="button"
+        data-nosfx
+        onClick={onRateClick}
+        aria-label="Botni baholash"
+        title="Botni baholash (5 ballik shkala)"
+        className={`w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-orange-500/15 border border-amber-400/40 hover:border-amber-400 text-amber-300 flex items-center justify-center active:scale-90 transition-all shadow-sm ${
+          small ? 'w-9 h-9' : ''
+        }`}
+      >
+        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+      </button>
+    )}
     {showGift && (
       <button
         type="button"
@@ -73,7 +108,9 @@ export const HeaderActions: React.FC<{ small?: boolean; showGift?: boolean; onGi
         onClick={onGiftClick}
         aria-label="Omadli baraban"
         title="Omadli baraban (Sovg'a)"
-        className={`relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-pink-500/15 to-purple-500/20 border border-amber-500/40 flex items-center justify-center active:scale-90 transition-all text-amber-400 hover:border-amber-400 shadow-sm ${small ? 'w-9 h-9' : ''}`}
+        className={`relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-pink-500/15 to-purple-500/20 border border-amber-500/40 flex items-center justify-center active:scale-90 transition-all text-amber-400 hover:border-amber-400 shadow-sm ${
+          small ? 'w-9 h-9' : ''
+        }`}
       >
         <span className="text-lg leading-none transform hover:scale-110 transition-transform">🎁</span>
         {typeof spinsCount === 'number' && spinsCount > 0 && (

@@ -1,6 +1,6 @@
 // (Ixtiyoriy) Botning webhook'i: /start, /stop, /remind buyruqlari. Agar botingiz boshqa joyda ishlayotgan bo'lsa, bu funksiyani ulamang.
 // O'rnatish: https://api.telegram.org/bot<BOT_TOKEN>/setWebhook?url=https://SAYT.vercel.app/api/fn/tg-webhook&secret_token=<TG_WEBHOOK_SECRET>
-import { json, parseBody, sendMessage, openAppMarkup, makeStartMarkup, makeDb, firstNameOf, processReferral, escHtml, DEFAULT_START_TEXT, DEFAULT_START_BUTTON } from '../lib/tg.mjs';
+import { json, parseBody, sendMessage, openAppMarkup, makeStartMarkup, makeDb, firstNameOf, processReferral, escHtml, siteUrl, DEFAULT_START_TEXT, DEFAULT_START_BUTTON } from '../lib/tg.mjs';
 
 export const handler = async event => {
   const token = process.env.BOT_TOKEN;
@@ -88,6 +88,15 @@ export const handler = async event => {
         const name = firstNameOf(m.from) || "do'st";
         const text = String(cfg.text || DEFAULT_START_TEXT).replace(/\{name\}/g, escHtml(name));
         await sendMessage(token, m.chat.id, text, makeStartMarkup(cfg));
+      }
+      // Promokod havolasi (t.me/<bot>?start=promo_KOD): ilova promokod oynasi ochiq holda ochiladi
+      if (/^promo_[A-Za-z0-9_\-]{3,32}$/.test(refParam) && siteUrl().startsWith('https://')) {
+        const pc = refParam.slice(6).toUpperCase();
+        try {
+          await sendMessage(token, m.chat.id, `🎟️ Promokod: <b>${escHtml(pc)}</b>\n\nSovg'angizni olish uchun pastdagi tugmani bosing 👇`, {
+            inline_keyboard: [[{ text: '🎁 Sovg\'ani olish', web_app: { url: `${siteUrl()}/?promo=${encodeURIComponent(pc)}` } }]],
+          });
+        } catch { /* ignore */ }
       }
       // Yangi foydalanuvchi: 2 minutdan (120 soniyadan) keyin Minnatdorchilik sertifikatini yuborish uchun navbat
       if (wasNew && db && id) {

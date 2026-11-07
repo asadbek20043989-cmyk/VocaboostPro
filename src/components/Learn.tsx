@@ -7,6 +7,7 @@ import { triggerHaptic } from '../services/telegram';
 import { Question, makeQuestion, chooseKind, checkTyped } from '../services/srs';
 import { sfx } from '../services/sound';
 import { HeaderActions } from './Brand';
+import { SpeakBtn } from './SpeakBtn';
 
 export const Shell: React.FC<{ title: string; sub?: string; progress?: number; onBack: () => void; children: React.ReactNode }> = ({ title, sub, progress, onBack, children }) => (
   <div className="min-h-screen bg-[#0B0F17] text-slate-100">
@@ -148,9 +149,22 @@ export const WordCard: React.FC<{ w: BankWord }> = ({ w }) => {
 
       <div className="text-lg font-semibold text-emerald-400">{w.uz}</div>
       {w.ex && (
-        <button type="button" onClick={() => speakEnglish(w.ex)} className="block w-full text-left rounded-2xl bg-[#0E1524] border border-slate-800 p-3 hover:border-slate-700 transition-all">
-          <div className="text-sm text-slate-100">{w.ex}</div>
-          <div className="text-xs text-slate-400 mt-1">{w.exUz}</div>
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('light');
+            speakEnglish(w.ex);
+          }}
+          className="group relative w-full text-left rounded-2xl bg-[#0E1524] border border-slate-800 p-3 hover:border-sky-500/50 hover:bg-[#111B2E] active:scale-[0.99] transition-all flex items-start gap-2.5"
+          title="Gap talaffuzini eshitish"
+        >
+          <span className="w-6 h-6 rounded-lg bg-sky-500/15 group-hover:bg-sky-500/25 border border-sky-500/30 text-sky-400 flex items-center justify-center shrink-0 mt-0.5 transition-colors shadow-sm" aria-label="Ovoz belgisi">
+            <Volume2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-slate-100 font-medium leading-snug">{w.ex}</div>
+            {w.exUz && <div className="text-xs text-slate-400 mt-1 leading-relaxed">{w.exUz}</div>}
+          </div>
         </button>
       )}
       {w.col.length > 0 && (
@@ -202,6 +216,11 @@ export const QuestionView: React.FC<{ q: Question; onDone: (correct: boolean) =>
           </button>
         ) : (
           <div className="text-2xl font-extrabold text-white leading-snug">{q.prompt}</div>
+        )}
+        {q.kind === 'gap' && result && q.word.ex && (
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
+            <SpeakBtn text={q.word.ex} /> <span className="text-left">{q.word.ex}</span>
+          </div>
         )}
         {q.kind === 'mcq' && (
           <button type="button" onClick={() => speakEnglish(q.word.en)} className="text-amber-400 text-xs inline-flex items-center gap-1"><Volume2 className="w-4 h-4" /> eshitish</button>

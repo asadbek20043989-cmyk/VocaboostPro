@@ -52,13 +52,17 @@ export interface Settings {
   xpCorrect: number;
   xpDailyBonus: number;
 }
-/** Daraja bo'yicha so'zlar ustuvorligi: o'z darajasi birinchi, tugasa — eng yaqin darajalar */
-const LEVEL_PREF: Record<EnglishLevel, EnglishLevel[]> = {
-  A1: ['A1', 'A2', 'B1', 'B2+'],
-  A2: ['A2', 'A1', 'B1', 'B2+'],
-  B1: ['B1', 'A2', 'B2+', 'A1'],
-  'B2+': ['B2+', 'B1', 'A2', 'A1'],
+/** Daraja bo'yicha so'zlar ustuvorligi: o'z darajasi birinchi, tugasa — eng yaqin darajalar (IELTS: A1..C2) */
+const LEVEL_PREF: Record<string, EnglishLevel[]> = {
+  A1: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+  A2: ['A2', 'B1', 'A1', 'B2', 'C1', 'C2'],
+  B1: ['B1', 'B2', 'A2', 'C1', 'A1', 'C2'],
+  B2: ['B2', 'C1', 'B1', 'C2', 'A2', 'A1'],
+  'B2+': ['B2', 'C1', 'B1', 'C2', 'A2', 'A1'],
+  C1: ['C1', 'C2', 'B2', 'B1', 'A2', 'A1'],
+  C2: ['C2', 'C1', 'B2', 'B1', 'A2', 'A1'],
 };
+export const LEVEL_ORDER: EnglishLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 /** Daraja bo'yicha so'z kam bo'lsa ham o'yin/mashqlar to'xtab qolmasligi uchun eng kam ko'rinadigan so'zlar soni */
 const MIN_LEVEL_WORDS = 40;
 const DEFAULT_SETTINGS: Settings = { reviewCap: 30, xpNewWord: 3, xpCorrect: 2, xpDailyBonus: 10 };
@@ -179,6 +183,9 @@ interface AppContextType {
   markWritingDone: () => boolean;
   today: string;
   syncReady: boolean;
+  claimGrants: () => void;
+  receivedGrants: any[] | null;
+  setReceivedGrants: (v: any[] | null) => void;
   accountId: string;
   isTelegram: boolean;
   linkAccount: (code: string) => boolean;
@@ -257,7 +264,7 @@ const normalizeBankWord = (id: string, w: any, i: number): BankWord | null => {
     hook: String(w.hook || ''),
     track: (['comm', 'ielts', 'acad'].includes(w.track) ? w.track : 'comm') as BankWord['track'],
     topic: String(w.topic || ''),
-    level: (['A1', 'A2', 'B1', 'B2+'].includes(w.level) ? w.level : 'B1') as EnglishLevel,
+    level: (['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'B2+'].includes(w.level) ? (w.level === 'B2+' ? 'B2' : w.level) : 'B1') as EnglishLevel,
     order: Number.isFinite(Number(w.order)) ? Number(w.order) : 100000 + i,
   };
 };
@@ -272,7 +279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ---------- holat ----------
   const [profile, setProfile] = useState<UserProfile>(() => {
     const stored = load<Partial<UserProfile> | null>('lx_profile_v1', null);
-    if (stored) return { ...INITIAL_PROFILE, ...stored };
+    if (stored) return { ...INITIAL_PROFILE, ...stored, level: ((stored.level as string) === 'B2+' ? 'B2' : stored.level || INITIAL_PROFILE.level) as EnglishLevel };
     return freshProfile();
   });
   // Telegram ichida: ism va profil rasmi avtomatik Telegramdagidek qo'yiladi (foydalanuvchi o'zi o'zgartirmagan bo'lsa)
@@ -312,6 +319,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [certificateView, setCertificateView] = useState<Certificate | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [receivedGrants, setReceivedGrants] = useState<any[] | null>(null);
   const pushNotice = (t: string) => {
     setNotice(t);
     setTimeout(() => setNotice(c => (c === t ? null : c)), 3800);
@@ -415,10 +423,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // So'zlar faqat versiya o'zgarganda yuklanadi (trafikni tejash uchun) va qurilmada saqlanadi
   const wordsVersion = Number(config?.wordsVersion) || 0;
+  const [wordsSynced, setWordsSynced] = useState(!realtimeEnabled); // so'zlar bazasi serverdagi bilan bir xil ekani aniq bo'lgach true
   useEffect(() => {
     if (!realtimeEnabled || !config) return;
     const cached = load<{ v: number; words: BankWord[] } | null>('lx_words_cache_v1', null);
-    if (cached && cached.v === wordsVersion && cached.words?.length) return;
+    if (cached && cached.v === wordsVersion && cached.words?.length) { setWordsSynced(true); return; }
     getJson('words')
       .then(raw => {
         const list: BankWord[] = [];
@@ -431,6 +440,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         save('lx_words_cache_v1', { v: wordsVersion, words: list, ids });
         setCloudWords(list.length ? list : null);
         setKnownIds(ids);
+        setWordsSynced(true);
       })
       .catch(() => {
         /* oflayn: keshdagi yoki boshlang'ich so'zlar ishlatiladi */
@@ -443,7 +453,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (base.length >= MIN_BANK) return base;
     const ids = new Set<string>([...base.map(w => w.id), ...knownIds]);
     const ens = new Set(base.map(w => w.en.toLowerCase()));
-    const extra = STARTER_WORDS.filter(w => !ids.has(w.id) && !ens.has(w.en.toLowerCase()));
+    const extra = STARTER_WORDS.filter(w => !ids.has(w.id) && !ens.has(w.en.toLowerCase())).map(w => ((w.level as string) === 'B2+' ? { ...w, level: 'B2' as EnglishLevel } : w));
     return [...base, ...extra];
   }, [cloudWords, knownIds]);
   const bankFromCloud = !!(cloudWords && cloudWords.length);
@@ -1140,7 +1150,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         // Eski «xpset» sovg'alari endi qo'llanmaydi: admin XP o'zgartirishi Liga yozuvidagi `adj` orqali (farq sifatida) ishlaydi.
       });
-      if (list.length) setGrantsDone(prev => Array.from(new Set([...prev, ...list.map(g => g.id)])));
+      if (list.length) {
+        setGrantsDone(prev => Array.from(new Set([...prev, ...list.map(g => g.id)])));
+        setReceivedGrants(list);
+      }
       setGrantsReady(true);
       if (j.more) setTimeout(() => claimGrants(), 1500); // yana sovg'a qolgan (ko'p bo'lsa bo'laklab olinadi)
     } catch {
@@ -1743,15 +1756,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const list: Cand[] = [];
     [7, 14, 30].forEach(n => profile.streak >= n && list.push({ kind: 'streak', key: String(n), n }));
     [10, 25, 50].forEach(n => duelWins >= n && list.push({ kind: 'duel', key: String(n), n }));
-    (['A1', 'A2', 'B1', 'B2+'] as const).forEach(L => {
-      const ws = mainBank.filter(w => w.level === L);
-      if (ws.length >= 20 && ws.every(w => srs[w.id]?.mastered)) list.push({ kind: 'level', key: L.replace('+', 'p'), level: L });
+    (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const).forEach(L => {
+      const ws = mainBank.filter(w => (w.level === L || (L === 'B2' && w.level === 'B2+')) && w.published !== false);
+      if (ws.length >= 20 && ws.every(w => srs[w.id]?.mastered)) list.push({ kind: 'level', key: L === 'B2' ? 'B2p' : L, level: L });
     });
     packs.forEach(p => {
       if (p.kind === 'open' && p.words.length >= 5 && p.words.every(w => srs[w.id]?.mastered)) list.push({ kind: 'pack', key: p.id.slice(0, 30), title: p.title });
     });
     return list;
   }, [profile.streak, duelWins, mainBank, packs, srs]);
+
+  // Foydalanuvchi joriy darajadagi lug'atlarni to'liq yodlab tugatganda avtomatik keyingi levelga o'tkazish
+  const autoLevelChecked = useRef<string>('');
+  useEffect(() => {
+    if (!profile.hasCompletedOnboarding || !syncReady || !wordsSynced) return; // admin so'zlari to'liq kelmasdan turib daraja oshirilmasin
+    const curLevel = (profile.level === 'B2+' ? 'B2' : profile.level) as EnglishLevel;
+    const curIdx = LEVEL_ORDER.indexOf(curLevel);
+    if (curIdx < 0 || curIdx >= LEVEL_ORDER.length - 1) return; // Eng oxirgi C2 darajada
+
+    const curWords = mainBank.filter(w => ((w.level || 'B1') === curLevel || (curLevel === 'B2' && w.level === 'B2+')) && w.published !== false);
+    if (curWords.length < 5) return; // kamida 5 ta so'z bo'lsa
+
+    const allMastered = curWords.every(w => srs[w.id]?.mastered);
+    const key = `${curLevel}_${curWords.length}`;
+    if (allMastered && autoLevelChecked.current !== key) {
+      autoLevelChecked.current = key;
+      const nextLevel = LEVEL_ORDER[curIdx + 1];
+      setProfile(p => ({ ...p, level: nextLevel, updatedAt: nowMs() }));
+      pushNotice(`🏆 TABRIKLAYMIZ! Siz ${curLevel} darajasi lug'atlarini to'liq yodladingiz! Yangi darajangiz: ${nextLevel} 🚀`);
+    }
+  }, [profile.level, profile.hasCompletedOnboarding, mainBank, srs, syncReady, wordsSynced]);
   useEffect(() => {
     if (!realtimeEnabled || !syncReady || !profile.hasCompletedOnboarding || awardBusy.current || !awardCandidates.length) return;
     const done = new Set<string>(load<string[]>('lx_awards_v1', []));
@@ -2081,6 +2115,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
+        claimGrants, receivedGrants, setReceivedGrants,
       }}
     >
       {children}

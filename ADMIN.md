@@ -301,3 +301,10 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 - Ilgari `grants` sovg'alarni birin-ketin olardi: 100+ sovg'a bo'lsa Vercel 60 soniya chegarasidan oshib, sovg'alar serverda «olingan» deb belgilanib, ilovaga yetmay **jimgina yo'qolardi** (masalan, ko'p do'st taklif qilgan foydalanuvchi XP sini to'liq ololmasdi).
 - Endi 10 tadan parallel olinadi, vaqt tugasa qolgani keyingi so'rovda (ilova o'zi qayta so'raydi) olinadi. Do'st taklifi XP si ham `keep` belgisiga ega: 7 kundan keyin yo'qolmaydi.
 - Eslatma: bu tuzatishdan **oldin** yo'qolgan sovg'alar o'z-o'zidan qaytmaydi. Admin → Sozlamalar → «Foydalanuvchiga sovg'a» orqali kamini qo'lda berish mumkin.
+
+## Yangi bo'limlar (v5.5)
+
+- **⭐ Baholar & So'rovnoma** — foydalanuvchilar ilovadagi «Botni baholash» (⭐) tugmasi orqali qoldirgan 5 ballik baholar, mezonlar va yozma taklif/shikoyatlar; shuningdek admin tuzadigan qisqa so'rovnoma (variantli va yozma savollar) va uning javoblari.
+- **🎟️ Promokodlar** — kod yoki havola (`https://t.me/<bot>?start=promo_KOD`) yarating: nechta kishi (0 = cheksiz), tugash vaqti va sovg'alar (XP, tanga, baraban, VIP, streak himoyasi) admin belgilaydi. Havola Telegram kanalga yoki ilovaga joylanadi. Botda `/start promo_KOD` ishlashi uchun `tg-webhook` ulangan bo'lishi kerak; «Taklif» bo'limida bot username kiritilgan bo'lsin.
+- **Darajalar** — IELTS: A1, A2, B1, B2, C1, C2. «So'zlar» bo'limida `.txt` fayl (`word - tarjima`) daraja tanlab yuklanadi. Foydalanuvchi joriy daraja so'zlarini to'liq yodlasa, daraja avtomatik oshadi.
+- **Sovg'alar** — har yuborishda «Telegram bot orqali xabar yuborilsin» katagi bor; o'chirilsa ham sovg'a ilova ochilganda avtomatik beriladi. /start bosganlar «sovg'a olgan / olmagan» deb ajratiladi.

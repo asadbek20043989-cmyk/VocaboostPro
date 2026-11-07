@@ -3,6 +3,7 @@ import { Volume2, Mic, Square, X, Sparkles, Check, BookmarkPlus, Loader2, PenLin
 import { useApp } from '../context/AppContext';
 import { SavedWord } from '../types';
 import { speakEnglish, isRecognitionAvailable, startListening, compareSpeech, stopSpeaking } from '../services/speech';
+import { SpeakBtn } from './SpeakBtn';
 import { callAI } from '../services/ai';
 import { triggerHaptic } from '../services/telegram';
 import { sfx } from '../services/sound';
@@ -148,7 +149,7 @@ export const XRay: React.FC<{ sentence: string; onClose: () => void }> = ({ sent
 
   return (
     <Shell title="Grammatik rentgen" icon={<Sparkles className="w-4 h-4 text-violet-400" />} onClose={onClose}>
-      <div className="p-3 rounded-xl bg-[#151C28] border border-slate-800 text-sm text-slate-100 leading-relaxed">{sentence}</div>
+      <div className="p-3 rounded-xl bg-[#151C28] border border-slate-800 text-sm text-slate-100 leading-relaxed flex items-start gap-2.5"><SpeakBtn text={sentence} className="mt-0.5" /><span>{sentence}</span></div>
       {loading && (
         <div className="py-10 flex flex-col items-center gap-2 text-slate-400 text-xs">
           <Loader2 className="w-6 h-6 animate-spin text-violet-400" /> Gap tahlil qilinmoqda...
@@ -261,7 +262,7 @@ export const ClozeTest: React.FC<{ words: SavedWord[]; onClose: () => void }> = 
   return (
     <Shell title={`Gapni to‘ldiring · ${i + 1}/${questions.length}`} icon={<PenLine className="w-4 h-4 text-amber-400" />} onClose={onClose}>
       <p className="text-[11px] text-slate-400 mb-3">Siz o‘qigan kitobdagi gap. Bo‘sh joyga mos so‘zni tanlang.</p>
-      <div className="p-4 rounded-2xl bg-[#151C28] border border-slate-800 text-lg leading-relaxed text-white">“{q.sentence}”</div>
+      <div className="p-4 rounded-2xl bg-[#151C28] border border-slate-800 text-lg leading-relaxed text-white">“{q.sentence}”{picked && q.w.contextSentence && <SpeakBtn text={q.w.contextSentence} className="ml-2" />}</div>
       <div className="mt-4 space-y-2.5">
         {q.options.map(o => {
           const right = o === answerOf(q);
