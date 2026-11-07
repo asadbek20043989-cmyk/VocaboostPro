@@ -254,6 +254,11 @@
         <div class="row"><button id="gSave">Saqlash</button><button class="sec" id="gReset">Standart holatga qaytarish</button></div>
       </div>
       <div class="card" style="margin-top:16px">
+        <h2>🖼️ Daraja ikonkalari ("Bugungi mashq" kartasi)</h2>
+        <p class="small">Har bir daraja oldidagi rasmni o'zgartiring. Rasm avtomatik 96×96 ga kichraytiriladi (PNG, JPG yoki WEBP). «Standart» tugmasi asl emoji belgisini qaytaradi.</p>
+        <div id="liBox" class="grid"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
         <h2>🏷️ Pastki menyu nishonlari (O'yinlar va Do'kon badge)</h2>
         <p class="small">Pastki asosiy menyudagi <b>O'yinlar</b> va <b>Do'kon</b> tugmalari ustiga ko'rsatiladigan yorqin nishon (badge). Rasmda ko'rsatilganidek ikkala tugmaga ham o'rnatiladi. Bo'sh qoldirsangiz olib tashlanadi.</p>
         <div class="grid">
@@ -791,6 +796,8 @@
           <div><label>👑 VIP muddati (soat)</label><input id="pmVip" type="number" min="0" value="24" /></div>
           <div><label>❄️ Streak himoyasi (muzlatgich)</label><input id="pmSaver" type="number" min="0" value="1" /></div>
         </div>
+        <label style="margin-top:12px;display:block">🛍️ Do'kondagi sovg'alar (ixtiyoriy, bir nechtasini belgilash mumkin)</label>
+        <div id="pmShopList" style="display:flex;flex-wrap:wrap;gap:6px;max-height:190px;overflow:auto;padding:8px;border:1px solid var(--bd,#2a3550);border-radius:12px"></div>
 
         <div class="row" style="margin-top:14px">
           <button id="pmSave">🚀 Promokodni yaratish va e'lon qilish</button>
@@ -859,7 +866,7 @@ async function load() {
     renderAll();
   } catch (e) { flash(e.message, false); }
 }
-function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderNavBadges(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); loadPromos(); loadSurvey(); loadFeedback(); }
+function renderAll() { loadEmojis(); loadInbox(); loadHall(); loadBotStart(); loadThanksCert(); loadChals(); renderPacks(); if ($('ch_pack') && !chEditId) chFillPacks($('ch_pack').value); renderCertText(); renderUsers(); renderRemind(); renderAd(); renderStats(); renderWords(); renderPlan(); renderGames(); renderNavBadges(); renderLevelIcons(); renderWheel(); renderPool(); renderLeague(); renderCerts(); renderSettings(); renderShop(); renderCoins(); renderRefs(); loadOrders(); loadPromos(); loadSurvey(); loadFeedback(); }
 const dailyFor = d => (data.config.daily || {})[d] || {};
 
 /* ---------- umumiy ---------- */
@@ -1080,6 +1087,41 @@ $('gSave').onclick = guard(async () => {
 });
 $('gReset').onclick = guard(async () => { if (!confirm("Barcha o'yin sozlamalari standart holatga qaytarilsinmi?")) return; await api('setConfig', { key: 'games', value: { _reset: true } }); flash('Qaytarildi ✅'); await load(); });
 
+
+/* ---------- Daraja ikonkalari ---------- */
+const LI_LEVELS = [['A1','🌱'],['A2','🚀'],['B1','🔮'],['B2','🎯'],['B2+','⚡'],['C1','👑'],['C2','💎']];
+function renderLevelIcons() {
+  const box = $('liBox');
+  if (!box) return;
+  const cur = data.config?.levelIcons || {};
+  box.innerHTML = LI_LEVELS.map(([lv, em]) => {
+    const img = cur[lv.replace('+', 'plus')];
+    return `<div style="border:1px solid var(--line);border-radius:12px;padding:10px">
+      <b>${lv}</b>
+      <div style="margin:8px 0;width:56px;height:56px;border-radius:14px;overflow:hidden;background:#1b2433;display:flex;align-items:center;justify-content:center;font-size:26px">${img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : em}</div>
+      <input type="file" accept="image/png,image/jpeg,image/webp" data-li-file="${lv}" style="padding:4px;max-width:100%">
+      <div class="row" style="margin-top:6px"><button class="sec small" data-li-reset="${lv}" ${img ? '' : 'disabled'}>Standart</button></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-li-file]').forEach(inp => {
+    inp.onchange = guard(async () => {
+      const f = inp.files[0];
+      if (!f) return;
+      const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+      const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Rasm o\'qilmadi')); i.src = url; });
+      const S = 96, c = document.createElement('canvas'); c.width = c.height = S;
+      const ctx = c.getContext('2d'), m = Math.min(im.width, im.height);
+      ctx.drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, S, S);
+      const out = c.toDataURL('image/webp', 0.85);
+      await api('setLevelIcon', { level: inp.dataset.liFile, image: out.startsWith('data:image/webp') ? out : c.toDataURL('image/png') });
+      flash(`${inp.dataset.liFile} ikonkasi yangilandi ✅`);
+      await load();
+    });
+  });
+  box.querySelectorAll('[data-li-reset]').forEach(b => {
+    b.onclick = guard(async () => { await api('setLevelIcon', { level: b.dataset.liReset, image: '' }); flash('Standart ikonka qaytarildi'); await load(); });
+  });
+}
 function renderNavBadges() {
   const nb = data.config?.shop?.navBadges || data.config?.shop?.badges || {};
   if ($('nb_games')) $('nb_games').value = nb.games || '';
@@ -2228,7 +2270,15 @@ if ($('svRefreshResponses')) $('svRefreshResponses').onclick = guard(loadFeedbac
 /* ---------- 🎟️ Promokodlar ---------- */
 let promosList = [];
 
+function drawPromoShopPicker() {
+  const box = $('pmShopList');
+  if (!box) return;
+  const keep = new Set([...box.querySelectorAll('input:checked')].map(i => i.value));
+  box.innerHTML = allShopItemsList().map(([id, title]) => `<label class="chk" style="display:inline-flex;gap:5px;align-items:center;padding:4px 8px;border:1px solid #2a3550;border-radius:10px;font-size:12px;cursor:pointer"><input type="checkbox" value="${esc(id)}" ${keep.has(id) ? 'checked' : ''}>${esc(title)}</label>`).join('');
+}
+
 async function loadPromos() {
+  drawPromoShopPicker();
   try {
     const r = await api('listPromos');
     promosList = r.items || [];
@@ -2251,6 +2301,7 @@ function renderPromos() {
     if (p.spins) rewards.push(`🎡 ${p.spins} spin`);
     if (p.vipHours) rewards.push(`👑 ${p.vipHours}h VIP`);
     if (p.streakSaver) rewards.push(`❄️ ${p.streakSaver} himoya`);
+    (p.shopItems || []).forEach(id => { const f = allShopItemsList().find(x => x[0] === id); rewards.push(`🛍️ ${esc(f ? f[1] : id)}`); });
 
     const usedCount = p.usedCount || 0;
     const maxUsesStr = p.maxUses > 0 ? `${usedCount} / ${p.maxUses}` : `${usedCount} / cheksiz`;
@@ -2323,18 +2374,20 @@ if ($('pmSave')) {
       spins: +$('pmSpins').value || 0,
       vipHours: +$('pmVip').value || 0,
       streakSaver: +$('pmSaver').value || 0,
+      shopItems: [...document.querySelectorAll('#pmShopList input:checked')].map(i => i.value),
       enabled: true
     };
     if ($('pmExpiry').value && promo.expiresAt < Date.now()) return flash('Tugash sanasi o\'tib ketgan', false);
 
-    if (!(promo.xp || promo.coins || promo.spins || promo.vipHours || promo.streakSaver)) {
-      return flash('Kamida bitta sovg\'a miqdorini kiriting (XP, tanga, spin, VIP yoki streak saver)', false);
+    if (!(promo.xp || promo.coins || promo.spins || promo.vipHours || promo.streakSaver || promo.shopItems.length)) {
+      return flash('Kamida bitta sovg\'a kiriting (XP, tanga, spin, VIP, streak saver yoki do\'kon sovg\'asi)', false);
     }
 
     await api('savePromo', { promo });
     flash(`«${code}» promokodi muvaffaqiyatli saqlandi va faollashtirildi ✅`);
     $('pmCode').value = '';
     $('pmDesc').value = '';
+    document.querySelectorAll('#pmShopList input:checked').forEach(i => { i.checked = false; });
     await loadPromos();
   });
 }

@@ -79,7 +79,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-[#111726] border border-amber-500/30 rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md bg-[#151C28] border border-amber-500/30 rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}

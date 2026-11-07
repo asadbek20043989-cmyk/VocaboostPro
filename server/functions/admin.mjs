@@ -320,6 +320,21 @@ export const handler = async event => {
         return json(200, { ok: true });
       }
 
+      // ---------- Daraja ikonkalari (admin rasm yuklaydi; brauzer 96x96 ga kichraytirib yuboradi) ----------
+      case 'setLevelIcon': {
+        const lvl = String(body.level || '');
+        if (!['A1', 'A2', 'B1', 'B2', 'B2+', 'C1', 'C2'].includes(lvl)) return json(400, { error: 'Daraja xato' });
+        const key = lvl.replace('+', 'plus');
+        const img = String(body.image || '');
+        if (!img) {
+          await call('DELETE', `config/levelIcons/${key}`);
+          return json(200, { ok: true, removed: true });
+        }
+        if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(img) || img.length > 60000) return json(400, { error: 'Rasm noto\'g\'ri yoki juda katta (PNG/JPG/WEBP, kichik hajmda)' });
+        await call('PUT', `config/levelIcons/${key}`, img);
+        return json(200, { ok: true });
+      }
+
       // ---------- O'yinlar / baraban / umumiy sozlamalar ----------
       case 'setConfig': {
         const key = body.key;
@@ -1168,6 +1183,7 @@ export const handler = async event => {
             id: code, code, desc: p.note || '', maxUses: Number(p.maxUses) || 0, usedCount: Number(p.usedCount) || 0,
             expiresAt: Number(p.expiresAt) || 0, active: p.active !== false, createdAt: p.createdAt || 0,
             xp: g.xp || 0, coins: g.coins || 0, spins: g.spins || 0, vipHours: g.vipHours || 0, streakSaver: g.streakSaver || 0,
+            shopItems: Array.isArray(g.shopItems) ? g.shopItems : [],
             usersCount: Object.keys(p.users || {}).length,
           };
         });
@@ -1188,11 +1204,14 @@ export const handler = async event => {
           coins: Math.max(0, Math.min(100000000, Math.round(Number(gs.coins)) || 0)),
           streakSaver: Math.max(0, Math.min(10, Math.round(Number(gs.streakSaver)) || 0)),
         };
-        if (!Object.values(cleanGifts).some(x => x > 0)) return json(400, { error: 'Kamida bitta sovg\'a miqdorini kiriting' });
+        // Do'kondagi sovg'alar (mahsulot ID lari): promokod ularni ham beradi
+        const rawItems = Array.isArray(gs.shopItems) ? gs.shopItems : (gs.shopItem ? [gs.shopItem] : []);
+        const shopItems = [...new Set(rawItems.map(x => String(x || '').trim()).filter(x => /^[A-Za-z0-9_\-]{1,64}$/.test(x)))].slice(0, 10);
+        if (!Object.values(cleanGifts).some(x => x > 0) && !shopItems.length) return json(400, { error: 'Kamida bitta sovg\'a miqdorini kiriting' });
         const expTs = src.expiresAt ? Date.parse(src.expiresAt) || Number(src.expiresAt) || 0 : 0;
         const prev = (await call('GET', `promos/${code}`)) || {};
         const promoData = {
-          code, maxUses, usedCount: Number(prev.usedCount) || 0, gifts: cleanGifts,
+          code, maxUses, usedCount: Number(prev.usedCount) || 0, gifts: { ...cleanGifts, shopItems },
           active: src.enabled !== false && src.active !== false,
           note: String(src.desc ?? src.note ?? '').trim().slice(0, 100),
           expiresAt: expTs > 0 ? expTs : 0,
@@ -1250,6 +1269,9 @@ export const handler = async event => {
         if (gifts.vipHours > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'vip', amount: gifts.vipHours, note, ts, keep: true };
         if (gifts.coins > 0) upd[`grants/${uid}/${newGid()}`] = { type: 'coins', amount: gifts.coins, note, ts, keep: true };
         for (let i = 0; i < (Number(gifts.streakSaver) || 0); i++) upd[`grants/${uid}/${newGid()}`] = { type: 'item', amount: 1, itemId: 'streak_saver', note, ts, keep: true };
+        for (const iid of (Array.isArray(gifts.shopItems) ? gifts.shopItems : []).slice(0, 10)) {
+          if (/^[A-Za-z0-9_\-]{1,64}$/.test(String(iid))) upd[`grants/${uid}/${newGid()}`] = { type: 'item', amount: 1, itemId: String(iid), note, ts, keep: true };
+        }
         await call('PATCH', '', upd);
         await flagGrant(uid);
         return json(200, { ok: true, code, gifts, message: 'Promokod muvaffaqiyatli qabul qilindi! 🎉' });

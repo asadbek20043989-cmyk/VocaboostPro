@@ -20,7 +20,7 @@ export const StreakPopup: React.FC = () => {
     <div className="fixed inset-0 z-[130] flex items-center justify-center px-6 bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={close}>
       <div
         onClick={e => e.stopPropagation()}
-        className={`sp-pop w-full max-w-xs rounded-3xl border p-6 text-center shadow-2xl ${
+        className={`keep-dark sp-pop w-full max-w-xs rounded-3xl border p-6 text-center shadow-2xl ${
           frozen ? 'bg-gradient-to-b from-[#0E2236] to-[#0B1220] border-cyan-400/40' : 'bg-gradient-to-b from-[#2A1A0A] to-[#0B1220] border-amber-400/40'
         }`}
       >

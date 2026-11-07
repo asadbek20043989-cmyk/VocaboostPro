@@ -175,7 +175,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
 export const HomeTab: React.FC = () => {
   const {
     profile, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
-    openLearn, setActiveTab, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
+    openLearn, setActiveTab, levelIcons, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
@@ -200,7 +200,7 @@ export const HomeTab: React.FC = () => {
   const hasBanner = (profile.own || []).includes('banner') && !!profile.banner && !!BANNERS[profile.banner as string];
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-3.5 pb-6">
       {/* Header */}
       <header className={`relative flex items-center justify-between gap-3 ${hasBanner ? 'overflow-hidden rounded-2xl p-3' : 'pt-2.5 pl-1.5'}`}>
         {hasBanner && <><div className="vb-banner absolute inset-0" style={{ background: BANNERS[profile.banner as string].bg }} aria-hidden /><div className="absolute inset-0 bg-black/35" aria-hidden /></>}
@@ -220,16 +220,6 @@ export const HomeTab: React.FC = () => {
         </div>
       </header>
 
-      {/* Jihozlarim: bir bosishda ramka, mavzu, unvon va boshqa bezaklar */}
-      <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl p-3 flex items-center gap-3 bg-gradient-to-r from-violet-500/15 via-fuchsia-500/10 to-amber-500/15 border border-violet-400/40 active:scale-[0.98] transition-all">
-        <span className="keep-dark w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30 shrink-0"><Sparkles className="w-5 h-5 text-white" /></span>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-extrabold text-white">Jihozlarim</div>
-          <div className="text-[11px] text-slate-400 truncate">Ramka, ilova mavzusi, unvon va nik rangi{(profile.own || []).length ? ` · ${(profile.own || []).filter(x => !x.startsWith('av:')).length} ta mahsulot` : ''}</div>
-        </div>
-        <ChevronRight className="w-5 h-5 text-violet-400 shrink-0" />
-      </button>
-
       {/* Bugungi mashq — Har bir daraja uchun o'ziga xos dizayn va motivatsiya */}
       {(() => {
         const curLvl = profile.level || 'B1';
@@ -239,14 +229,16 @@ export const HomeTab: React.FC = () => {
         const levelPct = levelWords.length ? Math.round((levelMastered / levelWords.length) * 100) : 0;
 
         return (
-          <section style={{ '--vb-tint': lt.tint } as React.CSSProperties} className={`vb-today rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-5 space-y-4 shadow-xl transition-all relative overflow-hidden`}>
+          <section style={{ '--vb-tint': lt.tint } as React.CSSProperties} className={`vb-today rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-4 space-y-3 shadow-xl transition-all relative overflow-hidden`}>
             {/* Orqa fon nur effekti */}
             <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-white/5 blur-2xl pointer-events-none" />
 
             <div className="relative flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <span className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${lt.iconBg} flex items-center justify-center text-xl shadow-md shrink-0`}>
-                  {lt.icon}
+                <span className={`w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br ${lt.iconBg} flex items-center justify-center text-xl shadow-md shrink-0`}>
+                  {levelIcons[curLvl.replace('+', 'plus')]
+                    ? <img src={levelIcons[curLvl.replace('+', 'plus')]} alt={curLvl} width={48} height={48} draggable={false} className="w-full h-full object-cover" />
+                    : lt.icon}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -264,44 +256,29 @@ export const HomeTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Daraja bo'yicha motivatsion shior */}
-            <div className="relative px-3 py-1.5 rounded-xl bg-black/25 border border-white/5 text-[11px] text-slate-300 flex items-center gap-2">
-              <span className="text-sm shrink-0">✨</span>
-              <span className="truncate">{lt.quote}</span>
-            </div>
-
-            {/* Daraja so'zlarini to'liq yodlash progressi */}
+            {/* Daraja so'zlarini yodlash progressi (ixcham) */}
             {levelWords.length > 0 && (
-              <div className="relative rounded-2xl p-3 bg-black/30 border border-white/10 space-y-1.5">
+              <div className="relative space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-300 font-medium">
-                    {curLvl} darajasi lug&apos;ati: <b className="text-white">{levelMastered} / {levelWords.length}</b> yodlandi
+                    {curLvl} lug&apos;ati: <b className="text-white">{levelMastered} / {levelWords.length}</b> yodlandi
                   </span>
                   <span className={`font-extrabold ${lt.titleColor}`}>{levelPct}%</span>
                 </div>
-                <div className="vb-track h-2 rounded-full bg-black/50 overflow-hidden">
-                  <div className={`h-full bg-gradient-to-r ${lt.iconBg} transition-all duration-500`} style={{ width: `${levelPct}%` }} />
+                <div className="vb-track h-1.5 rounded-full bg-black/50 overflow-hidden">
+                  <div className={`h-full bg-gradient-to-r ${lt.iconBg} transition-all duration-500`} style={{ width: `${Math.max(levelPct, levelMastered > 0 ? 2 : 0)}%` }} />
                 </div>
-                {levelMastered >= levelWords.length && levelWords.length >= 5 ? (
-                  <div className="text-[10px] text-amber-300 font-bold flex items-center gap-1 pt-0.5">
-                    🎉 Ushbu daraja to&apos;liq yakunlandi! Keyingi levelga o&apos;tiladi.
-                  </div>
-                ) : (
-                  <div className="text-[10px] text-slate-400">
-                    Barcha so&apos;zlarni to&apos;liq yodlaganingizda darajangiz avtomatik oshiriladi!
-                  </div>
-                )}
               </div>
             )}
 
-            <div className="relative grid grid-cols-2 gap-3">
-              <div className={`rounded-2xl border p-3 ${lt.statsBg}`}>
-                <div className="text-2xl font-extrabold text-sky-400 tabular-nums">{newQueue.length}</div>
-                <div className="text-[11px] text-slate-400">yangi so&apos;z</div>
+            <div className="relative grid grid-cols-2 gap-2.5">
+              <div className={`rounded-2xl border px-3 py-2 flex items-center gap-2.5 ${lt.statsBg}`}>
+                <div className="text-2xl font-extrabold text-sky-400 tabular-nums leading-none">{newQueue.length}</div>
+                <div className="text-[11px] leading-tight text-slate-400">yangi<br />so&apos;z</div>
               </div>
-              <div className={`rounded-2xl border p-3 ${lt.statsBg}`}>
-                <div className="text-2xl font-extrabold text-emerald-400 tabular-nums">{dueWords.length}</div>
-                <div className="text-[11px] text-slate-400">takrorlash kerak</div>
+              <div className={`rounded-2xl border px-3 py-2 flex items-center gap-2.5 ${lt.statsBg}`}>
+                <div className="text-2xl font-extrabold text-emerald-400 tabular-nums leading-none">{dueWords.length}</div>
+                <div className="text-[11px] leading-tight text-slate-400">takrorlash<br />kerak</div>
               </div>
             </div>
 
@@ -309,7 +286,7 @@ export const HomeTab: React.FC = () => {
               type="button"
               onClick={() => { triggerHaptic('medium'); openLearn(); }}
               disabled={allDone}
-              className={`w-full h-14 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2 shadow-lg disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98] transition-all ${lt.btnBg}`}
+              className={`w-full h-12 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2 shadow-lg disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98] transition-all ${lt.btnBg}`}
             >
               {allDone ? <><CheckCircle2 className="w-5 h-5" /> Bugungi reja bajarildi</> : <><Play className="w-5 h-5 fill-current" /> Mashqni boshlash</>}
             </button>
@@ -324,6 +301,13 @@ export const HomeTab: React.FC = () => {
           </section>
         );
       })()}
+
+      {/* Jihozlarim: ixcham qator */}
+      <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl px-3 h-12 flex items-center gap-2.5 bg-[#151C28] border border-violet-400/30 active:scale-[0.98] transition-all">
+        <span className="keep-dark w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4 text-white" /></span>
+        <span className="text-sm font-extrabold text-white flex-1 truncate">Jihozlarim</span>
+        <ChevronRight className="w-4 h-4 text-violet-400 shrink-0" />
+      </button>
 
       <LofiPlayer />
 

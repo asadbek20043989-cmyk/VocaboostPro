@@ -145,6 +145,7 @@ interface AppContextType {
   grantReferralSpin: () => boolean;
   // tanga, do'kon, taklif
   coins: number;
+  levelIcons: Record<string, string>;
   catalog: ShopItem[];
   shopConf: ShopCfg;
   buyItem: (id: string) => { ok: boolean; error?: string; reveal?: string };
@@ -833,6 +834,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ---------- do'kon: katalog, sotib olish, bezaklar, taklif ----------
   const shopConf = useMemo(() => shopCfg(config?.shop), [config]);
   const catalog = useMemo(() => buildCatalog(config?.shop), [config]);
+  const levelIcons: Record<string, string> = useMemo(() => (config?.levelIcons && typeof config.levelIcons === 'object' ? config.levelIcons : {}), [config]);
   const catalogRef = useRef<ShopItem[]>([]);
   catalogRef.current = catalog;
   coinRateRef.current = shopConf.coinPerXp;
@@ -2112,7 +2114,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dailyQuests, badges, games, settings, activeTab, setActiveTab, overlay, openLearn, openGame, closeOverlay,
         goBack, canGoBack, packs, todayPacks, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
-        freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
+        freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
         claimGrants, receivedGrants, setReceivedGrants,

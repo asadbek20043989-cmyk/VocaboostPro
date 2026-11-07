@@ -9,7 +9,7 @@ interface PromoModalProps {
 }
 
 export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClose }) => {
-  const { profile, accountId, claimGrants } = useApp();
+  const { profile, accountId, claimGrants, catalog } = useApp();
   const [code, setCode] = useState(initialCode);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -53,7 +53,7 @@ export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-sm bg-[#111726] border border-amber-500/40 rounded-3xl p-5 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-sm bg-[#151C28] border border-amber-500/40 rounded-3xl p-5 shadow-2xl overflow-hidden">
         {/* Yuqori orqa fon nur */}
         <div className="absolute -top-12 -left-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
 
@@ -100,6 +100,15 @@ export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClos
                   <span>+{claimedRewards.coins.toLocaleString()}</span>
                 </div>
               )}
+              {(Array.isArray(claimedRewards.shopItems) ? claimedRewards.shopItems : []).map((id: string) => {
+                const it = catalog.find(x => x.id === id);
+                return (
+                  <div key={id} className="flex items-center justify-between text-xs font-bold text-pink-300">
+                    <span>🛍️ Do&apos;kon sovg&apos;asi:</span>
+                    <span>{it ? `${it.icon} ${it.title}` : id}</span>
+                  </div>
+                );
+              })}
               {claimedRewards.streakSaver > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-sky-300">
                   <span>❄️ Streak muzlatgich:</span>

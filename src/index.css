@@ -432,10 +432,88 @@ html[data-skin="snow"]:not(.light) nav { border-top-color: rgb(186 230 253 / .45
 
 /* «Bugungi mashq» kartasi — kun rejimida (daraja rangi bilan och fon) */
 html.light .vb-today { background: linear-gradient(135deg, #FFFFFF 0%, var(--vb-tint) 100%) !important; box-shadow: 0 8px 24px rgb(15 23 42 / 0.08); }
-html.light .vb-today [class*="bg-black/"], html.light .vb-today [class*="bg-[#0"] { background-color: rgb(255 255 255 / 0.72) !important; border-color: rgb(15 23 42 / 0.1) !important; }
+html.light .vb-today [class*="bg-black/"], html.light .vb-today [class*="bg-[#"] { background-color: rgb(255 255 255 / 0.72) !important; border-color: rgb(15 23 42 / 0.1) !important; }
 html.light .vb-today .vb-track { background-color: rgb(15 23 42 / 0.12) !important; }
 html.light .vb-today .text-slate-300, html.light .vb-today .text-slate-400 { color: #475569; }
 html.light .vb-today button.text-white { color: #FFFFFF; }
 html.light .vb-today .text-indigo-300, html.light .vb-today .text-indigo-400 { color: #4338CA; }
 html.light .vb-today .text-fuchsia-300 { color: #A21CAF; }
 html.light .vb-today .text-rose-300, html.light .vb-today .text-rose-400 { color: #BE123C; }
+
+
+/* =====================================================================
+   SARLAVHA: premium tugmalar (bir xil o'lcham, teng masofa, yaltiroq effekt) va tasdiq belgisi
+   ===================================================================== */
+.vb-hbtn { --hb-a:#16255a; --hb-b:#0c1743; --hb-bd:rgb(99 130 255 / .55); --hb-glow:rgb(59 91 255 / .35); --d:0s;
+  position:relative; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:1rem; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--hb-bd); background:linear-gradient(160deg,var(--hb-a),var(--hb-b));
+  box-shadow:0 0 14px var(--hb-glow), inset 0 1px 0 rgb(255 255 255 / .14); transition:transform .15s, box-shadow .2s, border-color .2s; }
+.vb-hbtn--sm { width:2.5rem; height:2.5rem; border-radius:.95rem; }
+.vb-hbtn svg { width:1.3rem; height:1.3rem; stroke-width:2; flex:none; }
+.vb-hbtn:hover { box-shadow:0 0 20px var(--hb-glow), inset 0 1px 0 rgb(255 255 255 / .2); }
+.vb-hbtn:active { transform:scale(.92); }
+.vb-hbtn::after { content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgb(255 255 255 / .3) 50%,transparent 65%); background-size:250% 100%; background-position:150% 0;
+  animation:vb-hb-shine 4.8s ease-in-out var(--d) infinite; }
+@keyframes vb-hb-shine { 0%,55% { background-position:150% 0; } 100% { background-position:-50% 0; } }
+.vb-hbtn--star { --hb-a:#2b2f44; --hb-b:#1a1d2e; --hb-bd:rgb(251 191 36 / .5); --hb-glow:rgb(251 191 36 / .22); }
+.vb-hbtn--gift { --hb-a:#7c3aed; --hb-b:#3b0f8f; --hb-bd:#c026d3; --hb-glow:rgb(192 38 211 / .55); }
+html.light .vb-hbtn { --hb-a:#EEF2FF; --hb-b:#E0E7FF; --hb-bd:#A5B4FC; --hb-glow:rgb(99 102 241 / .2); box-shadow:0 2px 8px var(--hb-glow), inset 0 1px 0 #fff; }
+html.light .vb-hbtn--star { --hb-a:#FFFBEB; --hb-b:#FEF3C7; --hb-bd:#FCD34D; --hb-glow:rgb(245 158 11 / .22); }
+html.light .vb-hbtn--gift { --hb-a:#F3E8FF; --hb-b:#E9D5FF; --hb-bd:#C084FC; --hb-glow:rgb(168 85 247 / .3); }
+.vb-hbadge { position:absolute; top:-.4rem; right:-.4rem; min-width:1.15rem; height:1.15rem; padding:0 .25rem; border-radius:9999px; z-index:2;
+  background:#ef4444; color:#fff; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; box-shadow:0 0 8px rgb(239 68 68 / .7); }
+html.light .vb-hbadge { color:#fff; }
+
+.vb-logo-ring { display:inline-flex; padding:2px; border-radius:9999px; background:linear-gradient(135deg,#38bdf8,#6366f1 55%,#a855f7); box-shadow:0 0 14px rgb(99 102 241 / .5); flex:none; }
+.vb-logo-ring img { background:#0B0F17; }
+html.light .vb-logo-ring img { background:#fff; }
+.vb-verified { flex:none; color:#38bdf8; fill:rgb(56 189 248 / .22); animation:vb-verified-glow 2.6s ease-in-out infinite; }
+html.light .vb-verified { color:#0284C7; fill:rgb(2 132 199 / .15); }
+@keyframes vb-verified-glow { 0%,100% { filter:drop-shadow(0 0 3px rgb(56 189 248 / .55)); } 50% { filter:drop-shadow(0 0 9px rgb(56 189 248 / 1)); } }
+.vb-coin-chip { height:2.75rem; border-radius:1rem; padding:0 .85rem; border:1px solid rgb(251 191 36 / .55); background:linear-gradient(160deg,rgb(120 70 10 / .55),rgb(60 35 5 / .55));
+  box-shadow:0 0 14px rgb(251 191 36 / .25), inset 0 1px 0 rgb(255 255 255 / .12); }
+html.light .vb-coin-chip { background:linear-gradient(160deg,#FFFBEB,#FEF3C7); border-color:#FCD34D; box-shadow:0 2px 8px rgb(245 158 11 / .22), inset 0 1px 0 #fff; }
+@media (prefers-reduced-motion: reduce) { .vb-hbtn::after, .vb-verified { animation:none; } }
+
+/* =====================================================================
+   KUN REJIMI: qo'shimcha tuzatishlar (modal oynalar, to'q sirtlar, yetishmagan ranglar)
+   ===================================================================== */
+html.light [class*="bg-[#111726]"], html.light [class*="bg-[#18202F]"] { background-color: #FFFFFF; }
+html.light [class*="bg-[#121B2B]"], html.light [class*="bg-[#121B2A]"], html.light [class*="bg-[#151E2E]"], html.light [class*="bg-[#111B2E]"] { background-color: #F1F5F9; }
+html.light [class*="bg-[#1F2B3E]"] { background-color: #E2E8F0; }
+html.light [class*="hover:bg-[#111B2E]"]:hover { background-color: #E2E8F0; }
+html.light .to-\[\#0E1524\] { --tw-gradient-to: #EAEFF6; }
+html.light .bg-black\/70, html.light .bg-black\/75 { background-color: rgb(15 23 42 / 0.55); }
+html.light .text-yellow-400 { color: #A16207; }
+html.light .text-purple-300, html.light .text-purple-400 { color: #7E22CE; }
+html.light .text-indigo-200 { color: #3730A3; }
+html.light .text-pink-300\/80, html.light .text-pink-200 { color: #BE185D; }
+html.light .bg-slate-950 { background-color: #E2E8F0; }
+html.light .bg-white\/5, html.light .bg-white\/10 { background-color: rgb(15 23 42 / 0.05); }
+html.light .border-white\/10, html.light .border-white\/5 { border-color: rgb(15 23 42 / 0.1); }
+
+/* To'q rangda qoladigan bloklar (keep-dark): kulrang shkala va aksent ranglar asl holiga qaytadi */
+html.light .keep-dark {
+  --color-white: #FFFFFF;
+  --color-slate-100: #f1f5f9; --color-slate-200: #e2e8f0; --color-slate-300: #cad5e2; --color-slate-400: #90a1b9;
+  --color-slate-500: #62748e; --color-slate-600: #45556c; --color-slate-700: #314158; --color-slate-800: #1d293d; --color-slate-900: #0f172b;
+  color: #F8FAFC;
+}
+html.light .keep-dark .text-amber-400 { color: #FBBF24; } html.light .keep-dark .fill-amber-400 { fill: #FBBF24; }
+html.light .keep-dark .text-emerald-300, html.light .keep-dark .text-emerald-400 { color: #6EE7B7; }
+html.light .keep-dark .text-emerald-100, html.light .keep-dark .text-emerald-200 { color: #A7F3D0; }
+html.light .keep-dark .text-rose-300, html.light .keep-dark .text-rose-400 { color: #FDA4AF; }
+html.light .keep-dark .text-rose-100, html.light .keep-dark .text-rose-200 { color: #FECDD3; }
+html.light .keep-dark .text-sky-300, html.light .keep-dark .text-sky-400 { color: #7DD3FC; }
+html.light .keep-dark .text-sky-200 { color: #BAE6FD; }
+html.light .keep-dark .text-cyan-200, html.light .keep-dark .text-cyan-400 { color: #67E8F9; }
+html.light .keep-dark .text-violet-300, html.light .keep-dark .text-violet-400, html.light .keep-dark .text-purple-300 { color: #C4B5FD; }
+html.light .keep-dark .text-orange-400, html.light .keep-dark .text-orange-500 { color: #FB923C; }
+html.light .keep-dark .text-yellow-200, html.light .keep-dark .text-yellow-300, html.light .keep-dark .text-yellow-400 { color: #FDE047; }
+html.light .keep-dark .text-green-300, html.light .keep-dark .text-green-400 { color: #86EFAC; }
+html.light .keep-dark .text-red-300, html.light .keep-dark .text-red-400 { color: #FCA5A5; }
+html.light .keep-dark.to-\[\#0E1524\] { --tw-gradient-to: #0E1524; }
+html.light .keep-dark [class*="bg-[#0B0F17]"], html.light .keep-dark [class*="bg-[#151C28]"], html.light .keep-dark [class*="bg-[#0E1524]"] { background-color: rgb(15 23 42 / 0.6); }
+html.light .keep-dark .bg-black\/70, html.light .keep-dark .bg-black\/30 { background-color: rgb(0 0 0 / 0.3); }
+html.light .keep-dark [class*="border-slate-"] { border-color: rgb(148 163 184 / 0.3); }

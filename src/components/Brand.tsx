@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Sun, Moon, Star, Ticket } from 'lucide-react';
+import { Volume2, VolumeX, Sun, Moon, Star, Ticket, Gift, BadgeCheck } from 'lucide-react';
 import { useSfx } from '../services/sound';
 import { useTheme } from '../services/theme';
 
@@ -17,18 +17,21 @@ export const Logo: React.FC<{ className?: string; glow?: boolean }> = ({ classNa
   />
 );
 
-/** Logotip + nom (tepa panel uchun) */
+/** Logotip + nom + rasmiy tasdiq belgisi (tepa panel uchun) */
 export const BrandMark: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <div className={`flex items-center gap-2 min-w-0 ${className}`}>
-    <Logo className="w-8 h-8 shrink-0" />
-    <span className="text-[15px] font-extrabold tracking-tight text-white truncate">
+  <div className={`flex items-center gap-2.5 min-w-0 ${className}`}>
+    <span className="vb-logo-ring"><Logo className="w-10 h-10 shrink-0" /></span>
+    <span className="text-[17px] font-extrabold tracking-tight text-white truncate">
       Voca<span className="text-amber-400">Boost</span>
     </span>
+    <BadgeCheck className="vb-verified w-5 h-5" strokeWidth={2.2} aria-label="Rasmiy tasdiqlangan" role="img" />
   </div>
 );
 
-/** Tovush effektlarini o'chirish/yoqish tugmasi (yuqori o'ng burchak) */
-export const SoundButton: React.FC<{ className?: string }> = ({ className = '' }) => {
+const hb = (extra = '', small?: boolean) => `vb-hbtn ${small ? 'vb-hbtn--sm' : ''} ${extra} text-amber-400`;
+
+/** Tovush effektlarini o'chirish/yoqish tugmasi */
+export const SoundButton: React.FC<{ className?: string; small?: boolean }> = ({ className = '', small }) => {
   const [on, setOn] = useSfx();
   return (
     <button
@@ -38,15 +41,16 @@ export const SoundButton: React.FC<{ className?: string }> = ({ className = '' }
       aria-label={on ? "Tovushni o'chirish" : 'Tovushni yoqish'}
       aria-pressed={!on}
       title={on ? "Tovushni o'chirish" : 'Tovushni yoqish'}
-      className={`w-10 h-10 rounded-xl bg-[#151C28] border border-slate-800 flex items-center justify-center active:scale-90 transition-all ${on ? 'text-amber-400' : 'text-slate-500'} ${className}`}
+      style={{ ['--d' as any]: '3.6s' }}
+      className={`${hb('', small)} ${on ? '' : 'opacity-70'} ${className}`}
     >
-      {on ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+      {on ? <Volume2 /> : <VolumeX />}
     </button>
   );
 };
 
-/** Kun / Tun rejimi tugmasi (yuqori o'ng burchak) */
-export const ThemeButton: React.FC<{ className?: string }> = ({ className = '' }) => {
+/** Kun / Tun rejimi tugmasi */
+export const ThemeButton: React.FC<{ className?: string; small?: boolean }> = ({ className = '', small }) => {
   const [theme, setTheme] = useTheme();
   const light = theme === 'light';
   return (
@@ -56,23 +60,25 @@ export const ThemeButton: React.FC<{ className?: string }> = ({ className = '' }
       onClick={() => setTheme(light ? 'dark' : 'light')}
       aria-label={light ? 'Tun rejimiga o‘tish' : 'Kun rejimiga o‘tish'}
       title={light ? 'Tun rejimi' : 'Kun rejimi'}
-      className={`w-10 h-10 rounded-xl bg-[#151C28] border border-slate-800 flex items-center justify-center active:scale-90 transition-all text-amber-400 ${className}`}
+      style={{ ['--d' as any]: '2.7s' }}
+      className={`${hb('', small)} ${className}`}
     >
-      {light ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+      {light ? <Moon /> : <Sun />}
     </button>
   );
 };
 
-/** Tepa o'ng burchakdagi tugmalar: promokod + baholash + sovg'a + tema + tovush */
+/** Tepa panel tugmalari: promokod + baholash + sovg'a + tema + tovush (hammasi bir xil o'lcham va uslubda) */
 export const HeaderActions: React.FC<{
   small?: boolean;
+  spread?: boolean; // to'liq kenglikda teng masofa bilan joylashtirish
   showGift?: boolean;
   onGiftClick?: () => void;
   spinsCount?: number;
   onRateClick?: () => void;
   onPromoClick?: () => void;
-}> = ({ small, showGift, onGiftClick, spinsCount, onRateClick, onPromoClick }) => (
-  <div className="flex items-center gap-1.5 shrink-0">
+}> = ({ small, spread, showGift, onGiftClick, spinsCount, onRateClick, onPromoClick }) => (
+  <div className={spread ? 'flex items-center justify-between w-full' : 'flex items-center gap-2 shrink-0'}>
     {onPromoClick && (
       <button
         type="button"
@@ -80,11 +86,9 @@ export const HeaderActions: React.FC<{
         onClick={onPromoClick}
         aria-label="Promokod"
         title="Promokod kiritish"
-        className={`w-10 h-10 rounded-xl bg-[#151C28] border border-amber-500/30 hover:border-amber-400 text-amber-400 flex items-center justify-center active:scale-90 transition-all ${
-          small ? 'w-9 h-9' : ''
-        }`}
+        className={hb('', small)}
       >
-        <Ticket className="w-4 h-4" />
+        <Ticket />
       </button>
     )}
     {onRateClick && (
@@ -94,11 +98,10 @@ export const HeaderActions: React.FC<{
         onClick={onRateClick}
         aria-label="Botni baholash"
         title="Botni baholash (5 ballik shkala)"
-        className={`w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-orange-500/15 border border-amber-400/40 hover:border-amber-400 text-amber-300 flex items-center justify-center active:scale-90 transition-all shadow-sm ${
-          small ? 'w-9 h-9' : ''
-        }`}
+        style={{ ['--d' as any]: '0.9s' }}
+        className={hb('vb-hbtn--star', small)}
       >
-        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+        <Star className="fill-amber-400" />
       </button>
     )}
     {showGift && (
@@ -108,19 +111,14 @@ export const HeaderActions: React.FC<{
         onClick={onGiftClick}
         aria-label="Omadli baraban"
         title="Omadli baraban (Sovg'a)"
-        className={`relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-pink-500/15 to-purple-500/20 border border-amber-500/40 flex items-center justify-center active:scale-90 transition-all text-amber-400 hover:border-amber-400 shadow-sm ${
-          small ? 'w-9 h-9' : ''
-        }`}
+        style={{ ['--d' as any]: '1.8s' }}
+        className={hb('vb-hbtn--gift', small)}
       >
-        <span className="text-lg leading-none transform hover:scale-110 transition-transform">🎁</span>
-        {typeof spinsCount === 'number' && spinsCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-[10px] font-black text-slate-950 flex items-center justify-center shadow-md animate-pulse">
-            {spinsCount}
-          </span>
-        )}
+        <Gift />
+        {typeof spinsCount === 'number' && spinsCount > 0 && <span className="vb-hbadge">{spinsCount}</span>}
       </button>
     )}
-    <ThemeButton className={small ? 'w-9 h-9' : ''} />
-    <SoundButton className={small ? 'w-9 h-9' : ''} />
+    <ThemeButton small={small} />
+    <SoundButton small={small} />
   </div>
 );

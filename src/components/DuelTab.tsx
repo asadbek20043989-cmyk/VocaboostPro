@@ -160,7 +160,7 @@ const BlitzDuelModal: React.FC<{ bank: BankWord[]; blitzLeft: number; consumeBli
 
   return (
     <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#182232] to-[#0E1524] border border-amber-500/40 p-5 space-y-4 shadow-2xl relative">
+      <div className="keep-dark w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#182232] to-[#0E1524] border border-amber-500/40 p-5 space-y-4 shadow-2xl relative">
         <button
           type="button"
           onClick={onClose}

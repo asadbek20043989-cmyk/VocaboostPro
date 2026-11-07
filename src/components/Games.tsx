@@ -697,7 +697,7 @@ const RainGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
         <span>{i + 1} / {words.length} · ✅ {score}</span>
         <span className="tracking-widest">{Array.from({ length: maxLives }).map((_, k) => (k < lives ? '❤️' : '🖤')).join('')}</span>
       </div>
-      <div className="relative h-64 rounded-3xl overflow-hidden border border-sky-900/60 bg-gradient-to-b from-[#0B1B33] via-[#0E2440] to-[#12395F]">
+      <div className="keep-dark relative h-64 rounded-3xl overflow-hidden border border-sky-900/60 bg-gradient-to-b from-[#0B1B33] via-[#0E2440] to-[#12395F]">
         <div className="absolute left-0 right-0 bottom-0 h-3 bg-sky-400/40" />
         <div
           className={`absolute left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xl font-extrabold shadow-lg border-2 ${flash === 'ok' ? 'bg-emerald-500 text-slate-950 border-emerald-300' : flash === 'bad' ? 'bg-rose-500 text-white border-rose-300' : 'bg-white text-slate-900 border-sky-200'}`}

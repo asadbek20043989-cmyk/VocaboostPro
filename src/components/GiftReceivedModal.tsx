@@ -47,7 +47,7 @@ export const GiftReceivedModal: React.FC<GiftReceivedModalProps> = ({ items, onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-sm bg-gradient-to-b from-[#182033] to-[#0E1524] border-2 border-amber-500/50 rounded-3xl p-5 shadow-2xl text-center overflow-hidden">
+      <div className="keep-dark relative w-full max-w-sm bg-gradient-to-b from-[#182033] to-[#0E1524] border-2 border-amber-500/50 rounded-3xl p-5 shadow-2xl text-center overflow-hidden">
         {/* Orqa fon nur */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-500/25 rounded-full blur-3xl pointer-events-none" />
 

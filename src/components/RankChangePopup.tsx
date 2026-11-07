@@ -143,7 +143,7 @@ export const RankChangePopup: React.FC<{
     >
       <div
         onClick={e => e.stopPropagation()}
-        className={`rc-pop relative w-full max-w-[340px] rounded-[32px] p-6 text-center shadow-2xl border-2 transition-all ${
+        className={`keep-dark rc-pop relative w-full max-w-[340px] rounded-[32px] p-6 text-center shadow-2xl border-2 transition-all ${
           up
             ? 'bg-gradient-to-b from-[#0d2a1b] via-[#091815] to-[#060e18] border-emerald-400/60 shadow-emerald-500/25'
             : down
