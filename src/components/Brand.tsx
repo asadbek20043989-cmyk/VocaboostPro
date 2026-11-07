@@ -20,8 +20,8 @@ export const Logo: React.FC<{ className?: string; glow?: boolean }> = ({ classNa
 /** Logotip + nom (tepa panel uchun) */
 export const BrandMark: React.FC<{ className?: string }> = ({ className = '' }) => (
   <div className={`flex items-center gap-2 min-w-0 ${className}`}>
-    <Logo className="w-8 h-8" />
-    <span className="text-[15px] font-extrabold tracking-tight text-white">
+    <Logo className="w-8 h-8 shrink-0" />
+    <span className="text-[15px] font-extrabold tracking-tight text-white truncate">
       Voca<span className="text-amber-400">Boost</span>
     </span>
   </div>

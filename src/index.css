@@ -429,3 +429,13 @@ html[data-skin="snow"]:not(.light) nav { border-top-color: rgb(186 230 253 / .45
 @keyframes vb-tagbadge-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 .vb-tagbadge-pulse { animation: vb-tagbadge-pulse 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .vb-tagbadge-pulse { animation: none; } }
+
+/* «Bugungi mashq» kartasi — kun rejimida (daraja rangi bilan och fon) */
+html.light .vb-today { background: linear-gradient(135deg, #FFFFFF 0%, var(--vb-tint) 100%) !important; box-shadow: 0 8px 24px rgb(15 23 42 / 0.08); }
+html.light .vb-today [class*="bg-black/"], html.light .vb-today [class*="bg-[#0"] { background-color: rgb(255 255 255 / 0.72) !important; border-color: rgb(15 23 42 / 0.1) !important; }
+html.light .vb-today .vb-track { background-color: rgb(15 23 42 / 0.12) !important; }
+html.light .vb-today .text-slate-300, html.light .vb-today .text-slate-400 { color: #475569; }
+html.light .vb-today button.text-white { color: #FFFFFF; }
+html.light .vb-today .text-indigo-300, html.light .vb-today .text-indigo-400 { color: #4338CA; }
+html.light .vb-today .text-fuchsia-300 { color: #A21CAF; }
+html.light .vb-today .text-rose-300, html.light .vb-today .text-rose-400 { color: #BE123C; }

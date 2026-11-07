@@ -54,6 +54,7 @@ interface LevelTheme {
   statsBg: string;
   tagColor: string;
   tagBg: string;
+  tint: string;
 }
 
 const LEVEL_THEMES: Record<string, LevelTheme> = {
@@ -71,6 +72,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#091f16]/70 border-emerald-500/25",
     tagColor: "text-emerald-300",
     tagBg: "bg-emerald-500/15 border-emerald-500/30",
+    tint: "#d1fae5",
   },
   A2: {
     name: "A2 · Elementary",
@@ -86,6 +88,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#091b2c]/70 border-sky-500/25",
     tagColor: "text-sky-300",
     tagBg: "bg-sky-500/15 border-sky-500/30",
+    tint: "#e0f2fe",
   },
   B1: {
     name: "B1 · Intermediate",
@@ -101,6 +104,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#16122e]/70 border-indigo-500/25",
     tagColor: "text-indigo-300",
     tagBg: "bg-indigo-500/15 border-indigo-500/30",
+    tint: "#e0e7ff",
   },
   B2: {
     name: "B2 · Upper-Intermediate",
@@ -116,6 +120,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#211409]/70 border-amber-500/25",
     tagColor: "text-amber-300",
     tagBg: "bg-amber-500/15 border-amber-500/30",
+    tint: "#fef3c7",
   },
   'B2+': {
     name: "B2 · Upper-Intermediate",
@@ -131,6 +136,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#211409]/70 border-amber-500/25",
     tagColor: "text-amber-300",
     tagBg: "bg-amber-500/15 border-amber-500/30",
+    tint: "#fef3c7",
   },
   C1: {
     name: "C1 · Advanced",
@@ -146,6 +152,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#240b19]/70 border-rose-500/25",
     tagColor: "text-rose-300",
     tagBg: "bg-rose-500/15 border-rose-500/30",
+    tint: "#ffe4e6",
   },
   C2: {
     name: "C2 · Proficiency / Master",
@@ -161,6 +168,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
     statsBg: "bg-[#1a0c28]/70 border-fuchsia-500/25",
     tagColor: "text-fuchsia-300",
     tagBg: "bg-fuchsia-500/15 border-fuchsia-500/30",
+    tint: "#fae8ff",
   },
 };
 
@@ -231,7 +239,7 @@ export const HomeTab: React.FC = () => {
         const levelPct = levelWords.length ? Math.round((levelMastered / levelWords.length) * 100) : 0;
 
         return (
-          <section className={`rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-5 space-y-4 shadow-xl transition-all relative overflow-hidden`}>
+          <section style={{ '--vb-tint': lt.tint } as React.CSSProperties} className={`vb-today rounded-3xl bg-gradient-to-br ${lt.containerBg} border ${lt.border} p-5 space-y-4 shadow-xl transition-all relative overflow-hidden`}>
             {/* Orqa fon nur effekti */}
             <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-white/5 blur-2xl pointer-events-none" />
 
@@ -271,7 +279,7 @@ export const HomeTab: React.FC = () => {
                   </span>
                   <span className={`font-extrabold ${lt.titleColor}`}>{levelPct}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-black/50 overflow-hidden">
+                <div className="vb-track h-2 rounded-full bg-black/50 overflow-hidden">
                   <div className={`h-full bg-gradient-to-r ${lt.iconBg} transition-all duration-500`} style={{ width: `${levelPct}%` }} />
                 </div>
                 {levelMastered >= levelWords.length && levelWords.length >= 5 ? (
