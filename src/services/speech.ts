@@ -1,16 +1,16 @@
-// Talaffuz (v5.4): BRITISH ENGLISH, neyral ovoz.
+// Talaffuz (v5.7): BRITISH ENGLISH, neyral ovoz. British chiqmasa — AQSh NEYRAL ovozi. Robot ovoz HECH QACHON.
 // Ketma-ketlik (birinchisi ishlamasa keyingisiga zumda o'tiladi):
 //  1) Server neyral ovozi (/api/fn/tts, en-GB) — bir marta yaratiladi, keyin brauzer va CDN keshidan ZUMDA keladi
-//  2) Yakka so'z: haqiqiy inson yozuvi (Free Dictionary, UK afzal) -> Wikimedia
-//  3) Google TTS, so'ng qurilmaning eng yaxshi en-GB ovozi
+//  2) Yakka so'z: haqiqiy BRITISH inson yozuvi (Free Dictionary -uk, Wikimedia en-uk)
+//  3) Zaxira (British yo'q bo'lsa): AQSh neyral ovozi (server en-US) -> AQSh inson yozuvi
+//  4) Qurilma ovozi FAQAT sifatli neyral bo'lsa; aks holda robot o'rniga xabar chiqadi (Google TTS olib tashlangan)
 // Kechikmaslik uchun: so'zlar OLDINDAN yuklanadi (prefetchEnglish), audio xotirada saqlanadi.
 // Shadowing uchun: Web Speech API SpeechRecognition (bepul).
 
 const TTS_URL: string = ((import.meta as any).env?.VITE_TTS_URL as string) || '/api/fn/tts';
-const SERVER_TIMEOUT_MS = 8000;
+const SERVER_TIMEOUT_MS = 10000;
 const HUMAN_TIMEOUT_MS = 3500;
 const WIKI_TIMEOUT_MS = 2500;
-const GTTS_TIMEOUT_MS = 4000;
 const GOOD_VOICE_SCORE = 70; // shu balldan yuqori brauzer ovozi "sifatli" hisoblanadi
 const DICT_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
@@ -48,7 +48,7 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
   else if (/^en[-_](AU|CA|IE)$/i.test(v.lang)) sc += 14;
   else if (/^en([-_]|$)/i.test(v.lang)) sc += 10;
   // Sifatli (neyral / tarmoq) ovozlar — robotga o'xshamaydi
-  if (/Natural|Neural|Online/i.test(v.name)) sc += 60;
+  if (/Natural|Neural|Online|Premium|Enhanced/i.test(v.name)) sc += 60;
   if (/Google UK English/i.test(v.name)) sc += 50;
   else if (/Google US English/i.test(v.name)) sc += 40;
   if (/Sonia|Libby|Ryan|Daniel|Serena|Kate|Oliver|Martha|Arthur|Samantha|Ava|Allison|Susan|Zoe|Karen|Moira|Alex|Aria|Jenny|Guy/i.test(v.name)) sc += 40;
@@ -59,8 +59,10 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
 function loadVoices(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   const voices = window.speechSynthesis.getVoices();
-  const en = voices.filter(v => /^en([-_]|$)/i.test(v.lang));
-  cachedVoice = en.length ? en.slice().sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] : null;
+  // Faqat en-GB yoki en-US va FAQAT sifatli (neyral/tabiiy) ovoz; robot ovoz tanlanmaydi
+  const en = voices.filter(v => /^en[-_](GB|US)$/i.test(v.lang));
+  const best = en.length ? en.slice().sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] : null;
+  cachedVoice = best && scoreVoice(best) >= GOOD_VOICE_SCORE ? best : null;
 }
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   loadVoices();
@@ -91,7 +93,17 @@ export function stopSpeaking(): void {
 }
 
 function browserSpeak(text: string, rate: number, my: number): void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  if (my !== reqId) return; // yangi so'rov chiqib ketgan — eski so'rov xabar chiqarmasin
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('vb:noaudio', { detail: text }));
+    return;
+  }
+  if (!cachedVoice) loadVoices();
+  if (!cachedVoice) {
+    // Qurilmada sifatli ovoz yo'q — robot ovoz o'rniga xabar beramiz
+    window.dispatchEvent(new CustomEvent('vb:noaudio', { detail: text }));
+    return;
+  }
   const synth = window.speechSynthesis;
   const run = () => {
     if (my !== reqId) return;
@@ -129,38 +141,39 @@ function browserSpeak(text: string, rate: number, my: number): void {
 
 // ---------- Inson ovozi yozuvlari (Free Dictionary API) ----------
 
-const HUMAN_LS_KEY = 'vb_human_audio_v2';
-const humanCache = new Map<string, string | null>();
+const HUMAN_LS_KEY = 'vb_human_audio_v4';
+type Accent = 'gb' | 'us';
+type HumanEntry = { gb: string | null; us: string | null };
+const humanCache = new Map<string, HumanEntry>();
 try {
   const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(HUMAN_LS_KEY) : null;
-  if (raw) Object.entries(JSON.parse(raw) as Record<string, string>).forEach(([k, v]) => humanCache.set(k, v));
+  if (raw) Object.entries(JSON.parse(raw) as Record<string, HumanEntry>).forEach(([k, v]) => humanCache.set(k, v));
 } catch {
   /* ignore */
 }
-function saveHuman(word: string, url: string) {
+function saveHuman() {
   try {
-    const obj: Record<string, string> = {};
+    const obj: Record<string, HumanEntry> = {};
     humanCache.forEach((v, k) => {
-      if (v) obj[k] = v;
+      if (v.gb || v.us) obj[k] = v;
     });
-    obj[word] = url;
-    // juda kattalashib ketmasin
     const keys = Object.keys(obj);
-    if (keys.length > 1500) delete obj[keys[0]];
+    if (keys.length > 1200) delete obj[keys[0]]; // juda kattalashib ketmasin
     localStorage.setItem(HUMAN_LS_KEY, JSON.stringify(obj));
   } catch {
     /* ignore */
   }
 }
 
-async function getHumanAudio(word: string): Promise<string | null> {
-  if (humanCache.has(word)) return humanCache.get(word) || null;
+async function getHumanAudio(word: string, accent: Accent): Promise<string | null> {
+  const hit = humanCache.get(word);
+  if (hit) return hit[accent];
   const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const t = setTimeout(() => ctl?.abort(), HUMAN_TIMEOUT_MS);
   try {
     const r = await fetch(DICT_URL + encodeURIComponent(word), { signal: ctl?.signal });
     if (r.status === 404) {
-      humanCache.set(word, null); // bu so'z lug'atda yo'q — qayta so'ramaymiz
+      humanCache.set(word, { gb: null, us: null }); // bu so'z lug'atda yo'q — qayta so'ramaymiz
       return null;
     }
     if (!r.ok) return null;
@@ -171,10 +184,13 @@ async function getHumanAudio(word: string): Promise<string | null> {
         if (ph?.audio) urls.push(String(ph.audio).replace(/^http:/, 'https:').replace(/^\/\//, 'https://'));
       }
     }
-    const best = urls.find(u => /-uk\.mp3/i.test(u)) || urls.find(u => /-us\.mp3/i.test(u)) || urls[0] || null;
-    humanCache.set(word, best);
-    if (best) saveHuman(word, best);
-    return best;
+    const e: HumanEntry = {
+      gb: urls.find(u => /-uk\.mp3/i.test(u)) || null,
+      us: urls.find(u => /-us\.mp3/i.test(u)) || null,
+    };
+    humanCache.set(word, e);
+    if (e.gb || e.us) saveHuman();
+    return e[accent];
   } catch {
     return null;
   } finally {
@@ -190,35 +206,73 @@ function hasGoodBrowserVoice(): boolean {
 
 // Wikimedia Commons: ko'p uchraydigan so'zlar uchun inson yozuvi (topilmasa 404 -> keyingi manbaga o'tiladi)
 const wikiMiss = new Set<string>();
-const wikiUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-uk-${encodeURIComponent(w)}.ogg`;
-const wikiUsUrl = (w: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-us-${encodeURIComponent(w)}.ogg`;
-// Google Translate TTS (zaxira; audio elementiga to'g'ridan-to'g'ri)
-const gttsUrl = (t: string) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encodeURIComponent(t.slice(0, 190))}`;
+const wikiUrl = (w: string, accent: Accent) => `https://commons.wikimedia.org/wiki/Special:FilePath/En-${accent === 'gb' ? 'uk' : 'us'}-${encodeURIComponent(w)}.ogg`;
 
 // ---------- Server neyral ovozi (British) + xotira keshi ----------
 const blobCache = new Map<string, string>(); // kalit -> objectURL
 const inflight = new Map<string, Promise<string | null>>();
 const MAX_CACHE = 160;
-let serverFails = 0;
-let serverDownUntil = 0;
+const serverFails: Record<Accent, number> = { gb: 0, us: 0 };
+const serverDownUntil: Record<Accent, number> = { gb: 0, us: 0 };
+const US_VOICE = 'en-US-AriaNeural';
+const CACHE_NAME = 'vb-tts-gb-v1';
 
-const cacheKey = (t: string) => t.toLowerCase();
+/** Doimiy kesh (Cache Storage): bir marta yuklangan British ovoz keyingi kirishlarda ham zumda chiqadi, internetsiz ham ishlaydi */
+async function persistentGet(url: string): Promise<Blob | null> {
+  try {
+    if (typeof caches === 'undefined') return null;
+    const c = await caches.open(CACHE_NAME);
+    const r = await c.match(url);
+    if (!r) return null;
+    const b = await r.blob();
+    return b.size >= 600 ? b : null;
+  } catch { return null; }
+}
+async function persistentPut(url: string, blob: Blob): Promise<void> {
+  try {
+    if (typeof caches === 'undefined') return;
+    const c = await caches.open(CACHE_NAME);
+    await c.put(url, new Response(blob, { headers: { 'Content-Type': 'audio/mpeg' } }));
+  } catch { /* ignore */ }
+}
+async function fetchServerBlob(url: string): Promise<Blob> {
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => ctl?.abort(), SERVER_TIMEOUT_MS);
+  try {
+    const r = await fetch(url, { signal: ctl?.signal });
+    if (!r.ok) throw new Error('tts ' + r.status);
+    const blob = await r.blob();
+    if (blob.size < 600) throw new Error('tts bo\'sh');
+    return blob;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-async function serverAudio(text: string): Promise<string | null> {
-  const key = cacheKey(text);
+const cacheKey = (t: string, accent: Accent = 'gb') => accent + ':' + t.toLowerCase();
+
+async function serverAudio(text: string, accent: Accent = 'gb'): Promise<string | null> {
+  const key = cacheKey(text, accent);
   const hit = blobCache.get(key);
   if (hit) return hit;
   const pending = inflight.get(key);
   if (pending) return pending;
-  if (Date.now() < serverDownUntil) return null;
+  if (Date.now() < serverDownUntil[accent]) return null;
   const p = (async () => {
-    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timer = setTimeout(() => ctl?.abort(), SERVER_TIMEOUT_MS);
+    const reqUrl = `${TTS_URL}?t=${encodeURIComponent(text)}` + (accent === 'us' ? `&v=${US_VOICE}` : '');
     try {
-      const r = await fetch(`${TTS_URL}?t=${encodeURIComponent(text)}`, { signal: ctl?.signal });
-      if (!r.ok) throw new Error('tts ' + r.status);
-      const blob = await r.blob();
-      if (blob.size < 600) throw new Error('tts bo\'sh');
+      let blob = await persistentGet(reqUrl);
+      if (!blob) {
+        // Robot ovozga o'tib ketmaslik uchun serverga 2 marta uriniladi
+        try {
+          blob = await fetchServerBlob(reqUrl);
+        } catch (e) {
+          if (/ 400$/.test(String((e as any)?.message))) throw e; // matn xato — qayta urinishdan foyda yo'q
+          await new Promise(r => setTimeout(r, 400));
+          blob = await fetchServerBlob(reqUrl);
+        }
+        persistentPut(reqUrl, blob);
+      }
       const url = URL.createObjectURL(blob);
       blobCache.set(key, url);
       if (blobCache.size > MAX_CACHE) {
@@ -227,14 +281,13 @@ async function serverAudio(text: string): Promise<string | null> {
         blobCache.delete(first);
         if (old) { try { URL.revokeObjectURL(old); } catch { /* ignore */ } }
       }
-      serverFails = 0;
+      serverFails[accent] = 0;
       return url;
     } catch {
-      // Ketma-ket 3 marta xato bo'lsa, 2 daqiqa serverni so'ramaymiz (foydalanuvchi kutib qolmasin)
-      if (++serverFails >= 3) { serverDownUntil = Date.now() + 2 * 60 * 1000; serverFails = 0; }
+      // Ketma-ket 4 marta xato bo'lsa, 20 soniya serverni so'ramaymiz (foydalanuvchi kutib qolmasin)
+      if (++serverFails[accent] >= 4) { serverDownUntil[accent] = Date.now() + 20 * 1000; serverFails[accent] = 0; }
       return null;
     } finally {
-      clearTimeout(timer);
       inflight.delete(key);
     }
   })();
@@ -245,7 +298,7 @@ async function serverAudio(text: string): Promise<string | null> {
 /** So'z/gaplarni OLDINDAN yuklab qo'yadi — keyin bosilganda ovoz darhol chiqadi. Chaqiruv xavfsiz (xato bo'lsa jim). */
 export function prefetchEnglish(texts: (string | undefined | null)[], max = 8): void {
   try {
-    if (typeof window === 'undefined' || Date.now() < serverDownUntil) return;
+    if (typeof window === 'undefined' || Date.now() < serverDownUntil.gb) return;
     const seen = new Set<string>();
     let n = 0;
     for (const raw of texts) {
@@ -294,6 +347,8 @@ function playUrl(url: string, rate: number, my: number, timeoutMs: number): Prom
     try {
       a.src = url;
       a.playbackRate = rate >= 0.95 ? 1 : 0.95;
+      (a as any).preservesPitch = true;
+      (a as any).webkitPreservesPitch = true;
       const p = a.play();
       if (p && typeof p.catch === 'function') p.catch(() => finish(false));
     } catch {
@@ -350,13 +405,15 @@ function splitChunks(text: string, max = 200): string[] {
   return out;
 }
 
-/** Bitta bo'lak: server (British) -> Google -> (chaqiruvchi) brauzer ovozi. true = ovoz chiqdi */
+/** Bitta bo'lak: server British -> server AQSh (neyral). true = ovoz chiqdi. Robot ovoz yo'q. */
 async function playChunk(chunk: string, rate: number, my: number): Promise<boolean> {
-  const url = await serverAudio(chunk);
-  if (my !== reqId) return true;
-  if (url && (await playUrl(url, rate, my, 3000))) return true;
-  if (my !== reqId) return true;
-  return playUrl(gttsUrl(chunk), rate, my, GTTS_TIMEOUT_MS);
+  for (const accent of ['gb', 'us'] as Accent[]) {
+    const url = await serverAudio(chunk, accent);
+    if (my !== reqId) return true;
+    if (url && (await playUrl(url, rate, my, 4000))) return true;
+    if (my !== reqId) return true;
+  }
+  return false;
 }
 
 async function speakFluent(clean: string, rate: number, my: number): Promise<void> {
@@ -374,10 +431,16 @@ async function speakFluent(clean: string, rate: number, my: number): Promise<voi
   }
 }
 
-/** Talaffuz: BRITISH ENGLISH. Yakka so'z va gaplar — avval server neyral ovozi (keshdan zumda);
- *  u ishlamasa — inson yozuvi / Google / qurilma ovozi. Hech biri ishlamasa xabar chiqadi. */
+/** Talaffuz: BRITISH ENGLISH (neyral). British chiqmasa — AQSh neyral ovozi. Hech biri bo'lmasa robot ovoz o'rniga xabar chiqadi. */
 export function speakEnglish(text: string, rate: number = 0.9): void {
-  const clean = text.replace(/[*_#`~]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  const clean = text
+    .replace(/[*_#`~]/g, '')
+    .replace(/[‘’`´]/g, "'")
+    .replace(/\(\s*(?:n|v|adj|adv|prep|conj|pron|pl|sb|sth|noun|verb|adjective|adverb)\.?\s*\)/gi, ' ') // "(n)" o'qilmasin
+    .replace(/\s*\/\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 300);
   if (!clean) return;
   stopSpeaking();
   const my = reqId;
@@ -395,31 +458,25 @@ export function speakEnglish(text: string, rate: number = 0.9): void {
   // Yakka so'z
   (async () => {
     const word = words[0];
-    // 1) server (British neyral) — xotirada bo'lsa zumda chiqadi
-    const url = await serverAudio(word);
-    if (my !== reqId) return;
-    if (url && (await playUrl(url, rate, my, 3000))) return;
-    if (my !== reqId) return;
-    // 2) inson yozuvi (UK afzal)
-    const human = await getHumanAudio(word);
-    if (my !== reqId) return;
-    if (human && (await playUrl(human, rate, my, HUMAN_TIMEOUT_MS))) return;
-    if (my !== reqId) return;
-    if (!wikiMiss.has(word)) {
-      if (await playUrl(wikiUrl(word), rate, my, WIKI_TIMEOUT_MS)) return;
+    // Avval British (server -> inson yozuvi), bo'lmasa AQSh NEYRAL (server -> inson yozuvi). Robot ovoz yo'q.
+    for (const accent of ['gb', 'us'] as Accent[]) {
+      const url = await serverAudio(word, accent);
       if (my !== reqId) return;
-      if (await playUrl(wikiUsUrl(word), rate, my, WIKI_TIMEOUT_MS)) return;
+      if (url && (await playUrl(url, rate, my, 4000))) return;
       if (my !== reqId) return;
-      wikiMiss.add(word);
+      const human = await getHumanAudio(word, accent);
+      if (my !== reqId) return;
+      if (human && (await playUrl(human, rate, my, HUMAN_TIMEOUT_MS))) return;
+      if (my !== reqId) return;
+      const wk = accent + ':' + word;
+      if (!wikiMiss.has(wk)) {
+        if (await playUrl(wikiUrl(word, accent), rate, my, WIKI_TIMEOUT_MS)) return;
+        if (my !== reqId) return;
+        wikiMiss.add(wk);
+      }
     }
-    // 3) Google, so'ng qurilma ovozi (en-GB afzal)
-    if (await playUrl(gttsUrl(word), rate, my, GTTS_TIMEOUT_MS)) return;
-    if (my !== reqId) return;
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window && (cachedVoice || window.speechSynthesis.getVoices().length)) {
-      browserSpeak(clean, rate, my);
-    } else if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('vb:noaudio', { detail: clean }));
-    }
+    // Faqat sifatli (neyral) qurilma ovozi; aks holda xabar chiqadi
+    browserSpeak(clean, rate, my);
   })().catch(() => {
     if (my === reqId && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('vb:noaudio', { detail: clean }));
   });

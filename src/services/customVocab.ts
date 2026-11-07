@@ -120,7 +120,7 @@ export function parseBulkWords(rawText: string, max = 50): CustomWordInput[] {
     if (!cleaned) continue;
 
     // Ajratuvchilar: " - ", " : ", " = ", "\t"
-    const parts = cleaned.split(/\s*[-:=–—\t]\s*/);
+    const parts = cleaned.split(/\s+[-–—]\s+|\s*[:=\t]\s*/); // "well-known - taniqli" dagi defis so'zni bo'lib yubormasin
     const en = parts[0]?.trim();
     const uz = parts.slice(1).join(' - ').trim();
 

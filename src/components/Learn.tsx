@@ -353,7 +353,7 @@ export const LearnSession: React.FC = () => {
   const batch = batches[bi] || [];
   // Ovoz kechikmasligi uchun: joriy paket so'zlari va misollari oldindan yuklab qo'yiladi
   useEffect(() => {
-    prefetchEnglish([...batch.map(w => w.en), ...batch.slice(0, 2).map(w => w.ex)], 10);
+    prefetchEnglish([...batch.map(w => w.en), ...batch.map(w => w.ex)], 24); // so'zlar va ularning gaplari — barchasi oldindan British ovozda tayyorlanadi
   }, [bi, phase]);
   useEffect(() => {
     if (phase === 'review') prefetchEnglish(queue.slice(0, 4).map(w => w.en), 4);

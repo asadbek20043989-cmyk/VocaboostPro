@@ -333,10 +333,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(() => setNotice(c => (c === t ? null : c)), 3800);
   };
 
-  // Inson ovozi yozuvi topilmasa (sun'iy ovoz ishlatilmaydi) foydalanuvchiga bildiriladi
+  // British ham, AQSh neyral ovozi ham chiqmasa (robot ovoz ishlatilmaydi) foydalanuvchiga bildiriladi
   useEffect(() => {
     let last = 0;
-    const f = () => { if (Date.now() - last > 4000) { last = Date.now(); pushNotice("🔇 Bu so'z uchun inson ovozi yozuvi topilmadi"); } };
+    const f = () => { if (Date.now() - last > 4000) { last = Date.now(); pushNotice("🔇 Ovoz hozir yuklanmadi (robot ovoz ishlatilmaydi). Internetni tekshirib, qayta bosing"); } };
     window.addEventListener('vb:noaudio', f);
     return () => window.removeEventListener('vb:noaudio', f);
   }, []);
