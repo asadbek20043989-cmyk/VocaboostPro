@@ -118,7 +118,8 @@ export const handler = async event => {
         }
       }
       // Admin XP tuzatishi (adj/adjV) faqat admin paneldan o'zgaradi — ilova yozolmaydi
-      if ('adj' in parsed || 'adjV' in parsed || 'hasGrant' in parsed || 'refs' in parsed) {
+      if ('adj' in parsed || 'adjV' in parsed || 'hasGrant' in parsed || 'refs' in parsed || 'off' in parsed) {
+        delete parsed.off; // bezaklarni yoqish/o'chirish — faqat admin (foydalanuvchi o'zi qayta yoqib ololmasin)
         delete parsed.adj;
         delete parsed.adjV;
         delete parsed.refs; // taklif qilingan do'stlar soni — faqat server yozadi

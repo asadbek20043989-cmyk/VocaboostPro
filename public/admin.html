@@ -66,6 +66,11 @@
 
   /* ===== Admin: yangi tartibli maket (yon menyu + guruhlangan bo'limlar) ===== */
   #app > .row:first-child{position:sticky;top:0;z-index:30;background:rgba(11,15,23,.92);backdrop-filter:blur(8px);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .hbars{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:8px}.hbars>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+  .hbars i{display:block;width:100%;border-radius:4px 4px 0 0;background:linear-gradient(#6366F1,#3B82F6);min-height:2px}.hbars i.top{background:linear-gradient(#FBBF24,#F59E0B)}.hbars span{font-size:9px;color:var(--mut);margin-top:3px}.hbars b{font-size:9px;color:var(--txt)}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calgrid .cd{border:1px solid var(--line);border-radius:10px;padding:5px;min-height:62px;font-size:10px;line-height:1.25;overflow:hidden;background:#111827}.calgrid .cd b{font-size:11px;display:block;margin-bottom:2px;color:var(--mut)}.calgrid .cd.today{border-color:var(--gold)}.calgrid .cd.gap{border-style:dashed;border-color:#7F1D1D;cursor:pointer;color:#FCA5A5}.calgrid .cd.ok{background:#0F2A1F;border-color:#14532D}.calgrid .hd{font-size:10px;color:var(--mut);text-align:center}
+  .hrow{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.hrow .nm{width:42%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hrow .bar{flex:1;margin:0}
+  .fxrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line)}.fxrow .l{flex:1;min-width:0}.fxrow .v{font-size:11px;color:var(--mut)}.fxrow.empty{opacity:.55}
   .tabs{display:flex;gap:6px;overflow-x:auto;align-items:center;padding:8px 2px;margin:0 0 10px;position:sticky;top:56px;z-index:20;background:rgba(11,15,23,.94);scrollbar-width:thin}
   .tabs button{background:#1B2335;color:var(--mut);white-space:nowrap;border:1px solid transparent;font-weight:600;text-align:left;transition:background .15s,color .15s,border-color .15s}
   .tabs button:hover{color:var(--txt);border-color:var(--line)}
@@ -111,6 +116,7 @@
     <nav class="tabs" id="tabs" aria-label="Bo'limlar">
       <span class="tg">Asosiy</span>
       <button data-t="stats" class="on">📊 Umumiy</button>
+      <button data-t="astats">📈 Statistika</button>
       <span class="tg">O'quv kontenti</span>
       <button data-t="words">📖 So'zlar</button>
       <button data-t="plan">🗓 Kunlik reja</button>
@@ -138,8 +144,20 @@
     </nav>
 
     <section id="t-stats">
+      <div class="card" id="attnCard" style="margin-bottom:14px"><h2>⚡ Diqqat talab qiladi</h2><div id="attnBox" class="small">Yuklanmoqda…</div></div>
       <div class="grid" id="statGrid"></div>
       <div class="card" style="margin-top:14px"><h2>Bugungi sozlamalar</h2><div id="todayInfo" class="small"></div></div>
+    </section>
+
+    <section id="t-astats" class="hide">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2>📈 Foydalanuvchilar faolligi, o'yinlar va do'kon</h2>
+          <div class="row"><select id="as_days" style="max-width:150px"><option value="7">Oxirgi 7 kun</option><option value="14" selected>Oxirgi 14 kun</option><option value="30">Oxirgi 30 kun</option><option value="45">Oxirgi 45 kun</option></select><button class="sec" id="as_reload">🔄 Yangilash</button></div>
+        </div>
+        <p class="small">Vaqt — Toshkent vaqti bilan. Statistika ilova yangilangandan keyin yig'ila boshlaydi (ilgarigi kunlar bo'yicha ma'lumot yo'q). Foydalanuvchi ilovani soatiga bir marta «ochilgan» deb hisoblanadi.</p>
+        <div id="as_body"></div>
+      </div>
     </section>
 
     <section id="t-words" class="hide">
@@ -224,6 +242,26 @@
         <h2>📅 Bugungi mashqlar — lug'at to'plamlari <span class="small" id="pkCount"></span></h2>
         <p class="small">Alohida lug'at (so'zlar ro'yxati) yuklang. <b>Kunlik</b> to'plam tanlangan sanada ilovaning «Bugungi mashq» bo'limida paydo bo'ladi (odatdagi kunlik so'zlar <i>o'rniga</i> yoki <i>ustiga</i>). <b>⭐ Maxsus mavzu</b> — ilovadagi «Maxsus mavzular» bo'limida tanlangan sanada ko'rinadi: har kuni bitta mavzu (masalan «Home and Furniture») bo'yicha eng ko'p uchraydigan 20 ta so'z; o'tgan mavzular ham ro'yxatda qoladi va «Bugungi mashq»ga aralashmaydi. <b>Doim ochiq</b> to'plam esa bosh sahifada «Lug'at to'plamlari» ro'yxatida turadi va foydalanuvchi istalgan vaqtda o'rganadi. Qayta deploy kerak emas.</p>
         <div class="scroll"><table><thead><tr><th>Nomi</th><th>Turi</th><th>So'zlar</th><th>Holat</th><th></th></tr></thead><tbody id="pkBody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>🗓 Kontent kalendari — keyingi 28 kun <span class="small" id="calInfo"></span></h2>
+        <p class="small">Har kunga maxsus mavzu (⭐) va kunlik to'plam (🗓) qo'yilganini ko'rsatadi. <b>Bo'sh kunni bossangiz</b> — ommaviy yuklash shu sanadan boshlanadi.</p>
+        <div id="calGrid" class="calgrid"></div>
+      </div>
+      <div class="card">
+        <h2>⭐ Maxsus mavzularni sanama-san ommaviy yuklash</h2>
+        <p class="small">Bir nechta <b>.txt</b> (yoki .csv/.tsv/.json) faylni birdan tanlang — har bir fayl <b>alohida kun</b>ga biriktiriladi va o'sha sanada ilovada avtomatik chiqadi. Sana fayl nomidan olinadi (<code>2026-11-15.txt</code>, <code>15.11.2026.txt</code>), bo'lmasa boshlang'ich sanadan boshlab ketma-ket qo'yiladi. Mavzu nomi — fayl nomi (yoki faylning birinchi qatori <code>#Sayohat</code> bo'lsa, shu). Hamma sana va nomni jadvalda o'zgartirsa bo'ladi.</p>
+        <div class="f3">
+          <div><label>Fayllar (bir nechtasini tanlang)</label><input id="bk_files" type="file" multiple accept=".txt,.csv,.tsv,.json,text/plain,text/csv,application/json" /></div>
+          <div><label>Boshlang'ich sana</label><input id="bk_start" type="date" /></div>
+          <div><label>Kunlar oralig'i</label><select id="bk_step"><option value="1">Har kuni (1 kun)</option><option value="2">2 kunda bir</option><option value="7">Haftada bir</option></select></div>
+          <div><label>Turi</label><select id="bk_kind"><option value="topic">⭐ Maxsus mavzu — kunlik TOP 20</option><option value="daily">Kunlik to'plam</option></select></div>
+          <div><label>Daraja (kimga ko'rinadi)</label><select id="bk_level"><option value="">Hamma darajalar</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="bk_over" checked> Shu sana va darajada mavzu allaqachon bo'lsa — uning ustiga yozilsin (dublikat bo'lmaydi)</label>
+        <label class="chk"><input type="checkbox" id="bk_pub" checked> Darhol e'lon qilinsin</label>
+        <div class="scroll" style="margin-top:8px"><table><thead><tr><th>#</th><th>Fayl</th><th>Mavzu nomi</th><th>Sana</th><th>So'zlar</th><th></th></tr></thead><tbody id="bk_body"><tr><td colspan="6" class="small">Fayllar tanlanmagan</td></tr></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button id="bk_save">💾 Hammasini saqlash</button><button class="sec" id="bk_redo">📆 Sanalarni boshidan taqsimlash</button><button class="sec" id="bk_clear">Tozalash</button><span class="small" id="bk_info"></span></div>
       </div>
       <div class="card">
         <h2 id="pkEdTitle">Yangi to'plam</h2>
@@ -499,8 +537,14 @@
         <p class="small">«Yangi hafta» bosilganda: <b>1)</b> TOP-20 ning to'plagan XP si <b>Tarix zali</b>ga o'zgarmas qilib yoziladi (keyin hech kim o'zgartira olmaydi); <b>2)</b> hamma foydalanuvchining liga XP si 0 ga tushadi; <b>3)</b> yangi hafta boshlanadi. Streak, so'zlar va sertifikatlar o'zgarmaydi.</p>
         <label class="chk"><input type="checkbox" id="lgSpins" checked> 🎁 TOP-3 ga baraban aylantirishlari sovg'a qilinsin (1-o'rin: 5, 2-o'rin: 3, 3-o'rin: 2 ta, 3 kun ichida ishlatish)</label>
         <label class="chk"><input type="checkbox" id="lgCert" checked> 🏆 1-o'ringa «N-HAFTA CHEMPIONI» sertifikati berilsin (har hafta avtomatik)</label>
-        <div class="row"><select id="lgCertFmt" style="max-width:260px"><option value="story">📱 Sertifikat 9:16</option><option value="wide">🖥 Sertifikat 16:9</option></select><button class="bad" id="resetLeague">🔄 Yangi hafta (hammaning XP si 0 dan)</button></div>
+        <label class="chk"><input type="checkbox" id="lgNotify" checked> 📨 Hafta tugaganda TOP-20 o'quvchiga bot orqali tabrik xabari yuborilsin («Mashqni davom ettirish» tugmasi bilan)</label>
+        <label class="chk"><input type="checkbox" id="lgAuto"> ⏰ Haftani <b>avtomatik</b> yakunlash (har dushanba 00:05 Toshkent vaqti — «Yangi hafta» tugmasini bosish shart emas)</label>
+        <label>Xabar matni — <code>{week}</code> hafta raqami, <code>{xp}</code> XP, <code>{place}</code> o'rin, <code>{name}</code> ism</label>
+        <textarea id="lgMsg" style="min-height:96px"></textarea>
+        <div class="f3"><div><label>Tugma matni</label><input id="lgBtn" placeholder="▶️ Mashqni davom ettirish" /></div><div><label>Sinov uchun Telegram ID (o'zingizga)</label><input id="lgTestId" placeholder="123456789" /></div><div style="align-self:end" class="row"><button class="sec" id="lgAutoSave">💾 Saqlash</button><button class="sec" id="lgTest">📨 Sinab ko'rish</button></div></div>
+        <div class="row" style="margin-top:10px"><select id="lgCertFmt" style="max-width:260px"><option value="story">📱 Sertifikat 9:16</option><option value="wide">🖥 Sertifikat 16:9</option></select><button class="bad" id="resetLeague">🔄 Yangi hafta (hammaning XP si 0 dan)</button></div>
       </div>
+      <div class="card hide" id="fxCard"></div>
       <div class="card">
         <h2>🏛 Tarix zali <span class="small" id="hallCount"></span></h2>
         <p class="small">Yakunlangan haftalar. Bu ma'lumotlar foydalanuvchilarga «Tarix zali» bo'limida ko'rinadi va o'zgarmaydi.</p>
@@ -508,7 +552,7 @@
       </div>
       <div class="card">
         <div class="row" style="justify-content:space-between"><h2>Liga <span class="small" id="lCount"></span></h2></div>
-        <input id="lSearch" placeholder="Ism yoki ID bo'yicha qidirish..." style="margin-bottom:10px" />
+        <div class="row" style="margin-bottom:10px"><input id="lSearch" placeholder="Ism yoki ID bo'yicha qidirish..." style="flex:1;min-width:180px" /><button class="sec" id="lExport">⬇️ CSV (Excel)</button></div>
         <div class="scroll"><table><thead><tr><th></th><th>Ism</th><th>XP</th><th>Streak</th><th>Holat</th><th></th></tr></thead><tbody id="lBody"></tbody></table></div>
       </div>
     </section>
@@ -643,8 +687,17 @@
         <textarea id="sh_books" style="min-height:160px"></textarea>
         <h2 style="margin-top:14px">🎧 Lo-Fi musiqa</h2>
         <p class="small">Har qator: <code>Nomi | https://.../musiqa.mp3</code>. Bo'sh bo'lsa ilovaning o'zi tinch Lo-Fi musiqa hosil qiladi. To'g'ridan-to'g'ri mp3 havolasi kerak.</p>
-        <textarea id="sh_lofi" style="min-height:90px"></textarea>
+        <textarea id="sh_lofi" style="display:none"></textarea>
+        <p class="small">👉 Lo-Fi treklar endi pastdagi <b>«Lo-Fi musiqa kutubxonasi»</b> kartasida boshqariladi (tartib saqlanadi, 400 tagacha).</p>
         <div class="row" style="margin-top:12px"><button id="shSave">💾 Do'kon sozlamalarini saqlash</button></div>
+      </div>
+      <div class="card">
+        <h2>🎧 Lo-Fi musiqa kutubxonasi <span class="small" id="lf_count"></span></h2>
+        <p class="small">Ko'p trekni birdan qo'shing: har qatorga <code>Nomi | https://.../trek.mp3</code> yoki faqat <code>https://.../trek.mp3</code> yozing (nom havoladan olinadi). Tartib — ro'yxatdagi tartib (↑↓ bilan o'zgartiring); ilova treklarni shu tartibda ijro etadi. Ochilmaydigan havola ilovada avtomatik o'tkazib yuboriladi — <b>▶</b> bilan oldindan tekshirib ko'ring. To'g'ridan-to'g'ri audio havola kerak (mp3/ogg/m4a).</p>
+        <textarea id="lf_paste" style="min-height:90px" placeholder="Rainy Cafe | https://example.com/rainy.mp3&#10;https://example.com/night-walk.mp3"></textarea>
+        <div class="row" style="margin-top:8px"><button class="sec" id="lf_add">➕ Ro'yxatga qo'shish</button><label class="chk" style="margin:0"><input type="checkbox" id="lf_shuf"> Ilovada aralash tartibda ijro etilsin (standart: yo'q — tartib bilan)</label></div>
+        <div class="scroll" style="max-height:380px;margin-top:8px"><table><thead><tr><th>#</th><th>Nomi</th><th>Havola</th><th></th></tr></thead><tbody id="lf_body"></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button id="lf_save">💾 Kutubxonani saqlash</button><button class="sec" id="lf_clear">Hammasini tozalash</button><span class="small" id="lf_info"></span></div>
       </div>
       <div class="card">
         <h2>🎁 Tanga / mahsulot sovg'a qilish</h2>
@@ -1240,12 +1293,13 @@ function renderLeague() {
   const rows = Object.entries(data.leaderboard || {}).map(([id,u]) => ({ id, ...u, shown: Math.max(0,(+u.xp||0)+(+u.xpOffset||0)) })).filter(u => !q || String(u.name||'').toLowerCase().includes(q) || u.id.toLowerCase().includes(q)).sort((a,b) => b.shown - a.shown);
   $('lCount').textContent = `(${rows.length})`;
   $('lBody').innerHTML = rows.map(u => `<tr><td>${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : ''}</td><td><b>${esc(u.name||'—')}</b><br><span class="small">${esc(u.id)}</span></td><td><b>${u.shown}</b><br><span class="small">haqiqiy: ${Math.round(+u.xp||0)}</span></td><td>${+u.streak||0}</td><td>${u.deleted?'<span class="tag d">o\'chirilgan</span>':u.hidden?'<span class="tag h">yashirin</span>':'<span class="tag">faol</span>'}</td>
-    <td><div class="acts"><button class="sec" data-a="xp" data-id="${esc(u.id)}">XP</button><button class="sec" data-a="name" data-id="${esc(u.id)}">Ism</button><button class="sec" data-a="hide" data-id="${esc(u.id)}">${u.hidden?"Ko'rsatish":'Yashirish'}</button><button class="sec" data-a="cert" data-id="${esc(u.id)}">🎓</button>${u.deleted?`<button class="ok" data-a="restore" data-id="${esc(u.id)}">Tiklash</button>`:`<button class="bad" data-a="del" data-id="${esc(u.id)}">O'chirish</button>`}</div></td></tr>`).join('') || '<tr><td colspan="6" class="small">Hozircha ishtirokchi yo\'q</td></tr>';
+    <td><div class="acts"><button class="sec" data-a="xp" data-id="${esc(u.id)}">XP</button><button class="sec" data-a="name" data-id="${esc(u.id)}">Ism</button><button class="sec" data-a="hide" data-id="${esc(u.id)}">${u.hidden?"Ko'rsatish":'Yashirish'}</button><button class="sec" data-a="cert" data-id="${esc(u.id)}">🎓</button><button class="sec" data-a="fx" data-id="${esc(u.id)}" title="Sovg'a / bezaklarni yoqish-o'chirish">🎨</button>${u.off && Object.keys(u.off).length ? '<span class="tag h" title="Admin ba\'zi bezaklarni o\'chirgan">🎨 off</span>' : ''}${u.deleted?`<button class="ok" data-a="restore" data-id="${esc(u.id)}">Tiklash</button>`:`<button class="bad" data-a="del" data-id="${esc(u.id)}">O'chirish</button>`}</div></td></tr>`).join('') || '<tr><td colspan="6" class="small">Hozircha ishtirokchi yo\'q</td></tr>';
   $('lBody').querySelectorAll('button').forEach(b => b.onclick = guard(() => userAction(b.dataset.a, b.dataset.id)));
 }
 $('lSearch').oninput = renderLeague;
 async function userAction(a, id) {
   const u = data.leaderboard[id] || {};
+  if (a === 'fx') { await openFx(id); return; }
   if (a === 'cert') { document.querySelector('[data-t="certs"]').click(); $('cUserQ').value = id; fillUsers(); $('cUser').value = id; return; }
   if (a === 'xp') { const v = prompt(`${u.name||id} uchun yangi XP:`, Math.max(0,(+u.xp||0)+(+u.xpOffset||0))); if (v === null) return; if (isNaN(+v)) return flash('Raqam kiriting', false); await api('setUser', { id, patch: { xp: +v } }); }
   if (a === 'name') { const v = prompt('Yangi ism:', u.name || ''); if (v === null) return; await api('setUser', { id, patch: { name: v } }); }
@@ -1257,8 +1311,9 @@ async function userAction(a, id) {
 $('resetLeague').onclick = guard(async () => {
   const wk = (data.config.league || {}).week || 1;
   if (!confirm(`${wk}-hafta yakunlansinmi?\n\n• TOP-20 Tarix zaliga qotiriladi\n• Hamma foydalanuvchining liga XP si 0 ga tushadi\n\nBu amalni qaytarib bo'lmaydi. Davom etilsinmi?`)) return;
-  const r = await api('resetLeague', { rewardSpins: $('lgSpins').checked, rewardCert: $('lgCert').checked, certFmt: $('lgCertFmt').value });
-  flash(`${r.week}-hafta yakunlandi ✅ Tarix zaliga ${r.archived} ta o'quvchi yozildi, ${r.count} ta ishtirokchi 0 dan boshlandi${r.rewarded ? `, ${r.rewarded} ta mukofot berildi` : ''}`);
+  const r = await api('resetLeague', { rewardSpins: $('lgSpins').checked, rewardCert: $('lgCert').checked, certFmt: $('lgCertFmt').value, notify: $('lgNotify').checked });
+  const nf = r.notify ? `, 📨 ${r.notify.sent} ta xabar yuborildi${r.notify.blocked ? ` (${r.notify.blocked} ta bot bloklagan)` : ''}${r.notify.failed ? ` (${r.notify.failed} ta xato)` : ''}` : '';
+  flash(`${r.week}-hafta yakunlandi ✅ Tarix zaliga ${r.archived} ta o'quvchi yozildi, ${r.count} ta ishtirokchi 0 dan boshlandi${r.rewarded ? `, ${r.rewarded} ta mukofot berildi` : ''}${nf}`);
   await load(); await loadHall();
 });
 let hall = [];
@@ -1266,6 +1321,7 @@ async function loadHall() { try { const r = await api('listHall'); hall = r.item
 function renderHall() {
   const wk = (data.config.league || {}).week || 1;
   $('lgWeek').textContent = `(hozir: ${wk}-hafta davom etmoqda)`;
+  fillLeagueCfg();
   $('hallCount').textContent = `(${hall.length} hafta)`;
   $('hallList').innerHTML = hall.map(h => `<details style="margin-bottom:8px"><summary><b>${h.week}-hafta</b> · ${esc(h.date||'')} · ${h.players||0} ishtirokchi · 👑 ${esc((arr(h.top)[0]||{}).name||'—')} (${(arr(h.top)[0]||{}).xp||0} XP)</summary>
     <div class="scroll"><table><thead><tr><th>#</th><th>Ism</th><th>XP</th><th>Streak</th></tr></thead><tbody>${arr(h.top).map(t => `<tr><td>${t.place}</td><td>${esc(t.name)}<br><span class="small">${esc(t.uid)}</span></td><td><b>${t.xp}</b></td><td>${t.streak||0}</td></tr>`).join('')}</tbody></table></div></details>`).join('') || '<div class="small">Hali birorta hafta yakunlanmagan.</div>';
@@ -2412,6 +2468,255 @@ if (document.querySelector('#tabs button[data-t="promo"]')) {
     loadPromos();
   });
 }
+
+/* ================= v5.8: Statistika ================= */
+const gameName = id => { const g = GAMES.find(x => x[0] === id); return g ? `${g[1]} ${g[2]}` : id; };
+const shopName = id => { const d = SHOP_DEF.find(x => x[0] === id); const o = ((data.config.shop || {}).items || {})[id]; return (o && o.title) || (d && d[1]) || id; };
+const tashHour = ts => parseInt(new Date(ts).toLocaleString('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Tashkent' }), 10) % 24;
+function hourChart(counts, total, label) {
+  const mx = Math.max(1, ...counts), top = [...counts.keys()].sort((a, b) => counts[b] - counts[a]).slice(0, 3).filter(h => counts[h] > 0);
+  return `<div class="hbars">${counts.map((c, h) => `<div title="${String(h).padStart(2,'0')}:00 — ${c} ${label} (${total ? Math.round(c / total * 100) : 0}%)"><b>${c ? (total ? Math.round(c / total * 100) + '%' : c) : ''}</b><i class="${top.includes(h) ? 'top' : ''}" style="height:${Math.round(c / mx * 100)}%"></i><span>${h}</span></div>`).join('')}</div>
+  <div class="small" style="margin-top:6px">${top.length ? 'Eng faol soatlar: ' + top.sort((a, b) => a - b).map(h => `<b>${String(h).padStart(2,'0')}:00–${String((h + 1) % 24).padStart(2,'0')}:00</b>`).join(', ') : 'Hozircha ma\'lumot yo\'q'}</div>`;
+}
+function renderAStats(r) {
+  const totalUsers = Object.keys(data.leaderboard || {}).length;
+  const avgDay = r.perDay.length ? Math.round(r.userDays / r.perDay.length) : 0;
+  // zaxira: reytingdagi oxirgi faollik vaqti (ilova yangilanishidan oldingi ma'lumot ham bo'ladi)
+  const lastH = Array(24).fill(0); let lastN = 0;
+  Object.values(data.leaderboard || {}).forEach(u => { if (u && +u.ts > 1e12 && !u.deleted) { lastH[tashHour(+u.ts)]++; lastN++; } });
+  const gmap = Object.fromEntries(r.games.map(g => [g.id, g]));
+  const gRows = [...GAMES.map(g => g[0]), ...r.games.map(g => g.id).filter(id => !GAMES.some(g => g[0] === id))].map(id => ({ id, ...(gmap[id] || { plays: 0, done: 0, players: 0 }) })).sort((a, b) => b.plays - a.plays);
+  const gMax = Math.max(1, ...gRows.map(g => g.plays));
+  const smap = Object.fromEntries(r.shop.map(g => [g.id, g]));
+  const ids = [...new Set([...SHOP_DEF.map(x => x[0]), ...Object.keys((data.config.shop || {}).items || {}), ...r.shop.map(x => x.id)])];
+  const sRows = ids.map(id => ({ id, ...(smap[id] || { n: 0, coins: 0, buyers: 0 }) })).sort((a, b) => b.n - a.n || b.coins - a.coins);
+  const sMax = Math.max(1, ...sRows.map(x => x.n));
+  const sold = sRows.filter(x => x.n > 0), unsold = sRows.filter(x => !x.n);
+  $('as_body').innerHTML = `
+    <div class="grid" style="margin-bottom:14px">
+      <div class="stat"><b>${r.uniqueUsers}</b><span>${r.days} kunda ilovaga kirganlar</span></div>
+      <div class="stat"><b>${avgDay}</b><span>Kuniga o'rtacha faol</span></div>
+      <div class="stat"><b>${totalUsers ? Math.round(r.uniqueUsers / totalUsers * 100) : 0}%</b><span>Jami ${totalUsers} kishidan faol</span></div>
+      <div class="stat"><b>${r.games.reduce((a, g) => a + g.plays, 0)}</b><span>O'yin boshlanishi (jami)</span></div>
+    </div>
+    <h3>🕒 Qaysi soatda ilovaga kirishadi</h3>
+    <p class="small">Har ustun — shu soatda ilovaga kirgan foydalanuvchilar ulushi (${r.days} kun ichida kamida bir marta kirganlardan, %).</p>
+    ${r.uniqueUsers ? hourChart(r.hourUsers, r.uniqueUsers, 'foydalanuvchi') : '<div class="msg e" style="margin:8px 0">Hali ma\'lumot yig\'ilmagan — ilova yangilangandan keyin foydalanuvchilar kirgan sari to\'lib boradi.</div>'}
+    <details style="margin:10px 0"><summary class="small">Taxminiy: oxirgi faollik soati bo'yicha (hozirgi reyting ma'lumotidan, ${lastN} kishi)</summary>${hourChart(lastH, lastN, 'kishi')}</details>
+    <div class="scroll" style="margin:8px 0"><table><thead><tr><th>Kun</th>${r.perDay.slice(0, 14).map(d => `<th>${d.day.slice(5)}</th>`).join('')}</tr></thead><tbody><tr><td>Faol</td>${r.perDay.slice(0, 14).map(d => `<td>${d.users}</td>`).join('')}</tr></tbody></table></div>
+    <h3 style="margin-top:18px">🎮 Qaysi o'yin necha marta o'ynalgan</h3>
+    ${gRows.map(g => `<div class="hrow"><span class="nm" title="${esc(gameName(g.id))}">${esc(gameName(g.id))}</span><div class="bar"><i style="width:${Math.round(g.plays / gMax * 100)}%"></i></div><span class="small" style="width:170px;text-align:right"><b>${g.plays}</b> marta · ${g.players} kishi · ${g.plays ? Math.round(g.done / g.plays * 100) : 0}% tugatgan</span></div>`).join('')}
+    <h3 style="margin-top:18px">🛒 Do'kon: qaysi mahsulot qancha sotilgan</h3>
+    ${sold.length ? sold.map(x => `<div class="hrow"><span class="nm" title="${esc(shopName(x.id))}">${esc(shopName(x.id))}</span><div class="bar"><i style="width:${Math.round(x.n / sMax * 100)}%"></i></div><span class="small" style="width:190px;text-align:right"><b>${x.n}</b> dona · ${x.buyers} xaridor · 🪙 ${x.coins}</span></div>`).join('') : '<div class="small">Hali xarid bo\'lmagan.</div>'}
+    ${unsold.length ? `<details style="margin-top:8px"><summary class="small">Hali sotilmagan mahsulotlar (${unsold.length})</summary><div class="small" style="margin-top:6px">${unsold.map(x => esc(shopName(x.id))).join(' · ')}</div></details>` : ''}`;
+}
+async function loadAStats() { $('as_body').innerHTML = '<div class="small">Yuklanmoqda…</div>'; renderAStats(await api('statsOverview', { days: +$('as_days').value || 14 })); }
+document.querySelector('[data-t="astats"]').addEventListener('click', guard(loadAStats));
+$('as_reload').onclick = guard(loadAStats); $('as_days').onchange = guard(loadAStats);
+
+/* ================= v5.8: haftalik xabar sozlamalari ================= */
+const DEF_WEEK_TEXT = "🏁{week}-hafta tugadi.\n\n🎉 Siz {xp}XP bilan {place}-o'rinni oldingiz va kuchli TOP20 talikka kirdingiz. Tabriklaymiz 🎊🎊🎊";
+function fillLeagueCfg() {
+  const c = (data.config && data.config.league) || {};
+  if (document.activeElement && ['lgMsg', 'lgBtn'].includes(document.activeElement.id)) return;
+  $('lgAuto').checked = !!c.auto; $('lgNotify').checked = c.notify !== false;
+  $('lgMsg').value = c.msgText || DEF_WEEK_TEXT; $('lgBtn').value = c.msgButton || '▶️ Mashqni davom ettirish';
+  if (c.rewardSpins !== undefined) $('lgSpins').checked = !!c.rewardSpins; if (c.rewardCert !== undefined) $('lgCert').checked = !!c.rewardCert; if (c.certFmt) $('lgCertFmt').value = c.certFmt;
+}
+$('lgAutoSave').onclick = guard(async () => {
+  await api('setLeagueAuto', { auto: $('lgAuto').checked, notify: $('lgNotify').checked, rewardSpins: $('lgSpins').checked, rewardCert: $('lgCert').checked, certFmt: $('lgCertFmt').value, msgText: $('lgMsg').value, msgButton: $('lgBtn').value });
+  flash($('lgAuto').checked ? 'Saqlandi ✅ Hafta har dushanba 00:05 da avtomatik yakunlanadi' : 'Saqlandi ✅'); await loadHall();
+});
+$('lgTest').onclick = guard(async () => {
+  const r = await api('testWeekMsg', { tgId: $('lgTestId').value.trim(), msgText: $('lgMsg').value, msgButton: $('lgBtn').value });
+  flash(r.sent ? 'Sinov xabari yuborildi ✅ (Telegramni tekshiring)' : (r.blocked ? 'Bot bu foydalanuvchi tomonidan bloklangan yoki /start bosilmagan' : "Xabar yuborilmadi — ID va BOT_TOKEN ni tekshiring"), !!r.sent);
+});
+
+/* ================= v5.8: foydalanuvchi sovg'a / bezaklarini yoqish-o'chirish ================= */
+const FX_ROWS = [['skin', "🌧 Mavzu (yomg'ir, qor, neon...)"], ['frame', '🖼 Avatar ramkasi'], ['aura', '✨ Aura'], ['nameFx', '🔤 Ism effekti'], ['nameAnim', '🌈 Ism animatsiyasi'], ['nameColor', '🎨 Nik rangi'], ['nameSym', '🔣 Nik belgisi'], ['title', '🏷 Unvon'], ['rankBadge', '👑 Reyting belgisi'], ['banner', '🏞 Bosh sahifa banneri'], ['verified', '✅ VIP galochka'], ['spotlight', '🔦 Spotlight'], ['boost', '⚡ 2x XP kuchaytirgich'], ['vip', '💎 VIP (Pro) maqomi']];
+let fxId = '';
+async function openFx(id) {
+  const r = await api('getUserFx', { id }); fxId = id; const now = Date.now();
+  const val = k => ({ skin: r.equip.skin, frame: r.equip.frame, aura: r.equip.aura, nameFx: r.equip.nameFx, nameAnim: r.equip.nameAnim, nameColor: r.equip.nameColor, nameSym: r.equip.nameSym, title: r.equip.title, rankBadge: r.equip.rankBadge, banner: r.equip.banner,
+    verified: r.own.includes('verified') ? 'bor' : '', spotlight: r.spotUntil > now ? 'faol (' + new Date(r.spotUntil).toLocaleString() + 'gacha)' : '', boost: r.boostUntil > now ? 'faol (' + new Date(r.boostUntil).toLocaleString() + 'gacha)' : '', vip: r.proUntil > now ? 'faol (' + new Date(r.proUntil).toLocaleString() + 'gacha)' : '' })[k] || '';
+  $('fxCard').classList.remove('hide');
+  $('fxCard').innerHTML = `<h2>🎨 ${esc(r.name || id)} — sovg'a va bezaklar</h2>
+    <p class="small">Yoqilgan = foydalanuvchida ishlaydi. O'chirsangiz — sotib olingan/sovg'a qilingan narsa o'chib ketmaydi, faqat ta'siri to'xtaydi; qayta yoqsangiz darhol tiklanadi (foydalanuvchi ilovasida bir necha soniyada). ${r.hasEntry ? '' : "<b>Bu foydalanuvchi hali ilovaga kirmagan — saqlab bo'lmaydi.</b>"}</p>
+    ${FX_ROWS.map(([k, l]) => { const v = val(k), off = !!(r.off && r.off[k]); return `<label class="fxrow ${v || off ? '' : 'empty'}"><span class="l"><b>${l}</b><br><span class="v">${v ? esc(v) : 'hozir o\'rnatilmagan'}</span></span><input type="checkbox" data-fx="${k}" ${off ? '' : 'checked'} style="width:22px;height:22px"></label>`; }).join('')}
+    <details style="margin-top:8px"><summary class="small">Foydalanuvchining barcha narsalari (${r.own.length})</summary><div class="small" style="margin-top:6px">${r.own.map(esc).join(' · ') || '—'}</div></details>
+    <div class="row" style="margin-top:12px"><button id="fxSave">💾 Saqlash</button><button class="sec" id="fxAllOff">Hammasini o'chirish</button><button class="sec" id="fxAllOn">Hammasini yoqish</button><button class="sec" id="fxClose">Yopish</button></div>`;
+  const boxes = () => [...$('fxCard').querySelectorAll('[data-fx]')];
+  $('fxAllOff').onclick = () => boxes().forEach(b => b.checked = false); $('fxAllOn').onclick = () => boxes().forEach(b => b.checked = true);
+  $('fxClose').onclick = () => $('fxCard').classList.add('hide');
+  $('fxSave').onclick = guard(async () => { const off = {}; boxes().forEach(b => { if (!b.checked) off[b.dataset.fx] = 1; }); await api('setUserFx', { id: fxId, off }); flash('Saqlandi ✅ Foydalanuvchida bir necha soniyada yangilanadi'); $('fxCard').classList.add('hide'); await load(); });
+  $('fxCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ================= v5.8: maxsus mavzularni sanama-san ommaviy yuklash ================= */
+let bkRows = [];
+const isoAdd = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const natCmp = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+function dateFromName(n) {
+  let m = n.match(/(20\d{2})[-_.](\d{1,2})[-_.](\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  m = n.match(/(\d{1,2})[-_.](\d{1,2})[-_.](20\d{2})/); if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return '';
+}
+function bkAssign(force) {
+  const start = $('bk_start').value || todayStr(), step = +$('bk_step').value || 1;
+  bkRows.forEach((r, i) => { if (force || !r.fromName) r.date = isoAdd(start, i * step); });
+}
+function bkRender() {
+  const kind = $('bk_kind').value, lvl = $('bk_level').value;
+  $('bk_body').innerHTML = bkRows.map((r, i) => {
+    const ex = packs.find(p => p.kind === kind && p.date === r.date && (p.level || '') === lvl);
+    const dup = bkRows.some((o, j) => j !== i && o.date === r.date);
+    return `<tr><td>${i + 1}</td><td class="small">${esc(r.name)}</td><td><input data-bk="t" data-i="${i}" value="${esc(r.title)}"></td><td><input type="date" data-bk="d" data-i="${i}" value="${esc(r.date)}">${ex ? `<div class="small" style="color:var(--gold)">⚠ «${esc(ex.title)}» ustiga yoziladi</div>` : ''}${dup ? '<div class="small" style="color:#F87171">⚠ boshqa fayl bilan bir sana</div>' : ''}</td><td>${r.err ? `<span class="tag d">${esc(r.err)}</span>` : `${r.words.length}${r.words.length !== 20 && kind === 'topic' ? ' <span class="small">(20 tavsiya)</span>' : ''}`}</td><td><button class="sec" data-bk="x" data-i="${i}">✕</button></td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="small">Fayllar tanlanmagan</td></tr>';
+  $('bk_body').querySelectorAll('[data-bk]').forEach(el => { const i = +el.dataset.i; if (el.dataset.bk === 't') el.oninput = () => bkRows[i].title = el.value; if (el.dataset.bk === 'd') el.onchange = () => { bkRows[i].date = el.value; bkRows[i].fromName = true; bkRender(); }; if (el.dataset.bk === 'x') el.onclick = () => { bkRows.splice(i, 1); bkAssign(false); bkRender(); }; });
+  const ok = bkRows.filter(r => !r.err && r.words.length && r.date).length;
+  $('bk_info').textContent = bkRows.length ? `${ok} / ${bkRows.length} fayl saqlashga tayyor` : '';
+}
+$('bk_files').onchange = guard(async e => {
+  const files = [...e.target.files].sort(natCmp); const rows = [];
+  for (const f of files) {
+    let text = await f.text(), title = '';
+    const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+    const m = (lines[0] || '').match(/^\s*(?:#|Mavzu\s*:|Title\s*:)\s*(.+)$/i);
+    if (m) { title = m[1].trim(); text = lines.slice(1).join('\n'); }
+    const base = f.name.replace(/\.[^.]+$/, '');
+    if (!title) { title = base.replace(/(20\d{2})[-_.]\d{1,2}[-_.]\d{1,2}|\d{1,2}[-_.]\d{1,2}[-_.](20\d{2})/g, '').replace(/[_\-.]+/g, ' ').trim() || base; title = title.charAt(0).toUpperCase() + title.slice(1); }
+    const row = { name: f.name, title, date: dateFromName(f.name), fromName: !!dateFromName(f.name), words: [], err: '' };
+    try { row.words = parseWords(text).filter(w => w.en && w.uz); if (!row.words.length) row.err = "so'z topilmadi"; } catch (er) { row.err = er.message.slice(0, 40); }
+    rows.push(row);
+  }
+  bkRows = rows; bkAssign(false); bkRender();
+});
+['bk_start', 'bk_step'].forEach(id => $(id).onchange = () => { bkAssign(false); bkRender(); });
+['bk_kind', 'bk_level'].forEach(id => $(id).onchange = bkRender);
+$('bk_redo').onclick = () => { bkAssign(true); bkRender(); };
+$('bk_clear').onclick = () => { bkRows = []; $('bk_files').value = ''; bkRender(); };
+$('bk_save').onclick = guard(async () => {
+  const items = bkRows.filter(r => !r.err && r.words.length);
+  if (!items.length) return flash("Saqlash uchun yaroqli fayl yo'q", false);
+  if (items.some(r => !r.date || !r.title.trim())) return flash('Hamma faylga nom va sana kerak', false);
+  const kind = $('bk_kind').value;
+  const r = await api('savePackBatch', { kind, level: $('bk_level').value, mode: 'replace', overwrite: $('bk_over').checked, published: $('bk_pub').checked, items: items.map(x => ({ title: x.title.trim(), date: x.date, words: x.words })) });
+  const failed = r.results.filter(x => !x.ok);
+  flash(`Saqlandi ✅ ${r.saved} ta ${kind === 'topic' ? 'maxsus mavzu' : "kunlik to'plam"}` + (r.results.some(x => x.replaced) ? ` (${r.results.filter(x => x.replaced).length} tasi almashtirildi)` : '') + (failed.length ? ` · ❌ ${failed.length} ta xato: ` + failed.slice(0, 3).map(x => `${x.title}: ${x.error}`).join('; ') : ''), !failed.length);
+  bkRows = []; $('bk_files').value = ''; bkRender(); await load();
+});
+$('bk_start').value = todayStr();
+
+/* ================= v5.8: Lo-Fi musiqa kutubxonasi ================= */
+let lfTracks = [], lfDirty = false, lfAudio = null, lfPlaying = -1;
+function lfLoad() {
+  if (lfDirty) return;
+  const lf = data.config && data.config.lofi;
+  if (lf && arr(lf.tracks).length) { lfTracks = arr(lf.tracks).sort((a, b) => (+a.order || 0) - (+b.order || 0)).map(t => ({ title: t.title || '', url: t.url })); $('lf_shuf').checked = !!lf.shuffle; }
+  else { lfTracks = arr((data.config.shop || {}).lofi).map(t => ({ title: t.title || '', url: t.url })); }
+  lfRender();
+}
+function lfTitleFrom(url) { try { const n = decodeURIComponent(new URL(url).pathname.split('/').pop() || '').replace(/\.[a-z0-9]{2,4}$/i, '').replace(/[_\-+]+/g, ' ').trim(); return n ? n.charAt(0).toUpperCase() + n.slice(1) : ''; } catch (e) { return ''; } }
+function lfRender() {
+  $('lf_count').textContent = `(${lfTracks.length} ta trek${lfTracks.length > 400 ? ' — faqat dastlabki 400 tasi saqlanadi' : ''})`;
+  $('lf_body').innerHTML = lfTracks.map((t, i) => `<tr><td>${i + 1}</td><td><input data-lf="t" data-i="${i}" value="${esc(t.title)}" style="min-width:140px"></td><td class="small" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.url)}">${esc(t.url)}</td><td><div class="acts"><button class="sec" data-lf="p" data-i="${i}">${lfPlaying === i ? '⏹' : '▶'}</button><button class="sec" data-lf="u" data-i="${i}">↑</button><button class="sec" data-lf="d" data-i="${i}">↓</button><button class="bad" data-lf="x" data-i="${i}">✕</button></div></td></tr>`).join('') || '<tr><td colspan="4" class="small">Ro\'yxat bo\'sh — ilova o\'zi hosil qiladigan Lo-Fi musiqa ishlatiladi.</td></tr>';
+  $('lf_body').querySelectorAll('[data-lf]').forEach(el => {
+    const i = +el.dataset.i, k = el.dataset.lf;
+    if (k === 't') el.oninput = () => { lfTracks[i].title = el.value; lfDirty = true; };
+    else el.onclick = () => {
+      if (k === 'p') { if (lfAudio) { lfAudio.pause(); lfAudio = null; } if (lfPlaying === i) lfPlaying = -1; else { lfPlaying = i; lfAudio = new Audio(lfTracks[i].url); lfAudio.onerror = () => { flash(`«${lfTracks[i].title}» ochilmadi — havolani tekshiring`, false); lfPlaying = -1; lfRender(); }; lfAudio.onended = () => { lfPlaying = -1; lfRender(); }; lfAudio.play().catch(() => {}); } }
+      if (k === 'u' && i > 0) { [lfTracks[i - 1], lfTracks[i]] = [lfTracks[i], lfTracks[i - 1]]; lfDirty = true; }
+      if (k === 'd' && i < lfTracks.length - 1) { [lfTracks[i + 1], lfTracks[i]] = [lfTracks[i], lfTracks[i + 1]]; lfDirty = true; }
+      if (k === 'x') { lfTracks.splice(i, 1); lfDirty = true; if (lfAudio) { lfAudio.pause(); lfAudio = null; lfPlaying = -1; } }
+      lfRender();
+    };
+  });
+}
+$('lf_add').onclick = () => {
+  const have = new Set(lfTracks.map(t => t.url)); let added = 0, dup = 0;
+  $('lf_paste').value.split(/\r?\n/).forEach(line => {
+    const m = line.match(/https?:\/\/[^\s|]+/); if (!m) return;
+    const url = m[0].trim(); if (have.has(url)) { dup++; return; }
+    const title = line.replace(m[0], '').replace(/^[\s|,;\t\-–—]+|[\s|,;\t\-–—]+$/g, '').trim() || lfTitleFrom(url) || `Lo-Fi ${lfTracks.length + 1}`;
+    lfTracks.push({ title, url }); have.add(url); added++;
+  });
+  $('lf_info').textContent = `${added} ta qo'shildi${dup ? `, ${dup} ta takror o'tkazib yuborildi` : ''} — saqlashni unutmang`;
+  if (added) { lfDirty = true; $('lf_paste').value = ''; } lfRender();
+};
+$('lf_shuf').onchange = () => { lfDirty = true; };
+$('lf_clear').onclick = () => { if (confirm("Hamma treklar ro'yxatdan olib tashlansinmi?")) { lfTracks = []; lfDirty = true; lfRender(); } };
+$('lf_save').onclick = guard(async () => {
+  const r = await api('setLofi', { tracks: lfTracks, shuffle: $('lf_shuf').checked });
+  lfDirty = false; $('lf_info').textContent = ''; flash(`Lo-Fi saqlandi ✅ ${r.count} ta trek${r.dropped ? ` (${r.dropped} tasi yaroqsiz/takror edi)` : ''}`); await load();
+});
+const _renderAll = renderAll;
+renderAll = function () { _renderAll(); try { lfLoad(); } catch (e) { console.error(e); } };
+
+
+/* ================= v5.9: CSV eksport, kontent kalendari, «Diqqat talab qiladi» ================= */
+function downloadCsv(name, rows) {
+  const q = v => { v = String(v ?? ''); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const blob = new Blob(['\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const tsOf = v => { if (!v) return 0; if (+v > 1e11) return +v; const t = Date.parse(v); return isNaN(t) ? 0 : t; };
+const fmtDT = t => t ? new Date(t).toLocaleString('sv-SE').slice(0, 16) : '';
+$('lExport').onclick = guard(async () => {
+  const tg = data.tgusers || {};
+  const rows = [['ID', 'Ism', 'Telegram username', 'Daraja', 'Liga XP (ko\'rinadigan)', 'Streak', 'O\'rganilgan so\'zlar', 'Oxirgi faollik', 'Qo\'shilgan', 'Holat', 'Bot bloklangan', 'Admin o\'chirgan bezaklar']];
+  Object.entries(data.leaderboard || {}).forEach(([id, u]) => {
+    const t = tg[id.replace(/^tg_/, '')] || {};
+    rows.push([id, u.name || '', t.username || u.username || '', u.level || '', Math.max(0, (+u.xp || 0) + (+u.xpOffset || 0)), +u.streak || 0, +u.learned || 0, fmtDT(+u.ts), fmtDT(tsOf(u.joined)), u.deleted ? 'oʻchirilgan' : u.hidden ? 'yashirin' : 'faol', t.blocked ? 'ha' : '', u.off ? Object.keys(u.off).join(' ') : '']);
+  });
+  downloadCsv(`foydalanuvchilar-${todayStr()}.csv`, rows); flash(`${rows.length - 1} ta foydalanuvchi yuklab olindi ✅`);
+});
+
+function contentRunway() {
+  const have = new Set(packs.filter(p => p.kind === 'topic' && p.published !== false && p.date).map(p => p.date));
+  let n = 0; const t = todayStr();
+  for (let i = 0; i < 60; i++) { if (have.has(isoAdd(t, i))) n++; else break; }
+  return n;
+}
+function renderCal() {
+  if (!$('calGrid')) return;
+  const t = todayStr();
+  const by = {}; packs.forEach(p => { if (p.date && p.published !== false) (by[p.date] ||= []).push(p); });
+  const start = new Date(t + 'T00:00:00Z'), pad = (start.getUTCDay() + 6) % 7; // dushanbadan boshlanadi
+  let html = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'].map(d => `<div class="hd">${d}</div>`).join('') + '<div></div>'.repeat(pad);
+  let gaps = 0;
+  for (let i = 0; i < 28; i++) {
+    const d = isoAdd(t, i), list = by[d] || [], topic = list.find(p => p.kind === 'topic'), daily = list.find(p => p.kind === 'daily');
+    if (!topic) gaps++;
+    html += `<div class="cd ${d === t ? 'today' : ''} ${topic ? 'ok' : 'gap'}" data-d="${d}" ${topic ? '' : 'title="Bo\'sh — bosing va shu sanadan yuklang"'}><b>${+d.slice(8)}${d.slice(8) === '01' ? '.' + d.slice(5, 7) : ''}</b>${topic ? '⭐ ' + esc(topic.title).slice(0, 24) : 'mavzu yo\'q'}${daily ? '<br>🗓 ' + esc(daily.title).slice(0, 18) : ''}</div>`;
+  }
+  $('calGrid').innerHTML = html;
+  $('calInfo').textContent = `(${28 - gaps} kunda mavzu bor, ${gaps} kun bo'sh · zaxira: ${contentRunway()} kun)`;
+  $('calGrid').querySelectorAll('.cd.gap').forEach(c => c.onclick = () => { $('bk_start').value = c.dataset.d; bkAssign(false); bkRender(); $('bk_files').scrollIntoView({ behavior: 'smooth', block: 'center' }); flash(`Ommaviy yuklash ${c.dataset.d} sanasidan boshlanadi — fayllarni tanlang`); });
+}
+function renderAttn() {
+  if (!$('attnBox')) return;
+  const now = Date.now(), t = todayStr(), y = isoAdd(t, -1);
+  const users = Object.values(data.leaderboard || {}).filter(u => u && !u.deleted && u.ts);
+  const day = 864e5;
+  const act24 = users.filter(u => now - +u.ts < day).length;
+  const newToday = users.filter(u => now - tsOf(u.joined) < day && tsOf(u.joined)).length;
+  const new7 = users.filter(u => now - tsOf(u.joined) < 7 * day && tsOf(u.joined)).length;
+  const away3 = users.filter(u => now - +u.ts > 3 * day).length;
+  const risk = users.filter(u => (+u.streak || 0) >= 3 && u.lr === y).length;
+  const blocked = Object.values(data.tgusers || {}).filter(u => u && u.blocked).length;
+  const run = contentRunway();
+  const item = (ic, txt, warn, tab) => `<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${ic} ${txt}</span>${tab ? `<button class="sec" data-go="${tab}">Ochish</button>` : ''}</div>`;
+  $('attnBox').innerHTML =
+    item(run <= 2 ? '🔴' : run <= 6 ? '🟡' : '🟢', `Maxsus mavzu zaxirasi: <b>${run} kun</b>${run <= 2 ? " — tez orada tugaydi, yangi fayllar yuklang" : ''}`, run <= 2, 'packs') +
+    item('🟢', `Oxirgi 24 soatda faol: <b>${act24}</b> · yangi bugun: <b>${newToday}</b> · 7 kunda: <b>${new7}</b>`, false, 'astats') +
+    item(risk ? '🟡' : '🟢', `Streak xavfida (3+ kunlik, kecha o'qigan, bugun hali yo'q): <b>${risk}</b>`, !!risk, 'remind') +
+    item(away3 > users.length * 0.4 ? '🟡' : '🟢', `3 kundan beri kirmaganlar: <b>${away3}</b> / ${users.length}`, false, 'remind') +
+    item(blocked ? '🟡' : '🟢', `Botni bloklaganlar: <b>${blocked}</b> (ularga xabar yetmaydi)`, !!blocked, 'users');
+  $('attnBox').querySelectorAll('[data-go]').forEach(b => b.onclick = () => document.querySelector(`[data-t="${b.dataset.go}"]`).click());
+}
+const _renderPacks = renderPacks; renderPacks = function () { _renderPacks(); try { renderCal(); } catch (e) { console.error(e); } };
+const _renderStats = renderStats; renderStats = function () { _renderStats(); try { renderAttn(); } catch (e) { console.error(e); } };
+
 </script>
 </body>
 </html>

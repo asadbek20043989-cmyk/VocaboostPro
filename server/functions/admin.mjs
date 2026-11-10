@@ -4,7 +4,9 @@
 //   FIREBASE_DB_URL       — https://<project>-default-rtdb.firebaseio.com
 //   FIREBASE_DB_SECRET    — Realtime Database "Database secret" (Project settings > Service accounts > Database secrets)
 import { timingSafeEqual } from 'node:crypto';
-import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay } from '../lib/tg.mjs';
+import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow } from '../lib/tg.mjs';
+
+import { finishWeek } from '../lib/week.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -48,7 +50,7 @@ export const handler = async event => {
   const now = Date.now();
   const attempt = loginAttempts.get(clientIp);
 
-  const PUBLIC_ACTIONS = new Set(['claimPromo', 'submitRating', 'submitSurvey', 'getActiveSurvey']);
+  const PUBLIC_ACTIONS = new Set(['claimPromo', 'submitRating', 'submitSurvey', 'getActiveSurvey', 'track']);
   if (!PUBLIC_ACTIONS.has(body.action)) {
     if (attempt && attempt.lockedUntil > now) {
       const minsLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
@@ -87,6 +89,48 @@ export const handler = async event => {
     try {
       if (await call('GET', `leaderboard/${uid}/ts`)) await call('PATCH', `leaderboard/${uid}`, { hasGrant: true });
     } catch { /* bayroq muhim emas: ilova birinchi ochilishda baribir tekshiradi */ }
+  };
+
+  // To'plamni bazaga yozadi (savePack va savePackBatch ishlatadi). skipVersion — ko'p to'plam saqlanganda versiyani oxirida bir marta yangilash uchun
+  const savePackCore = async (body, skipVersion = false) => {
+    const str = (v, n) => String(v ?? '').trim().slice(0, n);
+    const title = str(body.title, 80);
+    if (!title) throw new Error("To'plam nomini kiriting");
+    const kind = body.kind === 'daily' ? 'daily' : body.kind === 'topic' ? 'topic' : 'open';
+    const packLevel = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(body.level) ? body.level : ''; // bo'sh — hamma darajaga
+    const date = str(body.date, 10);
+    if (kind !== 'open' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Kunlik to'plam / maxsus mavzu uchun sanani tanlang");
+    const packId = ID_RE.test(body.id || '') ? body.id : 'k' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+    const list = Array.isArray(body.words) ? body.words.slice(0, 500) : [];
+    const slug = t => String(t).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    const arrOf = v => (Array.isArray(v) ? v : String(v ?? '').split('|')).map(x => str(x, 80)).filter(Boolean).slice(0, 8);
+    const words = {};
+    const errors = [];
+    list.forEach((w, i) => {
+      const en = str(w.en, 60), uz = str(w.uz, 120);
+      if (!en || !uz) return errors.push(`${i + 1}-qator: inglizcha so'z va o'zbekcha ma'no kerak`);
+      let id = `p_${packId}_${slug(en) || i}`;
+      if (words[id]) id += `_${i}`;
+      words[id] = {
+        en, uz, ipa: str(w.ipa, 60), pos: str(w.pos, 20), ex: str(w.ex, 220), exUz: str(w.exUz, 260),
+        col: arrOf(w.col), fam: arrOf(w.fam), hook: str(w.hook, 260), topic: str(w.topic, 40),
+        level: packLevel || (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(String(w.level).trim().toUpperCase()) ? String(w.level).trim().toUpperCase() : (String(w.level).trim() === 'B2+' ? 'B2' : 'B1')), order: i, published: true,
+      };
+    });
+    const prev = await call('GET', `packs/${packId}/createdAt`);
+    const meta = {
+      title, desc: str(body.desc, 240), kind, date: kind !== 'open' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace', level: packLevel,
+      order: Number.isFinite(Number(body.order)) ? Number(body.order) : 0, published: body.published !== false, createdAt: prev || Date.now(),
+    };
+    if (list.length) {
+      if (!Object.keys(words).length) throw new Error(errors.slice(0, 5).join('; ') || "So'zlar topilmadi");
+      await call('PUT', `packs/${packId}`, { ...meta, words });
+    } else {
+      if (!prev) throw new Error("Kamida bitta so'z kiriting");
+      await call('PATCH', `packs/${packId}`, meta); // so'zlar o'zgarmaydi, faqat sozlamalar
+    }
+    if (!skipVersion) await call('PUT', 'config/packsVersion', Date.now());
+    return { id: packId, saved: Object.keys(words).length, errors };
   };
 
   try {
@@ -130,64 +174,45 @@ export const handler = async event => {
       }
 
       // Haftalik ligani yangilash: TOP-20 natijalari «Tarix zali»ga QOTIRIB saqlanadi (keyin o'zgarmaydi),
-      // so'ngra hammaning liga XP si 0 ga tushiriladi va yangi hafta boshlanadi.
+      // so'ngra hammaning liga XP si 0 ga tushiriladi va yangi hafta boshlanadi. TOP-20 ga bot orqali tabrik xabari boradi.
+      // (Xuddi shu mantiq avtomatik cron `week-end` da ham ishlaydi — server/lib/week.mjs)
       case 'resetLeague': {
-        const lb = (await call('GET', 'leaderboard')) || {};
-        const league = (await call('GET', 'config/league')) || {};
-        const week = Math.max(1, Math.round(Number(league.week) || 1)); // yakunlanayotgan hafta raqami
-        const hallId = 'w' + String(week).padStart(4, '0');
-        if (await call('GET', `hall/${hallId}/week`)) return json(400, { error: `${week}-hafta allaqachon Tarix zaliga yozilgan (qayta yozib bo'lmaydi). Sahifani yangilang.` });
-
-        const shownOf = e => Math.max(0, (Number(e?.xp) || 0) + (Number(e?.xpOffset) || 0));
-        const ranked = Object.entries(lb)
-          .filter(([, e]) => e && !e.deleted && !e.hidden && shownOf(e) > 0)
-          .map(([uid, e]) => ({ uid, e, xp: shownOf(e) }))
-          .sort((a, b) => b.xp - a.xp || (Number(a.e.ts) || 0) - (Number(b.e.ts) || 0))
-          .slice(0, 20);
-        const top = ranked.map((r, i) => ({
-          place: i + 1,
-          uid: r.uid,
-          name: String(r.e.name || "O'quvchi").slice(0, 40),
-          avatar: typeof r.e.avatar === 'string' && !r.e.avatar.startsWith('data:') ? r.e.avatar.slice(0, 300) : '',
-          xp: r.xp,
-          streak: Number(r.e.streak) || 0,
-          level: String(r.e.level || '').slice(0, 4),
-        }));
-        const totalPlayers = Object.values(lb).filter(e => e && !e.deleted && shownOf(e) > 0).length;
-        const endedAt = Date.now();
-        if (top.length) {
-          await call('PUT', `hall/${hallId}`, { week, startedAt: Number(league.startedAt) || 0, endedAt, date: tashkentDay(), players: totalPlayers, top });
-        }
-
-        // Ixtiyoriy mukofotlar: TOP-3 ga baraban aylantirishlari, 1-o'ringa «Hafta chempioni» sertifikati
-        let rewarded = 0;
-        if (body.rewardSpins) {
-          const spins = [5, 3, 2];
-          for (let i = 0; i < Math.min(3, ranked.length); i++) {
-            await call('PUT', `grants/${ranked[i].uid}/${newGid()}`, { type: 'spins', amount: spins[i], validHours: 72, note: `${week}-hafta ligasi: ${i + 1}-o'rin`, ts: Date.now() });
-            await flagGrant(ranked[i].uid);
-            rewarded++;
-          }
-        }
-        if (body.rewardCert && ranked[0]) {
-          await issueCertificate(call, {
-            userId: ranked[0].uid, tpl: 'weekly', label: `${week}-HAFTA CHEMPIONI`, title: `${week}-hafta ligasi g'olibi`, reason: `${ranked[0].xp} XP bilan haftaning eng kuchli o'quvchisi bo'ldi`,
-            name: top[0].name, fmt: body.certFmt === 'story' ? 'story' : 'wide', stats: statsFromLb(ranked[0].e),
+        try {
+          const r = await finishWeek(call, {
+            rewardSpins: !!body.rewardSpins, rewardCert: !!body.rewardCert, certFmt: body.certFmt,
+            notify: body.notify !== false,
           });
-          rewarded++;
+          return json(200, { ok: true, ...r });
+        } catch (e) {
+          if (e.code === 'DUP') return json(400, { error: e.message });
+          throw e;
         }
+      }
 
-        const upd = {};
-        for (const [id, e] of Object.entries(lb)) {
-          const shown = shownOf(e);
-          upd[`${id}/xp`] = 0; // hamma uchun XP 0 dan boshlanadi
-          upd[`${id}/xpOffset`] = 0;
-          upd[`${id}/adj`] = (Number(e?.adj) || 0) - shown; // foydalanuvchining o'z hisobi ham 0 dan boshlanadi (farq sifatida)
-          upd[`${id}/adjV`] = (Number(e?.adjV) || 0) + 1;
-        }
-        if (Object.keys(upd).length) await call('PATCH', 'leaderboard', upd);
-        await call('PUT', 'config/league', { week: week + 1, startedAt: endedAt });
-        return json(200, { ok: true, count: Object.keys(upd).length / 4, week, archived: top.length, rewarded });
+      // Avtomatik yakunlash va tabrik xabari sozlamalari (config/league ichida; hafta raqamiga tegilmaydi)
+      case 'setLeagueAuto': {
+        const upd = {
+          auto: !!body.auto,
+          notify: body.notify !== false,
+          rewardSpins: !!body.rewardSpins,
+          rewardCert: !!body.rewardCert,
+          certFmt: body.certFmt === 'wide' ? 'wide' : 'story',
+          msgText: String(body.msgText || '').trim().slice(0, 1500),
+          msgButton: String(body.msgButton || '').trim().slice(0, 40),
+        };
+        await call('PATCH', 'config/league', upd);
+        return json(200, { ok: true });
+      }
+
+      // Haftalik tabrik xabarini bitta Telegram ID ga sinab ko'rish (admin o'ziga)
+      case 'testWeekMsg': {
+        const { notifyTop } = await import('../lib/week.mjs');
+        const id = String(body.tgId || '').replace(/^tg_/, '');
+        if (!/^\d{3,15}$/.test(id)) return json(400, { error: 'Telegram ID kiriting (faqat raqamlar)' });
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const lg = (await call('GET', 'config/league')) || {};
+        const r = await notifyTop(call, [{ uid: `tg_${id}`, e: { name: 'Sinov' }, xp: 2765 }].map((x, i) => ({ ...x })), Math.max(1, Number(lg.week) || 1), { text: String(body.msgText || '').trim() || lg.msgText, button: String(body.msgButton || '').trim() || lg.msgButton });
+        return json(200, { ok: true, ...r });
       }
 
       // Tarix zali (admin ko'rishi uchun)
@@ -764,6 +789,138 @@ export const handler = async event => {
       }
 
       // ---------- Do'kon va taklif sozlamalari ----------
+      // ---------- Foydalanuvchi sovg'a / bezaklarini yoqish-o'chirish ----------
+      // Foydalanuvchi sotib olgan yoki sovg'a qilingan bezaklar (mavzu: yomg'ir/qor..., ramka, aura, 2x XP, VIP...) o'chmaydi — faqat ta'siri to'xtatiladi.
+      // Holat `leaderboard/<uid>/off` da turadi ({ skin: 1, frame: 1 ... }); ilova uni jonli kuzatadi va bir necha soniyada qo'llaydi. Qayta yoqish — yozuvni olib tashlash.
+      case 'getUserFx': {
+        if (!ID_RE.test(body.id || '')) return json(400, { error: 'ID xato' });
+        const [prof, wheel, lbe] = await Promise.all([
+          call('GET', `state/${body.id}/profile`).catch(() => null),
+          call('GET', `state/${body.id}/wheel`).catch(() => null),
+          call('GET', `leaderboard/${body.id}`).catch(() => null),
+        ]);
+        const p = prof || {};
+        const own = Array.isArray(p.own) ? p.own : Object.values(p.own || {});
+        return json(200, {
+          id: body.id,
+          name: String(lbe?.name || p.name || ''),
+          own: own.map(String),
+          equip: {
+            skin: String(p.skin || ''), frame: String(p.frame || ''), aura: String(p.aura || ''), nameFx: String(p.nameFx || ''), nameAnim: String(p.nameAnim || ''),
+            nameColor: String(p.nameColor || ''), nameSym: String(p.nameSym || ''), title: String(p.title || ''), rankBadge: String(p.rankBadge || ''), banner: String(p.banner || ''),
+          },
+          boostUntil: Number(p.boostUntil) || 0,
+          spotUntil: Number(p.spotUntil) || 0,
+          proUntil: Number(wheel?.proUntil) || 0,
+          off: lbe && typeof lbe.off === 'object' && lbe.off ? lbe.off : {},
+          hasEntry: !!lbe?.ts,
+        });
+      }
+
+      case 'setUserFx': {
+        if (!ID_RE.test(body.id || '')) return json(400, { error: 'ID xato' });
+        if (!(await call('GET', `leaderboard/${body.id}/ts`))) return json(400, { error: "Bu foydalanuvchi ilovaga hali kirmagan (reytingda yozuvi yo'q)" });
+        const KEYS = ['skin', 'frame', 'aura', 'nameFx', 'nameAnim', 'nameColor', 'nameSym', 'title', 'rankBadge', 'banner', 'verified', 'spotlight', 'boost', 'vip'];
+        const off = {};
+        for (const k of KEYS) if (body.off && body.off[k]) off[k] = 1;
+        if (Object.keys(off).length) await call('PUT', `leaderboard/${body.id}/off`, off);
+        else await call('DELETE', `leaderboard/${body.id}/off`);
+        return json(200, { ok: true, off });
+      }
+
+      // ---------- Lo-Fi musiqa kutubxonasi (do'kon sozlamasidan alohida; tartib saqlanadi, 400 tagacha) ----------
+      case 'setLofi': {
+        const src = Array.isArray(body.tracks) ? body.tracks : [];
+        const seen = new Set();
+        const tracks = [];
+        for (const t of src) {
+          const url = String(t?.url || '').trim().slice(0, 600);
+          if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+          seen.add(url);
+          tracks.push({ title: String(t?.title || '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 80) || `Lo-Fi ${tracks.length + 1}`, url, order: tracks.length });
+          if (tracks.length >= 400) break;
+        }
+        await call('PUT', 'config/lofi', { tracks, shuffle: !!body.shuffle, v: Date.now() });
+        return json(200, { ok: true, count: tracks.length, dropped: src.length - tracks.length });
+      }
+
+      // ---------- Statistika ----------
+      // Ilova yuborgan yengil hodisalar: ochilish (soat bo'yicha), o'yin boshlandi/tugadi, do'kon xaridi.
+      // Foydalanuvchining Telegram imzosi tekshiriladi; so'rov ichidagi hodisalar soni cheklangan.
+      case 'track': {
+        const bad = verifyUid(String(body.uid || ''), body.initData);
+        if (bad) return bad;
+        const uid = String(body.uid);
+        const lim = (globalThis.__trackLim ||= new Map());
+        const slot = Math.floor(Date.now() / 60000);
+        const cur = lim.get(uid);
+        const used = cur && cur.slot === slot ? cur.n : 0;
+        if (used >= 40) return json(429, { error: "Ko'p so'rov" });
+        const evs = (Array.isArray(body.events) ? body.events : []).slice(0, 25);
+        lim.set(uid, { slot, n: used + 1 });
+        if (lim.size > 5000) lim.clear();
+        const inc = n => ({ '.sv': { increment: Math.max(1, Math.min(1000, Math.round(Number(n) || 1))) } });
+        const KEY = /^[A-Za-z0-9_\-]{1,64}$/;
+        const day = tashkentDay();
+        const hh = String(tashkentNow().getUTCHours()).padStart(2, '0');
+        const jobs = new Map(); // yo'l -> yangilanish obyekti
+        const put = (path, obj) => jobs.set(path, { ...(jobs.get(path) || {}), ...obj });
+        for (const e of evs) {
+          const ev = String(e?.ev || '');
+          const key = String(e?.key || '');
+          if (ev === 'open') put(`stats/au/${day}/${uid}`, { [hh]: 1 });
+          else if ((ev === 'gstart' || ev === 'gdone') && KEY.test(key)) {
+            put(`stats/games/${key}`, { [ev === 'gstart' ? 'plays' : 'done']: inc(e.n) });
+            put(`stats/gu/${key}`, { [uid]: 1 });
+            put(`stats/gd/${day}/${key}`, { [ev === 'gstart' ? 'plays' : 'done']: inc(e.n) });
+          } else if (ev === 'buy' && KEY.test(key)) {
+            const price = Math.max(0, Math.min(100000000, Math.round(Number(e.price) || 0)));
+            put(`stats/shop/${key}`, { n: inc(1), coins: { '.sv': { increment: price } } });
+            put(`stats/su/${key}`, { [uid]: 1 });
+            put(`stats/sd/${day}/${key}`, { n: inc(1) });
+          }
+        }
+        await Promise.all([...jobs.entries()].map(([path, obj]) => call('PATCH', path, obj).catch(() => null)));
+        return json(200, { ok: true });
+      }
+
+      case 'statsOverview': {
+        const days = Math.max(1, Math.min(45, Math.round(Number(body.days) || 14)));
+        const t0 = tashkentNow().getTime();
+        const dayKeys = Array.from({ length: days }, (_, i) => new Date(t0 - i * 86400000).toISOString().slice(0, 10));
+        // Eski kunlarni tozalash (60+ kun oldingi faollik yozuvlari)
+        const oldKeys = Array.from({ length: 12 }, (_, i) => new Date(t0 - (61 + i) * 86400000).toISOString().slice(0, 10));
+        Promise.all(oldKeys.map(d => call('DELETE', `stats/au/${d}`).catch(() => null))).catch(() => {});
+        const [auDays, games, gu, shop, su, gd] = await Promise.all([
+          Promise.all(dayKeys.map(d => call('GET', `stats/au/${d}`).catch(() => null))),
+          call('GET', 'stats/games').catch(() => null),
+          call('GET', 'stats/gu').catch(() => null),
+          call('GET', 'stats/shop').catch(() => null),
+          call('GET', 'stats/su').catch(() => null),
+          Promise.all(dayKeys.slice(0, 14).map(d => call('GET', `stats/gd/${d}`).catch(() => null))),
+        ]);
+        const hours = Array(24).fill(0); // soat bo'yicha: shu soatda faol bo'lgan (foydalanuvchi, kun) juftliklari
+        const perDay = [];
+        const uniq = new Set();
+        let userDays = 0;
+        dayKeys.forEach((d, i) => {
+          const m = auDays[i] || {};
+          const users = Object.keys(m);
+          users.forEach(u => {
+            uniq.add(u);
+            userDays++;
+            Object.keys(m[u] || {}).forEach(h => { const n = Number(h); if (n >= 0 && n < 24) hours[n]++; });
+          });
+          perDay.push({ day: d, users: users.length });
+        });
+        const hoursUsers = Array(24).fill(0).map(() => new Set());
+        auDays.forEach(m => Object.entries(m || {}).forEach(([u, hs]) => Object.keys(hs || {}).forEach(h => { const n = Number(h); if (n >= 0 && n < 24) hoursUsers[n].add(u); })));
+        const gameRows = Object.entries(games || {}).map(([id, g]) => ({ id, plays: Number(g?.plays) || 0, done: Number(g?.done) || 0, players: Object.keys((gu || {})[id] || {}).length }));
+        const shopRows = Object.entries(shop || {}).map(([id, g]) => ({ id, n: Number(g?.n) || 0, coins: Number(g?.coins) || 0, buyers: Object.keys((su || {})[id] || {}).length }));
+        const gameDays = dayKeys.slice(0, 14).map((d, i) => ({ day: d, games: gd[i] || {} }));
+        return json(200, { days, hours, hourUsers: hoursUsers.map(x => x.size), uniqueUsers: uniq.size, userDays, perDay, games: gameRows, shop: shopRows, gameDays });
+      }
+
       case 'setShop': {
         const v = body.value;
         if (!v || typeof v !== 'object' || JSON.stringify(v).length > 90000) return json(400, { error: "Qiymat noto'g'ri yoki juda katta" });
@@ -1129,44 +1286,44 @@ export const handler = async event => {
       }
 
       case 'savePack': {
-        const str = (v, n) => String(v ?? '').trim().slice(0, n);
-        const title = str(body.title, 80);
-        if (!title) return json(400, { error: "To'plam nomini kiriting" });
-        const kind = body.kind === 'daily' ? 'daily' : body.kind === 'topic' ? 'topic' : 'open';
-        const packLevel = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(body.level) ? body.level : ''; // bo'sh — hamma darajaga
-        const date = str(body.date, 10);
-        if (kind !== 'open' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(400, { error: 'Kunlik to\'plam / maxsus mavzu uchun sanani tanlang' });
-        const packId = ID_RE.test(body.id || '') ? body.id : 'k' + Date.now().toString(36);
-        const list = Array.isArray(body.words) ? body.words.slice(0, 500) : [];
-        const slug = t => String(t).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-        const arrOf = v => (Array.isArray(v) ? v : String(v ?? '').split('|')).map(x => str(x, 80)).filter(Boolean).slice(0, 8);
-        const words = {};
-        const errors = [];
-        list.forEach((w, i) => {
-          const en = str(w.en, 60), uz = str(w.uz, 120);
-          if (!en || !uz) return errors.push(`${i + 1}-qator: inglizcha so'z va o'zbekcha ma'no kerak`);
-          let id = `p_${packId}_${slug(en) || i}`;
-          if (words[id]) id += `_${i}`;
-          words[id] = {
-            en, uz, ipa: str(w.ipa, 60), pos: str(w.pos, 20), ex: str(w.ex, 220), exUz: str(w.exUz, 260),
-            col: arrOf(w.col), fam: arrOf(w.fam), hook: str(w.hook, 260), topic: str(w.topic, 40),
-            level: packLevel || (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(String(w.level).trim().toUpperCase()) ? String(w.level).trim().toUpperCase() : (String(w.level).trim() === 'B2+' ? 'B2' : 'B1')), order: i, published: true,
-          };
-        });
-        const prev = await call('GET', `packs/${packId}/createdAt`);
-        const meta = {
-          title, desc: str(body.desc, 240), kind, date: kind !== 'open' ? date : '', mode: body.mode === 'extra' ? 'extra' : 'replace', level: packLevel,
-          order: Number.isFinite(Number(body.order)) ? Number(body.order) : 0, published: body.published !== false, createdAt: prev || Date.now(),
-        };
-        if (list.length) {
-          if (!Object.keys(words).length) return json(400, { error: errors.slice(0, 5).join('; ') || "So'zlar topilmadi" });
-          await call('PUT', `packs/${packId}`, { ...meta, words });
-        } else {
-          if (!prev) return json(400, { error: "Kamida bitta so'z kiriting" });
-          await call('PATCH', `packs/${packId}`, meta); // so'zlar o'zgarmaydi, faqat sozlamalar
+        try {
+          const r = await savePackCore(body);
+          return json(200, { ok: true, ...r });
+        } catch (e) {
+          return json(400, { error: String(e.message || e) });
         }
-        await call('PUT', 'config/packsVersion', Date.now());
-        return json(200, { ok: true, id: packId, saved: Object.keys(words).length, errors });
+      }
+
+      // Bir nechta maxsus mavzu / kunlik to'plamni sanama-sana birdan saqlash.
+      // items: [{ title, date, desc?, words: [...] }]. Bir xil sana + bir xil daraja + bir xil tur bo'yicha mavjud to'plam bo'lsa — uning ustiga yoziladi (dublikat bo'lmaydi).
+      case 'savePackBatch': {
+        const items = Array.isArray(body.items) ? body.items.slice(0, 120) : [];
+        if (!items.length) return json(400, { error: 'Yuklanadigan fayl yo\'q' });
+        const kind = body.kind === 'daily' ? 'daily' : 'topic';
+        const level = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(body.level) ? body.level : '';
+        const overwrite = body.overwrite !== false;
+        const all = overwrite ? (await call('GET', 'packs')) || {} : {};
+        const byKey = {};
+        Object.entries(all).forEach(([id, p]) => { if (p && p.kind === kind && p.date) byKey[`${p.date}|${p.level || ''}`] = id; });
+        const results = [];
+        let ok = 0;
+        for (const it of items) {
+          const key = `${String(it.date || '').slice(0, 10)}|${level}`;
+          const existing = byKey[key];
+          try {
+            const r = await savePackCore({
+              id: existing || undefined, title: it.title, desc: it.desc, kind, level, date: it.date,
+              mode: body.mode, order: 0, published: body.published !== false, words: it.words,
+            }, true);
+            if (byKey[key] === undefined) byKey[key] = r.id; // bir so'rovda ikki xil fayl bir sanaga tushsa, ikkinchisi birinchisining ustiga yoziladi
+            results.push({ date: it.date, title: it.title, ok: true, id: r.id, saved: r.saved, replaced: !!existing, skipped: r.errors.length });
+            ok++;
+          } catch (e) {
+            results.push({ date: it.date, title: it.title, ok: false, error: String(e.message || e) });
+          }
+        }
+        if (ok) await call('PUT', 'config/packsVersion', Date.now());
+        return json(200, { ok: true, saved: ok, failed: items.length - ok, results });
       }
 
       case 'setPackPublished': {

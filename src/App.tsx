@@ -172,7 +172,7 @@ const MainScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col justify-between selection:bg-amber-500/20 selection:text-amber-300">
-      <div className="flex-1 max-w-md w-full mx-auto px-4 pt-3 pb-24">
+      <div className="flex-1 max-w-md w-full mx-auto px-4 pt-3 pb-32">
         {/* Yuqori panel: logotip (chapda) va tovush/sovg'a/baholash/promokod tugmalari (o'ngda) */}
         <div className="flex items-center justify-between gap-2 mb-2">
           <BrandMark />

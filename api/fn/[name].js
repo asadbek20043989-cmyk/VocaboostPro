@@ -14,6 +14,7 @@ import { handler as remind } from '../../server/functions/remind.mjs';
 import { handler as shop } from '../../server/functions/shop.mjs';
 import { handler as streakWarn } from '../../server/functions/streak-warn.mjs';
 import { handler as welcomeCron } from '../../server/functions/welcome-cron.mjs';
+import { handler as weekEnd } from '../../server/functions/week-end.mjs';
 import { handler as tgWebhook } from '../../server/functions/tg-webhook.mjs';
 import { handler as tgavatar } from '../../server/functions/tgavatar.mjs';
 import { handler as tgemoji } from '../../server/functions/tgemoji.mjs';
@@ -26,8 +27,9 @@ const HANDLERS = {
   remind,
   'streak-warn': streakWarn,
   'welcome-cron': welcomeCron,
+  'week-end': weekEnd,
 };
-const CRON = new Set(['remind', 'streak-warn', 'welcome-cron']);
+const CRON = new Set(['remind', 'streak-warn', 'welcome-cron', 'week-end']);
 
 export const config = { maxDuration: 60 };
 

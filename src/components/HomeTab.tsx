@@ -7,6 +7,7 @@ import { LofiPlayer } from './LofiPlayer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { LuckyWheel } from './LuckyWheel';
+import { LevelPicker } from './LevelPicker';
 import { WordMap } from './WordMap';
 import { VocabStory } from './Learning';
 import { nowMs, todayKey, addDays, dayDiff } from '../services/time';
@@ -158,8 +159,8 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
 
 export const HomeTab: React.FC = () => {
   const {
-    profile, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
-    openLearn, setActiveTab, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
+    profile, leagueUsers, leagueWeek, setActiveTab, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
+    openLearn, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
@@ -171,6 +172,7 @@ export const HomeTab: React.FC = () => {
   const openEquip = () => { triggerHaptic('selection'); try { sessionStorage.setItem('vb_open_equip', '1'); } catch { /* ignore */ } setActiveTab('shop'); };
   const activeDuels = duels.filter(d => d.endsAt > nowMs()).length;
   const [showWheel, setShowWheel] = useState(false);
+  const [showLevel, setShowLevel] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showStory, setShowStory] = useState(false);
 
@@ -286,12 +288,46 @@ export const HomeTab: React.FC = () => {
         );
       })()}
 
-      {/* Jihozlarim: ixcham qator */}
-      <button type="button" onClick={openEquip} className="w-full text-left rounded-2xl px-3 h-12 flex items-center gap-2.5 bg-[#151C28] border border-violet-400/30 active:scale-[0.98] transition-all">
-        <span className="keep-dark w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4 text-white" /></span>
-        <span className="text-sm font-extrabold text-white flex-1 truncate">Jihozlarim</span>
-        <ChevronRight className="w-4 h-4 text-violet-400 shrink-0" />
-      </button>
+      {/* Haftalik liga: tugashiga qancha qoldi va keyingi o'ringacha necha XP */}
+      {leagueWeek && leagueWeek.startedAt > 0 && (() => {
+        const left = leagueWeek.startedAt + 7 * 86400000 - Date.now();
+        const list = leagueUsers.filter(u => u.xp > 0).sort((a, b) => b.xp - a.xp);
+        const mi = list.findIndex(u => u.isCurrentUser);
+        const d = Math.floor(left / 86400000), h = Math.floor((left % 86400000) / 3600000), mn = Math.floor((left % 3600000) / 60000);
+        const timeTxt = left <= 0 ? 'Hafta yakunlanmoqda' : d >= 1 ? `${d} kun ${h} soat` : `${h} soat ${mn} daqiqa`;
+        let hint = 'Reytingga kirish uchun bugun mashq qiling';
+        if (mi === 0) hint = list[1] ? `🥇 Birinchisiz! Ikkinchidan ${profile.xp - list[1].xp} XP oldindasiz` : '🥇 Hozircha birinchisiz!';
+        else if (mi > 0) hint = `Keyingi o‘ringacha yana ${list[mi - 1].xp - profile.xp + 1} XP`;
+        return (
+          <button type="button" onClick={() => { triggerHaptic('selection'); setActiveTab('leaderboard'); }} className="w-full text-left rounded-2xl p-3 bg-gradient-to-r from-indigo-600/25 via-sky-500/10 to-[#151C28] border border-indigo-400/40 flex items-center gap-3 active:scale-[0.98] transition-all">
+            <span className="w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-lg font-black text-indigo-100 shrink-0">{mi >= 0 ? `#${mi + 1}` : '🏁'}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-extrabold text-white">{leagueWeek.week}-hafta · {timeTxt} qoldi</span>
+              <span className="block text-[11px] text-indigo-100/80 truncate">{hint}</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-indigo-300 shrink-0" />
+          </button>
+        );
+      })()}
+
+      {/* Jihozlarim va Daraja: ikkita ixcham, yorqin kartochka */}
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" onClick={openEquip} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-violet-600/30 via-fuchsia-600/15 to-[#151C28] border border-fuchsia-400/40 active:scale-[0.97] transition-all">
+          <svg viewBox="0 0 48 48" className="w-11 h-11 drop-shadow-[0_4px_6px_rgba(217,70,239,.5)]" aria-hidden>
+            <defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F5D0FE" /><stop offset="1" stopColor="#C026D3" /></linearGradient></defs>
+            <path d="M14 6h20l9 12-19 24L5 18z" fill="url(#gm)" stroke="#F0ABFC" strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M5 18h38M17 18l7 24 7-24M14 6l3 12 7-12 7 12 3-12" fill="none" stroke="#FAE8FF" strokeOpacity=".8" strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+          <div className="mt-1.5 text-sm font-black text-white">Jihozlarim</div>
+          <div className="text-[11px] text-fuchsia-200/80">Ramka, aura, mavzu</div>
+        </button>
+        <button type="button" onClick={() => { triggerHaptic('selection'); setShowLevel(true); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-amber-500/30 via-orange-500/10 to-[#151C28] border border-amber-400/50 active:scale-[0.97] transition-all">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-xl font-black text-slate-950 shadow-lg shadow-amber-500/30">{profile.level}</div>
+          <div className="mt-1.5 text-sm font-black text-white">Darajam</div>
+          <div className="text-[11px] text-amber-200/90 font-semibold">{profile.placement ? 'O‘zgartirish · Test' : '🎯 Testdan o‘ting'}</div>
+        </button>
+      </div>
+      {showLevel && <LevelPicker onClose={() => setShowLevel(false)} />}
 
       <LofiPlayer />
 

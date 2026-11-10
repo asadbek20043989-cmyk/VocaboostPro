@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, Sparkles, Check, Zap, Brain, Gamepad2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Sparkles, Check, Zap, Brain, Gamepad2, Target } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { EnglishLevel } from '../types';
 import { triggerHaptic } from '../services/telegram';
 import { Logo, HeaderActions } from './Brand';
+import { LevelTest } from './LevelTest';
 
 const LEVELS: { id: EnglishLevel; t: string; d: string }[] = [
   { id: 'A1', t: 'Noldan boshlayapman', d: "A1 · Boshlang'ich (IELTS 2.0-3.0)" },
@@ -26,6 +27,7 @@ export const Onboarding: React.FC = () => {
   const [step, setStep] = useState<1 | 2>(1);
   const [level, setLevel] = useState<EnglishLevel>('A2');
   const [perDay, setPerDay] = useState<number>(10);
+  const [testOpen, setTestOpen] = useState(false);
 
   const pick = <T,>(fn: (v: T) => void, v: T) => {
     triggerHaptic('selection');
@@ -34,6 +36,7 @@ export const Onboarding: React.FC = () => {
   const minutes = Math.round(6 + perDay * 0.7);
 
   return (
+    <>
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex flex-col">
       <div className="max-w-md w-full mx-auto px-4 pt-4 flex-1 pb-28">
         <div className="flex items-center justify-between mb-3">
@@ -60,6 +63,12 @@ export const Onboarding: React.FC = () => {
               </div>
             </div>
 
+            <button type="button" onClick={() => { triggerHaptic('medium'); setTestOpen(true); }} className="w-full p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 flex items-center gap-3 text-left shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-all">
+              <span className="w-11 h-11 rounded-xl bg-black/15 flex items-center justify-center shrink-0"><Target className="w-6 h-6" /></span>
+              <span className="flex-1"><span className="block text-[15px] font-black">Darajamni test bilan aniqlayman</span><span className="block text-xs font-semibold opacity-80">20 savol · 2 daqiqa · eng aniq yo‘l</span></span>
+              <ArrowRight className="w-5 h-5 shrink-0" />
+            </button>
+            <div className="flex items-center gap-3 text-[11px] text-slate-500"><span className="flex-1 h-px bg-slate-800" />yoki o‘zingiz tanlang<span className="flex-1 h-px bg-slate-800" /></div>
             <h2 className="text-base font-extrabold text-white pt-1">Ingliz tili darajangiz qanday?</h2>
             <div className="grid gap-2.5">
               {LEVELS.map(l => (
@@ -117,5 +126,7 @@ export const Onboarding: React.FC = () => {
         </div>
       </div>
     </div>
+    {testOpen && <LevelTest onClose={() => setTestOpen(false)} onApply={o => { setLevel(o.level); setTestOpen(false); setStep(2); }} />}
+    </>
   );
 };

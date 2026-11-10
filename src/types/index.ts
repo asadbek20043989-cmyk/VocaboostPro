@@ -106,6 +106,8 @@ export interface UserProfile {
   username?: string;
   avatar: string;
   level: EnglishLevel;
+  /** Oxirgi daraja aniqlash testi natijasi */
+  placement?: { level: EnglishLevel; score: number; max: number; ts: number; mode: 'test' | 'manual' };
   track: Track;
   wordsPerDay: number; // kuniga nechta yangi so'z (5 / 10 / 15 / 20)
   dailyGoalMinutes: DailyGoalMinutes;

@@ -24,6 +24,7 @@ import { subscribe, patch, put, realtimeEnabled, getJson, removePath } from '../
 import { nowMs, todayKey, dayDiff, syncClock } from '../services/time';
 import { claimCertificate, claimWelcomeCertificate, claimAward } from '../services/certApi';
 import { ACCOUNT_ID, lsGet, lsSet, lsDel } from '../services/account';
+import { track, setStatsUser, flushStatsNow } from '../services/stats';
 import { shopCfg, buildCatalog, priceOf, balanceOf, inviteLinkFor, botNameFrom, ShopCfg } from '../services/shop';
 import { parseWordPack, PHRASAL_TEXT, IDIOMS_TEXT } from '../data/packs';
 import { ShopItem, DEFAULT_ITEMS, parsePremium, DEFAULT_PREMIUM_TEXT, LTD_AVATARS, NICK_COLORS, TITLES } from '../data/shopDefaults';
@@ -147,6 +148,8 @@ interface AppContextType {
   freeSpinsLeft: number;
   totalSpinsLeft: number;
   isPro: boolean;
+  /** Admin o'chirib qo'ygan bezak/sovg'alar (skin, frame, boost, vip ...) */
+  adminOff: Record<string, any>;
   spinWheel: () => { prize: WheelPrize; usedFree: boolean } | null;
   applyPrize: (prize: WheelPrize, usedFree: boolean) => void;
   grantReferralSpin: () => boolean;
@@ -278,6 +281,15 @@ const normalizeBankWord = (id: string, w: any, i: number): BankWord | null => {
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+/** Admin o'chirib qo'ygan bezaklar (leaderboard/<uid>/off) ta'sirini kosmetika obyektidan olib tashlaydi */
+const COS_OFF_MAP: Record<string, string> = { fr: 'frame', nf: 'nameFx', nc: 'nameColor', ns: 'nameSym', ti: 'title', rb: 'rankBadge', au: 'aura', na: 'nameAnim', vf: 'verified', sp: 'spotlight' };
+const applyOff = <T extends Record<string, any>>(c: T, off: any): T => {
+  if (!off || typeof off !== 'object') return c;
+  const o: any = { ...c };
+  Object.keys(COS_OFF_MAP).forEach(k => { if (off[COS_OFF_MAP[k]]) o[k] = k === 'vf' ? false : k === 'sp' ? 0 : ''; });
+  return o;
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
@@ -614,7 +626,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const wheelCfg = useMemo(() => buildWheel(config?.wheel), [config]);
 
-  const myCos = { fr: profile.frame || '', nf: profile.nameFx || '', nc: profile.nameColor || '', ns: profile.nameSym || '', ti: profile.title || '', vf: (profile.own || []).includes('verified'), rb: profile.rankBadge || '', au: (profile.own || []).includes('aura') ? profile.aura || '' : '', na: (profile.own || []).includes('nameanim') ? profile.nameAnim || '' : '', sp: profile.spotUntil || 0 };
+  const myOff: Record<string, any> = (leagueRaw && leagueRaw[myId.current]?.off) || {};
+  const offKey = JSON.stringify(myOff);
+  const effProfile = useMemo(() => {
+    if (!Object.keys(myOff).length) return profile;
+    const p: UserProfile = { ...profile };
+    if (myOff.skin) p.skin = '';
+    if (myOff.frame) p.frame = '';
+    if (myOff.aura) p.aura = '';
+    if (myOff.nameFx) p.nameFx = '';
+    if (myOff.nameAnim) p.nameAnim = '';
+    if (myOff.nameColor) p.nameColor = '';
+    if (myOff.nameSym) p.nameSym = '';
+    if (myOff.title) p.title = '';
+    if (myOff.rankBadge) p.rankBadge = '';
+    if (myOff.banner) p.banner = '';
+    if (myOff.boost) p.boostUntil = 0;
+    if (myOff.spotlight) p.spotUntil = 0;
+    if (myOff.verified) p.own = (profile.own || []).filter(x => x !== 'verified');
+    return p;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, offKey]);
+
+  useEffect(() => {
+    if (!profile.hasCompletedOnboarding) return;
+    setStatsUser(myId.current);
+    const onVis = () => { if (document.visibilityState === 'visible') track('open'); else flushStatsNow(); };
+    track('open');
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [profile.hasCompletedOnboarding]);
+
+  const myCosRaw = { fr: profile.frame || '', nf: profile.nameFx || '', nc: profile.nameColor || '', ns: profile.nameSym || '', ti: profile.title || '', vf: (profile.own || []).includes('verified'), rb: profile.rankBadge || '', au: (profile.own || []).includes('aura') ? profile.aura || '' : '', na: (profile.own || []).includes('nameanim') ? profile.nameAnim || '' : '', sp: profile.spotUntil || 0 };
+  const myCos = applyOff(myCosRaw, myOff);
   const leagueUsers: LeaderboardUser[] = (() => {
     const list: LeaderboardUser[] = [];
     let meSeen = false;
@@ -635,7 +679,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         streak: isMe ? profile.streak : Number(e.streak) || 0,
         level: (isMe ? profile.level : e.level || 'A1') as EnglishLevel,
         isCurrentUser: isMe,
-        cos: isMe ? myCos : { fr: e.fr || '', nf: e.nf || '', nc: e.nc || '', ns: e.ns || '', ti: e.ti || '', vf: !!e.vf, rb: e.rb || '', au: e.au || '', na: e.na || '', sp: Number(e.sp) || 0 },
+        cos: isMe ? myCos : applyOff({ fr: e.fr || '', nf: e.nf || '', nc: e.nc || '', ns: e.ns || '', ti: e.ti || '', vf: !!e.vf, rb: e.rb || '', au: e.au || '', na: e.na || '', sp: Number(e.sp) || 0 }, e.off),
         refs: Number(e.refs) || 0,
       });
     });
@@ -840,7 +884,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // ---------- do'kon: katalog, sotib olish, bezaklar, taklif ----------
-  const shopConf = useMemo(() => shopCfg(config?.shop), [config]);
+  const shopConf = useMemo(() => {
+    const c = shopCfg(config?.shop);
+    // Lo-Fi kutubxonasi: alohida `config/lofi` (admin tartibi saqlanadi). Bo'lmasa — eski do'kon sozlamasidagi ro'yxat.
+    const lf = config?.lofi;
+    if (lf && typeof lf === 'object') {
+      const raw = Array.isArray(lf.tracks) ? lf.tracks : lf.tracks && typeof lf.tracks === 'object' ? Object.values(lf.tracks) : [];
+      const tr = (raw as any[])
+        .filter(t => t && /^https?:\/\//.test(String(t.url || '')))
+        .sort((x, y) => (Number(x.order) || 0) - (Number(y.order) || 0))
+        .map(t => ({ title: String(t.title || 'Lo-Fi').slice(0, 80), url: String(t.url) }));
+      if (tr.length) { c.lofi = tr; c.lofiShuffle = !!lf.shuffle; }
+    }
+    return c;
+  }, [config]);
   const catalog = useMemo(() => buildCatalog(config?.shop), [config]);
   const levelIcons: Record<string, string> = useMemo(() => (config?.levelIcons && typeof config.levelIcons === 'object' ? config.levelIcons : {}), [config]);
   const catalogRef = useRef<ShopItem[]>([]);
@@ -848,7 +905,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   coinRateRef.current = shopConf.coinPerXp;
   const coins = balanceOf(profile);
   const owns = (id: string) => (profile.own || []).includes(id);
-  const boostActive = (profile.boostUntil || 0) > now;
+  const boostActive = (profile.boostUntil || 0) > now && !myOff.boost;
 
   /** Mahsulotni foydalanuvchiga beradi (sotib olish, admin sovg'asi) */
   const giveItem = (p: UserProfile, id: string, it?: ShopItem): UserProfile => {
@@ -919,6 +976,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     triggerHaptic('success');
     sfx.win(false);
     if (it.kind === 'manual') queueOrder(it, price);
+    track('buy', it.id.replace(/[^A-Za-z0-9_\-]/g, '_').slice(0, 64), price);
     return { ok: true, reveal };
   };
 
@@ -960,8 +1018,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Mavzu (skin) ilova ranglarini o'zgartiradi. Sinab ko'rish (preview) faqat ekranda — profil/ma'lumotlarga TEGMAYDI.
   const [previewSkin, setPreviewSkin] = useState('');
-  const ownedSkin = profile.skin && (profile.own || []).includes(`skin_${profile.skin}`) ? profile.skin : '';
-  const activeSkin = previewSkin || ownedSkin;
+  const ownedSkin = profile.skin && (profile.own || []).includes(`skin_${profile.skin}`) && !myOff.skin ? profile.skin : '';
+  const activeSkin = (previewSkin && !myOff.skin) ? previewSkin : ownedSkin;
   useEffect(() => {
     if (activeSkin) document.documentElement.setAttribute('data-skin', activeSkin);
     else document.documentElement.removeAttribute('data-skin');
@@ -1025,7 +1083,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const lockActive = w.lockedUntil > now;
   const freeSpinsLeft = lockActive ? 0 : Math.max(0, wheelCfg.freeSpins - w.spinsUsed);
   const totalSpinsLeft = freeSpinsLeft + w.bonusSpins + w.grantSpins;
-  const isPro = wheel.proUntil > now;
+  const isPro = wheel.proUntil > now && !myOff.vip;
 
   useEffect(() => {
     if (wheel.lockedUntil > 0 && now >= wheel.lockedUntil) setWheel(p => normalizeWheel(p, nowMs()));
@@ -1220,7 +1278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [leagueRaw, syncReady, profile.hasCompletedOnboarding, profile.adjV]);
 
   const applyXpMultiplier = (amount: number): number => {
-    if (amount > 0 && (latest.current.profile.boostUntil || 0) > nowMs()) return amount * 2; // do'kondan olingan 2x kuchaytirgich
+    if (amount > 0 && (latest.current.profile.boostUntil || 0) > nowMs() && !myOff.boost) return amount * 2; // do'kondan olingan 2x kuchaytirgich
     if (!wheel.doubleXpPending || amount <= 0) return amount;
     setWheel(p => ({ ...p, doubleXpPending: false }));
     return amount * 2;
@@ -1479,6 +1537,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       triggerHaptic('warning');
       return false;
     }
+    track('gstart', id.replace(/[^A-Za-z0-9_\-]/g, '_').slice(0, 64));
     setOverlay({ type: 'game', id });
     return true;
   };
@@ -1488,6 +1547,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const t = todayKey();
     const g = games.find(x => x.id === id);
     const passed = total > 0 && correct / total >= 0.6;
+    if (!demo && g) track('gdone', id.replace(/[^A-Za-z0-9_\-]/g, '_').slice(0, 64));
     if (demo || !g || !passed) return { xp: 0, passed, already: false };
     const already = profile.gameXp[id] === t;
     if (already) return { xp: 0, passed, already: true };
@@ -2138,7 +2198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
-        profile, bank, bankFromCloud, srs, savedWords, masteredCount, dueWords, newQueue, introducedToday,
+        profile: effProfile, adminOff: myOff, bank, bankFromCloud, srs, savedWords, masteredCount, dueWords, newQueue, introducedToday,
         dailyQuests, badges, games, settings, activeTab, setActiveTab, overlay, openLearn, openGame, closeOverlay,
         goBack, canGoBack, packs, todayPacks, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,

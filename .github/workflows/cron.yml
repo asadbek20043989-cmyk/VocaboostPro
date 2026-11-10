@@ -8,6 +8,7 @@ on:
   schedule:
     - cron: '0 * * * *'            # remind — har soat
     - cron: '10 5-7,14-17 * * *'   # streak-warn
+    - cron: '5 19 * * 0'           # week-end — dushanba 00:05 (Toshkent): haftani yakunlash + TOP-20 ga xabar
   workflow_dispatch: {}            # qo'lda sinash: ikkalasini ham chaqiradi
 jobs:
   call:
@@ -28,5 +29,6 @@ jobs:
           case "$SCHEDULE" in
             '0 * * * *')            call remind ;;
             '10 5-7,14-17 * * *')   call streak-warn ;;
+            '5 19 * * 0')           call week-end ;;
             *)                      call remind; call streak-warn ;;
           esac

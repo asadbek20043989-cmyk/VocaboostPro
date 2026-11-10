@@ -308,3 +308,27 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 - **🎟️ Promokodlar** — kod yoki havola (`https://t.me/<bot>?start=promo_KOD`) yarating: nechta kishi (0 = cheksiz), tugash vaqti va sovg'alar (XP, tanga, baraban, VIP, streak himoyasi) admin belgilaydi. Havola Telegram kanalga yoki ilovaga joylanadi. Botda `/start promo_KOD` ishlashi uchun `tg-webhook` ulangan bo'lishi kerak; «Taklif» bo'limida bot username kiritilgan bo'lsin.
 - **Darajalar** — IELTS: A1, A2, B1, B2, C1, C2. «So'zlar» bo'limida `.txt` fayl (`word - tarjima`) daraja tanlab yuklanadi. Foydalanuvchi joriy daraja so'zlarini to'liq yodlasa, daraja avtomatik oshadi.
 - **Sovg'alar** — har yuborishda «Telegram bot orqali xabar yuborilsin» katagi bor; o'chirilsa ham sovg'a ilova ochilganda avtomatik beriladi. /start bosganlar «sovg'a olgan / olmagan» deb ajratiladi.
+
+---
+
+## v5.8 — yangiliklar
+
+**Admin panel**
+- **📈 Statistika** (yangi bo'lim): soat bo'yicha kirish ulushi (Toshkent vaqti), kunlik faol foydalanuvchilar, qaysi o'yin necha marta o'ynalgani (boshlangan / tugatilgan / nechta kishi), do'kon mahsulotlari bo'yicha sotuv (dona, xaridor, tanga). Ma'lumot ilova yangilangandan keyin yig'ila boshlaydi (`stats/*`).
+- **🎨 Bezaklarni yoqish/o'chirish**: Liga → foydalanuvchi qatoridagi 🎨 tugma. Mavzu (yomg'ir, qor...), ramka, aura, ism effektlari, galochka, spotlight, 2x XP, VIP alohida yoqiladi/o'chiriladi. Narsa yo'qolmaydi — faqat ta'siri to'xtaydi (`leaderboard/<uid>/off`). Foydalanuvchi buni o'zi qayta yoqa olmaydi.
+- **⭐ Maxsus mavzularni ommaviy yuklash** (Bugungi mashqlar): bir nechta .txt fayl → har biri alohida sanaga (fayl nomidan yoki boshlang'ich sanadan ketma-ket). Shu sana+daraja uchun mavzu bor bo'lsa, ustiga yoziladi.
+- **🏆 Liga**: hafta tugaganda TOP-20 ga bot xabari («🏁N-hafta tugadi…» + «Mashqni davom ettirish» tugmasi), matnni tahrirlash va o'zingizga sinab ko'rish, **avtomatik yakunlash** (har dushanba 00:05 Toshkent; GitHub Actions `week-end`).
+- **🎧 Lo-Fi kutubxonasi** (Do'kon): 400 tagacha trek, ko'p qatorni birdan qo'shish, ↑↓ tartib, ▶ sinash. Alohida `config/lofi` da saqlanadi.
+
+**Ilova**
+- Pastki menyu: 3D ikonkalar, alohida hududlar, nozik ajratgichlar, oltin «Do'kon», HOT kabi belgilar (admin → navBadges).
+- **Daraja aniqlash testi** (20 savol, qiyinlikka qarab 1–6 ball, noto'g'ri javobga jarima, «Bilmayman» tugmasi): Onboarding, bosh sahifadagi «Darajam» kartochkasi va sozlamalardan istalgan vaqtda. Natijada: qayta topshirish / shu daraja bilan davom etish / o'zim tanlayman.
+- «Jihozlarim» va «Darajam» — bosh sahifada ikkita ixcham kartochka.
+- Ligada o'rin raqami (#111 kabi) avatar tagida qolib ketishi tuzatildi.
+- Lo-Fi pleer: tartib saqlanadi, ochilmagan trek o'tkazib yuboriladi, oldingi/keyingi, aralash tugmasi, treklar ro'yxati.
+
+## v5.9 — qo'shimchalar
+- **⚡ Diqqat talab qiladi** (Umumiy): maxsus mavzu zaxirasi (necha kunga yetadi), 24 soatlik faollik, yangi foydalanuvchilar, streak xavfidagilar, uzoq kirmaganlar, botni bloklaganlar — har biriga tegishli bo'limga o'tish tugmasi.
+- **🗓 Kontent kalendari** (Bugungi mashqlar): keyingi 28 kun; bo'sh kunni bossangiz ommaviy yuklash shu sanadan boshlanadi.
+- **⬇️ CSV eksport** (Liga): foydalanuvchilar ro'yxati Excel uchun (UTF-8).
+- **Ilova**: bosh sahifada «N-hafta · tugashiga ... qoldi · keyingi o'ringacha X XP» kartochkasi; Lo-Fi uyqu taymeri (15/30/60 daqiqa); «Darajam» kartochkasida test eslatmasi.

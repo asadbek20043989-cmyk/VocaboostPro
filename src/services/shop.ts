@@ -16,6 +16,7 @@ export interface ShopCfg {
   premiumText: string;
   booksText: string;
   lofi: { title: string; url: string }[];
+  lofiShuffle?: boolean;
   navBadges?: Partial<Record<string, string>>;
 }
 
@@ -30,7 +31,7 @@ export function shopCfg(raw: any): ShopCfg {
     allQuests: Math.max(0, Math.round(num(c.allQuests, 15))),
     premiumText: String(c.premiumText || ''),
     booksText: String(c.booksText || ''),
-    lofi: toArr(c.lofi).filter((t: any) => t && /^https?:\/\//.test(String(t.url || ''))).map((t: any) => ({ title: String(t.title || 'Lo-Fi').slice(0, 60), url: String(t.url) })),
+    lofi: toArr(c.lofi).filter((t: any) => t && /^https?:\/\//.test(String(t.url || ''))).map((t: any) => ({ title: String(t.title || 'Lo-Fi').slice(0, 80), url: String(t.url) })),
     navBadges: (c.navBadges || c.badges || {}) as Partial<Record<string, string>>,
   };
 }
@@ -94,11 +95,13 @@ export const DEFAULT_SHARE_TEXT = "🚀 VocaBoost — inglizcha so'zlarni tez va
 // ---------------------------------------------------------------------------------------------------
 type Track = { title: string; url: string };
 type Lofi = {
-  on: boolean; paused: boolean; title: string;
-  start: (tracks?: Track[]) => void; stop: () => void; pause: () => void; resume: () => void; toggle: () => void; next: () => void;
+  on: boolean; paused: boolean; title: string; index: number; count: number; shuffle: boolean; error: string;
+  start: (tracks?: Track[], opts?: { shuffle?: boolean; startAt?: number }) => void; stop: () => void; pause: () => void; resume: () => void; toggle: () => void; next: () => void; prev: () => void;
+  playAt: (i: number) => void; setShuffle: (v: boolean) => void; sync: (tracks: Track[]) => void;
+  sleepAt: number; setSleep: (min: number) => void;
   listeners: Set<() => void>;
 };
-const L: Lofi = { on: false, paused: false, title: '', start: () => {}, stop: () => {}, pause: () => {}, resume: () => {}, toggle: () => {}, next: () => {}, listeners: new Set() };
+const L: Lofi = { on: false, paused: false, title: '', index: 0, count: 0, shuffle: false, error: '', start: () => {}, stop: () => {}, pause: () => {}, resume: () => {}, toggle: () => {}, next: () => {}, prev: () => {}, playAt: () => {}, setShuffle: () => {}, sync: () => {}, sleepAt: 0, setSleep: () => {}, listeners: new Set() };
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -187,26 +190,109 @@ function startSynth() {
   timer = setInterval(tick, 200);
 }
 
+// ---------- Pleylist (admin yuklagan treklar) ----------
+// Tartib admin belgilagan tartibda saqlanadi (aralash — faqat «🔀» yoqilsa). Ochilmaydigan trek butun pleerni to'xtatmaydi — keyingisiga o'tiladi.
+const IDX_KEY = 'vb_lofi_idx_v2';
+let order: number[] = [];
+let pos = 0;
+let failStreak = 0;
+let loadTimer: ReturnType<typeof setTimeout> | null = null;
+let sleepTimer: ReturnType<typeof setTimeout> | null = null;
+
+const shuffled = (n: number, first: number): number[] => {
+  const a = Array.from({ length: n }, (_, i) => i).filter(i => i !== first);
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return [first, ...a];
+};
+const rebuildOrder = () => {
+  if (L.shuffle) { order = shuffled(list.length, idx); pos = 0; }
+  else { order = list.map((_, i) => i); pos = idx; }
+};
+const saveIdx = () => { try { localStorage.setItem(IDX_KEY, JSON.stringify({ u: list[idx]?.url || '', i: idx })); } catch { /* ignore */ } };
+
+function clearLoad() { if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; } }
+
+/** Ochilmagan trek: keyingisiga o'tamiz; hammasi ochilmasa — to'xtatamiz */
+function failed() {
+  clearLoad();
+  failStreak++;
+  if (failStreak >= list.length) { L.error = "Treklar ochilmadi: havolalarni tekshiring"; L.stop(); L.error = "Treklar ochilmadi: havolalarni tekshiring"; notify(); return; }
+  advance(1);
+}
+
 function playTrack(i: number) {
-  idx = i % list.length;
+  if (!list.length) return;
+  idx = ((i % list.length) + list.length) % list.length;
   L.title = list[idx].title;
+  L.index = idx;
+  saveIdx();
   if (!audioEl) {
     audioEl = new Audio();
     audioEl.volume = 0.5;
-    audioEl.onended = () => { playTrack(idx + 1); notify(); };
+    audioEl.preload = 'auto';
+    audioEl.setAttribute('playsinline', 'true');
+    audioEl.onended = () => { failStreak = 0; advance(1); };
+    audioEl.onerror = () => failed();
+    audioEl.onplaying = () => { failStreak = 0; clearLoad(); L.error = ''; };
   }
+  clearLoad();
   audioEl.src = list[idx].url;
-  audioEl.play().catch(() => { L.stop(); });
+  loadTimer = setTimeout(failed, 20000); // 20 soniyada boshlanmasa — o'tkazib yuboramiz
+  const pr = audioEl.play();
+  if (pr && pr.catch) pr.catch((e: any) => {
+    if (e && e.name === 'NotAllowedError') { clearLoad(); L.paused = true; notify(); } // brauzer avtoijroga ruxsat bermadi: foydalanuvchi bosganda davom etadi
+    else if (e && e.name !== 'AbortError') failed();
+  });
+  notify();
 }
 
-L.start = (tracks = []) => {
+function advance(dir: 1 | -1) {
+  if (!list.length) return;
+  if (!order.length) rebuildOrder();
+  pos = (pos + dir + order.length) % order.length;
+  playTrack(order[pos]);
+}
+
+L.start = (tracks = [], opts) => {
   if (L.on) return;
-  L.on = true; L.paused = false;
+  L.on = true; L.paused = false; L.error = '';
   list = tracks;
-  if (list.length) playTrack(Math.floor(Math.random() * list.length));
-  else { mood = Math.floor(Math.random() * MOODS.length); startSynth(); }
+  L.count = list.length;
+  L.shuffle = !!opts?.shuffle;
+  failStreak = 0;
+  if (list.length) {
+    // oxirgi tinglangan joydan davom etamiz (shu havola hali ro'yxatda bo'lsa), aks holda birinchi trekdan
+    let start = 0;
+    try { const s = JSON.parse(localStorage.getItem(IDX_KEY) || 'null'); if (s && list[s.i]?.url === s.u) start = s.i; } catch { /* ignore */ }
+    if (typeof opts?.startAt === 'number') start = opts.startAt;
+    idx = Math.max(0, Math.min(list.length - 1, start));
+    rebuildOrder();
+    playTrack(idx);
+  } else { mood = Math.floor(Math.random() * MOODS.length); startSynth(); }
   notify();
 };
+/** Admin ro'yxatni yangilasa — ijro to'xtamaydi, joriy trek saqlanadi */
+L.sync = (tracks: Track[]) => {
+  if (!L.on || !tracks.length || !list.length) return;
+  const cur = list[idx]?.url;
+  if (tracks.length === list.length && tracks.every((t, i) => t.url === list[i].url)) return;
+  list = tracks;
+  L.count = list.length;
+  const ni = list.findIndex(t => t.url === cur);
+  idx = ni >= 0 ? ni : Math.min(idx, list.length - 1);
+  L.index = idx;
+  rebuildOrder();
+  notify();
+};
+L.playAt = (i: number) => {
+  if (!L.on || !list.length) return;
+  idx = Math.max(0, Math.min(list.length - 1, i));
+  rebuildOrder();
+  L.paused = false; failStreak = 0;
+  if (ctx) ctx.resume().catch(() => {});
+  playTrack(idx);
+};
+L.setShuffle = (v: boolean) => { L.shuffle = v; rebuildOrder(); notify(); };
 L.pause = () => {
   if (!L.on || L.paused) return;
   L.paused = true;
@@ -224,16 +310,32 @@ L.resume = () => {
 L.toggle = () => (L.paused ? L.resume() : L.pause());
 L.next = () => {
   if (!L.on) return;
-  if (list.length) playTrack(idx + 1);
-  else if (ctx) { mood = (mood + 1) % MOODS.length; step = 0; nextT = ctx.currentTime + 0.1; L.title = MOODS[mood].name; }
-  if (L.paused) { L.paused = false; if (ctx) ctx.resume().catch(() => {}); }
+  if (list.length) { failStreak = 0; L.paused = false; advance(1); }
+  else if (ctx) { mood = (mood + 1) % MOODS.length; step = 0; nextT = ctx.currentTime + 0.1; L.title = MOODS[mood].name; if (L.paused) { L.paused = false; ctx.resume().catch(() => {}); } }
+  notify();
+};
+L.prev = () => {
+  if (!L.on || !list.length) return;
+  if (audioEl && audioEl.currentTime > 4) { audioEl.currentTime = 0; return; } // 4 soniyadan keyin bosilsa — trek boshiga
+  failStreak = 0; L.paused = false; advance(-1);
+  notify();
+};
+/** Uyqu taymeri: berilgan daqiqadan keyin musiqa o'zi o'chadi (0 — bekor qilish) */
+L.setSleep = (min: number) => {
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+  L.sleepAt = 0;
+  if (min > 0 && L.on) { L.sleepAt = Date.now() + min * 60000; sleepTimer = setTimeout(() => { sleepTimer = null; L.sleepAt = 0; L.stop(); }, min * 60000); }
   notify();
 };
 L.stop = () => {
-  L.on = false; L.paused = false; L.title = '';
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+  L.sleepAt = 0;
+  const err = L.error;
+  L.on = false; L.paused = false; L.title = ''; L.error = err;
+  clearLoad();
   if (timer) { clearInterval(timer); timer = null; }
   if (ctx) { ctx.close().catch(() => {}); ctx = null; master = null; }
-  if (audioEl) { audioEl.pause(); audioEl.src = ''; audioEl = null; }
+  if (audioEl) { audioEl.onended = null; audioEl.onerror = null; audioEl.pause(); audioEl.removeAttribute('src'); audioEl.load(); audioEl = null; }
   notify();
 };
 export const lofi = L;

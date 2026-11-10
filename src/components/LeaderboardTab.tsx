@@ -30,6 +30,7 @@ import { DuelTab } from './DuelTab';
 import { ChallengesTab } from './ChallengesTab';
 import { Podium, GlowAvatar } from './Podium';
 import { levelLabel } from '../data/levels';
+import { LevelTest } from './LevelTest';
 import { HallOfHistory } from './HallOfHistory';
 import { loadHall, championCounts, champLabel } from '../services/hall';
 import { BANNERS } from '../data/shopDefaults';
@@ -96,6 +97,7 @@ export const LeaderboardTab: React.FC = () => {
   // Settings form state
   const [editName, setEditName] = useState(profile.name);
   const [editLevel, setEditLevel] = useState<EnglishLevel>(profile.level);
+  const [settingsTest, setSettingsTest] = useState(false);
   const [editPerDay, setEditPerDay] = useState<number>(profile.wordsPerDay);
   const [editRemind, setEditRemind] = useState(profile.botRemind !== false);
   const [editAvatar, setEditAvatar] = useState(profile.avatar);
@@ -233,7 +235,7 @@ export const LeaderboardTab: React.FC = () => {
               {refLeague.slice(0, 50).map((u, i) => (
                 <div key={u.id} className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${u.isCurrentUser ? 'bg-amber-500/15 border-amber-500/60' : 'bg-[#151C28] border-slate-800/80'} ${i === 0 ? 'row-gold' : i === 1 ? 'row-silver' : i === 2 ? 'row-bronze' : ''}`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="font-bold text-xs text-slate-400 w-5 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</span>
+                    <span className="font-bold text-xs text-slate-400 min-w-[1.75rem] shrink-0 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</span>
                     <CosAvatar src={u.avatar} name={u.name} size={34} cos={u.cos} />
                     <div className="min-w-0"><CosName name={u.name} cos={u.cos} showTitle className="font-semibold text-xs text-white" /></div>
                   </div>
@@ -271,11 +273,11 @@ export const LeaderboardTab: React.FC = () => {
           {/* Current User Fixed Position Strip */}
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/50 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
-              <span className="font-extrabold text-base text-amber-400 w-6 text-center tabular-nums">
+              <span className={`font-extrabold text-amber-400 text-center tabular-nums shrink-0 min-w-[2.6rem] leading-none ${String(currentUserRank || "-").length > 2 ? "text-sm" : "text-base"}`}>
                 #{currentUserRank || '-'}
               </span>
-              <CosAvatar src={profile.avatar} name={profile.name} size={40} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} />
-              <div>
+              <div className="shrink-0"><CosAvatar src={profile.avatar} name={profile.name} size={40} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} /></div>
+              <div className="min-w-0">
                 <div className="font-bold text-sm text-white"><CosName name={`${profile.name} (Siz)`} cos={leaderboardList.find(u => u.isCurrentUser)?.cos} showTitle /></div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-2">
                   <span>{profile.level}</span>
@@ -311,7 +313,7 @@ export const LeaderboardTab: React.FC = () => {
                   } ${rank === 1 ? 'row-gold' : rank === 2 ? 'row-silver' : rank === 3 ? 'row-bronze' : ''} ${(user.cos?.sp || 0) > nowMs() ? 'vb-spot-row' : ''}`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-xs text-slate-400 w-5 text-center tabular-nums">
+                    <span className="font-bold text-xs text-slate-400 min-w-[1.75rem] shrink-0 text-center tabular-nums">
                       {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                     </span>
                     {rank <= 3 ? <GlowAvatar rank={rank as 1 | 2 | 3} src={user.avatar} name={user.name} size={36} au={user.cos?.au} /> : <CosAvatar src={user.avatar} name={user.name} size={32} cos={user.cos} />}
@@ -614,6 +616,8 @@ export const LeaderboardTab: React.FC = () => {
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 px-0.5">{levelLabel(editLevel)}</p>
+              <button type="button" onClick={() => { triggerHaptic('medium'); setSettingsTest(true); }} className="w-full mt-1 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold active:scale-[0.98]">🎯 Daraja aniqlash testini topshirish</button>
+              {settingsTest && <LevelTest currentLevel={profile.level} onClose={() => setSettingsTest(false)} onApply={o => { setEditLevel(o.level); updateProfile({ level: o.level, placement: { level: o.level, score: o.score, max: o.max, ts: Date.now(), mode: o.mode } }); setSettingsTest(false); }} />}
             </div>
 
             {/* Daily words */}
