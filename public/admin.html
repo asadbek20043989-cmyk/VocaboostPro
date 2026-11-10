@@ -1895,7 +1895,7 @@ $('pAction').onchange = popUi;
 $('savePop').onclick = guard(async () => {
   const act = $('pAction').value;
   const target = act === 'tab' ? $('pTab').value : $('pTarget').value.trim();
-  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), action: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
+  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), btnAction: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
   flash('Pop-up saqlandi ✅'); await load();
 });
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });

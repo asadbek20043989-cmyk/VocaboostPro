@@ -1005,7 +1005,7 @@ export const handler = async event => {
       // ---------- Ilovaga kirganda chiqadigan pop-up ----------
       case 'setPopup': {
         const old = (await call('GET', 'config/popup')) || {};
-        const act = ['none', 'levelTest', 'tab', 'link', 'promo'].includes(body.action) ? body.action : 'none';
+        const act = ['none', 'levelTest', 'tab', 'link', 'promo'].includes(body.btnAction) ? body.btnAction : 'none'; // eslint: body.action — so'rov turi, tugma amali alohida `btnAction`
         let target = String(body.target || '').slice(0, 300);
         if (act === 'tab' && !['home', 'words', 'games', 'leaderboard', 'shop'].includes(target)) target = 'home';
         if (act === 'link' && target && !/^https?:\/\//i.test(target) && !/^t\.me\//i.test(target)) return json(400, { error: "Havola https:// yoki t.me/ bilan boshlanishi kerak" });
