@@ -50,4 +50,4 @@ Realtime Database qoidalari o'zgarmaydi (`database.rules.json`). Faqat Authorize
 - `api/fn/[name].js` — barcha server funksiyalarini bitta Vercel funksiyasi qiladi (Hobby 12 funksiya limitiga tushmaydi)
 - `server/functions`, `server/lib` — eski Netlify funksiyalari (kodi deyarli o'zgarmagan)
 - `/.netlify/functions/*` eski manzillari ham `vercel.json` orqali ishlaydi
-- Xabar yuborish (broadcast) funksiyasi maksimal 60 soniya ishlaydi (Hobby chegarasi); juda ko'p foydalanuvchi bo'lsa `api/fn/[name].js` dagi `maxDuration` ni oshiring (Pro / Fluid compute kerak).
+- Xabar yuborish (broadcast) funksiyasi bir chaqiruvda ~45 soniya ishlaydi (Hobby chegarasi 60 s), vaqt tugasa o'zini yangidan chaqirib qolganini davom ettiradi (ro'yxat va joriy o'rin bazada: `broadcastJobs/<id>`). Zanjir uzilsa, soatlik `remind` yoki paneldagi «▶️ Davom ettirish» tugmasi qolganini yuboradi. Bir chaqiruv hajmini `BROADCAST_BUDGET_MS` (ms) bilan o'zgartirish mumkin.

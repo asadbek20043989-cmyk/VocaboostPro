@@ -13,6 +13,15 @@ export const handler = async event => {
   const body = parseBody(event);
   const code = process.env.ADMIN_CODE;
   if (!body || !code || !safeEq(body.code || '', code)) return { statusCode: 401, body: '' };
+  // Davom ettirish: yuborish vaqt chegarasiga yetganda o'zini (yoki cron/panel) shu yerga qayta yo'naltiradi
+  if (body.resume) {
+    try {
+      await runBroadcast({ resume: String(body.resume), chain: !!body.chain });
+    } catch {
+      /* holat adminState/broadcast da */
+    }
+    return { statusCode: 202, body: '' };
+  }
   const text = String(body.text || '').trim();
   if (!text) return { statusCode: 400, body: '' };
   try {
@@ -25,6 +34,7 @@ export const handler = async event => {
       respectOptOut: body.kind === 'daily',
       skipActiveToday: !!body.skipActiveToday,
       segment: cleanSegment(body.segment),
+      onlyIds: Array.isArray(body.onlyIds) ? body.onlyIds.map(String).filter(x => /^\d{3,15}$/.test(x)).slice(0, 50000) : null,
       parseMode: body.parseMode || 'HTML',
       invite: body.invite && typeof body.invite === 'object' ? { label: String(body.invite.label || ''), mode: body.invite.mode === 'link' ? 'link' : 'share' } : null,
     });

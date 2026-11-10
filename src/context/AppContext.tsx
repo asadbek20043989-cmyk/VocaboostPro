@@ -1,3 +1,4 @@
+import type { AdminPopupCfg } from '../types';
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import {
   UserProfile, SavedWord, DailyQuest, AchievementBadge, EnglishLevel, WheelState,
@@ -177,6 +178,8 @@ interface AppContextType {
   challengesLive: boolean;
   realtimeOn: boolean;
   announcement: { text: string; active: boolean } | null;
+  /** Admin paneldan belgilanadigan, ilovaga kirganda chiqadigan pop-up */
+  adminPopup: AdminPopupCfg | null;
   /** Joriy liga haftasi (admin «Yangi hafta» bosganda oshadi) */
   leagueWeek: { week: number; startedAt: number } | null;
   // sertifikatlar
@@ -696,6 +699,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     config?.announcement && config.announcement.active && config.announcement.text
       ? { text: String(config.announcement.text), active: true }
       : null;
+
+  const adminPopup: AdminPopupCfg | null = (() => {
+    const p = config?.popup;
+    if (!p || !p.active || !p.id || !(p.title || p.text)) return null;
+    const g = (k: string) => String(p[k] || '');
+    return {
+      id: String(p.id), emoji: g('emoji'), title: g('title'), text: g('text'), btn: g('btn'),
+      title_ru: g('title_ru'), text_ru: g('text_ru'), btn_ru: g('btn_ru'),
+      title_en: g('title_en'), text_en: g('text_en'), btn_en: g('btn_en'),
+      action: (['none', 'levelTest', 'tab', 'link', 'promo'].includes(p.action) ? p.action : 'none') as AdminPopupCfg['action'],
+      target: g('target'), who: p.who === 'old' ? 'old' : 'all', freq: p.freq === 'daily' || p.freq === 'always' ? p.freq : 'once',
+    };
+  })();
 
   const leagueWeek = config?.league && Number(config.league.week) > 0 ? { week: Number(config.league.week), startedAt: Number(config.league.startedAt) || 0 } : null;
 
@@ -2217,7 +2233,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         goBack, canGoBack, packs, todayPacks, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
-        realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
+        realtimeOn: realtimeEnabled, announcement, adminPopup, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
         claimGrants, receivedGrants, setReceivedGrants,
       }}

@@ -229,89 +229,180 @@ export const cleanSegment = raw => {
   return levels.length || seg.inactiveDays || seg.minStreak || seg.maxStreak !== undefined ? seg : null;
 };
 
+// ---------- Ommaviy yuborish (Vercel 60 soniya chegarasiga mos, davom ettiriladigan) ----------
+// Muammo: eski kod hamma foydalanuvchini BITTA chaqiruvda, ketma-ket (har biri ~0,2 s) yuborardi. Vercel funksiyasi 60 soniyada
+// o'chirilgani uchun ~280 tadan keyin yuborish to'xtab qolardi. Endi:
+//  • xabarlar 25 tadan guruhlab (taxminan 25 xabar/s — Telegram chegarasi 30/s dan past) parallel yuboriladi;
+//  • yuboriladiganlar ro'yxati va joriy o'rni bazada (broadcastJobs/<id>) saqlanadi;
+//  • vaqt tugab qolsa, funksiya o'zini yangidan chaqirib, qolganini davom ettiradi (har chaqiruv — yangi 60 soniya);
+//  • biror sabab bilan zanjir uzilsa, soatlik `remind` yoki paneldagi «Davom ettirish» tugmasi qolganini yuboradi.
+const BC_BATCH = 25;
+const BC_MIN_BATCH_MS = 1000;
+const bcBudgetMs = () => Number(process.env.BROADCAST_BUDGET_MS) || (process.env.NETLIFY ? 800000 : 42000);
+
+/** To'xtab qolgan yoki vaqt tugagan yuborishni yangi chaqiruvda davom ettiradi. chain=true: oldingi ishchi tugagan (qulf tekshirilmaydi) */
+export async function triggerBroadcastResume(runId, chain = false) {
+  const base = siteUrl();
+  const code = process.env.ADMIN_CODE;
+  if (!base || !code || !runId) return false;
+  try {
+    const r = await fetch(`${base}/api/fn/broadcast-background`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, resume: String(runId), chain: !!chain }),
+      signal: AbortSignal.timeout(10000),
+    });
+    return r.status === 202 || r.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function runBroadcast(opts) {
+  const t0 = Date.now();
   const token = process.env.BOT_TOKEN;
   const db = makeDb();
   if (!token || !db) throw new Error('BOT_TOKEN yoki Firebase sozlanmagan');
-  const users = (await db('GET', 'tgusers')) || {};
-  const lb = opts.skipActiveToday || opts.segment ? (await db('GET', 'leaderboard')) || {} : {};
-  const dayStart = tashkentStartOfDayMs();
-  const markup = opts.customButtonsOnly ? makeCustomButtonsMarkup(opts.buttons) : (opts.buttons && opts.buttons.length ? makeCustomButtonsMarkup(opts.buttons) : openAppMarkup());
-  const parseMode = opts.parseMode || 'HTML';
-  const photoUrl = opts.photoUrl ? String(opts.photoUrl).trim() : null;
+
+  let runId;
+  let job;
+  let st;
+  let users;
+  if (opts.resume) {
+    // ---- davom ettirish ----
+    runId = String(opts.resume);
+    [job, st] = await Promise.all([db('GET', `broadcastJobs/${runId}`), db('GET', 'adminState/broadcast')]);
+    if (!job || !st || st.id !== runId || st.done) return st || null;
+    // Zanjirdan tashqari (cron/tugma) chaqiruvda: boshqa ishchi hali ishlayotgan bo'lsa — aralashmaymiz
+    if (!opts.chain && Date.now() - (Number(st.lastTick) || 0) < 120000) return st;
+    users = (await db('GET', 'tgusers')) || {};
+  } else {
+    // ---- yangi yuborish ----
+    users = (await db('GET', 'tgusers')) || {};
+    const lb = opts.skipActiveToday || opts.segment ? (await db('GET', 'leaderboard')) || {} : {};
+    const dayStart = tashkentStartOfDayMs();
+    const only = Array.isArray(opts.onlyIds) ? new Set(opts.onlyIds.map(String)) : null; // faqat shu ID larga (yarim qolgan yuborishni tugatish)
+    const targets = Object.entries(users).filter(([id, u]) => {
+      if (only && !only.has(id)) return false;
+      if (!u || u.blocked) return false;
+      if (opts.respectOptOut && u.remind === false) return false;
+      if (opts.skipActiveToday && Number(lb[`tg_${id}`]?.ts) >= dayStart) return false;
+      if (opts.segment && !inSegment(opts.segment, u, lb[`tg_${id}`])) return false;
+      return /^\d{3,15}$/.test(id);
+    });
+    runId = 'b' + Date.now().toString(36);
+    const photoUrl = opts.photoUrl ? String(opts.photoUrl).trim() : null;
+    job = {
+      o: {
+        text: String(opts.text),
+        photoUrl,
+        buttons: Array.isArray(opts.buttons) ? opts.buttons : [],
+        customButtonsOnly: !!opts.customButtonsOnly,
+        parseMode: opts.parseMode || 'HTML',
+        invite: opts.invite || null,
+      },
+      ids: targets.map(([id]) => id).join(','),
+      pos: 0,
+    };
+    st = {
+      id: runId,
+      kind: opts.kind || 'manual',
+      text: String(opts.text).slice(0, 300),
+      photoUrl: photoUrl || null,
+      buttonsCount: opts.buttons ? opts.buttons.length : 0,
+      startedAt: Date.now(),
+      total: targets.length,
+      sent: 0,
+      failed: 0,
+      blocked: 0,
+      done: false,
+      lastTick: Date.now(),
+    };
+    const prev = await db('GET', 'adminState/broadcast').catch(() => null);
+    await db('PUT', `broadcastJobs/${runId}`, job);
+    await db('PUT', 'adminState/broadcast', st);
+    if (prev?.id && prev.id !== runId) db('DELETE', `broadcastJobs/${prev.id}`).catch(() => {});
+  }
+
+  const o = job.o || {};
+  const ids = String(job.ids || '').split(',').filter(Boolean);
+  const markup = o.customButtonsOnly ? makeCustomButtonsMarkup(o.buttons) : o.buttons && o.buttons.length ? makeCustomButtonsMarkup(o.buttons) : openAppMarkup();
+  const parseMode = o.parseMode || 'HTML';
+  const photoUrl = o.photoUrl || null;
 
   // Shaxsiy taklif tugmasi: har bir foydalanuvchi uchun UNING o'z havolasi (t.me/Bot?start=ref_<ID>) bilan
   let inviteBot = '';
   let inviteText = DEFAULT_INVITE_TEXT;
-  if (opts.invite) {
+  if (o.invite) {
     const rcfg = (await db('GET', 'config/referral').catch(() => null)) || {};
     inviteBot = await getBotUsername(rcfg, token);
     inviteText = String(rcfg.shareText || DEFAULT_INVITE_TEXT);
   }
-  const targets = Object.entries(users).filter(([id, u]) => {
-    if (!u || u.blocked) return false;
-    if (opts.respectOptOut && u.remind === false) return false;
-    if (opts.skipActiveToday && Number(lb[`tg_${id}`]?.ts) >= dayStart) return false;
-    if (opts.segment && !inSegment(opts.segment, u, lb[`tg_${id}`])) return false;
-    return true;
-  });
 
-  const runId = 'b' + Date.now().toString(36);
-  const st = {
-    id: runId,
-    kind: opts.kind || 'manual',
-    text: String(opts.text).slice(0, 300),
-    photoUrl: photoUrl || null,
-    buttonsCount: opts.buttons ? opts.buttons.length : 0,
-    startedAt: Date.now(),
-    total: targets.length,
-    sent: 0,
-    failed: 0,
-    blocked: 0,
-    done: false
-  };
-  await db('PUT', 'adminState/broadcast', st).catch(() => {});
-
-  let n = 0;
-  for (const [id, u] of targets) {
+  const upd = {};
+  const sendOne = async id => {
+    const u = users[id] || {};
+    if (u.blocked) return;
     const name = String(u.name || '').split(' ')[0] || "do'st";
-    const text = String(opts.text).replace(/\{name\}/gi, escHtml(name));
-    let tries = 0;
+    const text = String(o.text).replace(/\{name\}/gi, escHtml(name));
     let mk = markup;
-    if (opts.invite && inviteBot) {
+    if (o.invite && inviteBot) {
       const link = inviteLink(inviteBot, id);
-      const url = opts.invite.mode === 'link' ? link : shareUrl(link, inviteText);
-      const row = [{ text: String(opts.invite.label || '👥 Do\'stlarni taklif qilish').slice(0, 40), url }];
+      const url = o.invite.mode === 'link' ? link : shareUrl(link, inviteText);
+      const row = [{ text: String(o.invite.label || "👥 Do'stlarni taklif qilish").slice(0, 40), url }];
       mk = { inline_keyboard: [row, ...((markup && markup.inline_keyboard) || [])] };
     }
+    let tries = 0;
     for (;;) {
       try {
-        if (photoUrl) {
-          await sendPhoto(token, Number(id), photoUrl, text, mk, parseMode);
-        } else {
-          await sendMessage(token, Number(id), text, mk, parseMode);
-        }
+        if (photoUrl) await sendPhoto(token, Number(id), photoUrl, text, mk, parseMode);
+        else await sendMessage(token, Number(id), text, mk, parseMode);
         st.sent++;
-        break;
+        return;
       } catch (e) {
-        if (e.code === 429 && tries++ < 3) {
+        if (e.code === 429 && tries++ < 4) {
           await sleep(((e.retryAfter || 2) + 0.5) * 1000);
           continue;
         }
-        if (e.code === 403 || /blocked|deactivated|chat not found/i.test(e.message)) {
+        if (e.code === 403 || /blocked|deactivated|chat not found/i.test(String(e.message))) {
           st.blocked++;
-          await db('PATCH', `tgusers/${id}`, { blocked: true }).catch(() => {});
+          upd[`tgusers/${id}/blocked`] = true;
         } else st.failed++;
-        break;
+        return;
       }
     }
-    n++;
-    if (n % 20 === 0) await db('PATCH', 'adminState/broadcast', { sent: st.sent, failed: st.failed, blocked: st.blocked }).catch(() => {});
-    await sleep(45);
+  };
+
+  let pos = Math.max(0, Number(job.pos) || 0);
+  const stopAt = t0 + bcBudgetMs();
+  while (pos < ids.length && Date.now() < stopAt) {
+    const tb = Date.now();
+    const batch = ids.slice(pos, pos + BC_BATCH);
+    await Promise.all(batch.map(sendOne));
+    pos += batch.length;
+    // Bitta so'rov bilan: hisoblagichlar + joriy o'rin + bloklanganlar (uzilib qolsa ham shu joydan davom etadi)
+    await db('PATCH', '', {
+      ...upd,
+      'adminState/broadcast/sent': st.sent,
+      'adminState/broadcast/failed': st.failed,
+      'adminState/broadcast/blocked': st.blocked,
+      'adminState/broadcast/lastTick': Date.now(),
+      [`broadcastJobs/${runId}/pos`]: pos,
+    }).catch(() => {});
+    for (const k of Object.keys(upd)) delete upd[k];
+    const spent = Date.now() - tb;
+    if (spent < BC_MIN_BATCH_MS) await sleep(BC_MIN_BATCH_MS - spent);
   }
-  st.done = true;
-  st.finishedAt = Date.now();
-  await db('PUT', 'adminState/broadcast', st).catch(() => {});
+
+  if (pos >= ids.length) {
+    st.done = true;
+    st.finishedAt = Date.now();
+    await db('PATCH', 'adminState/broadcast', { sent: st.sent, failed: st.failed, blocked: st.blocked, done: true, finishedAt: st.finishedAt, lastTick: Date.now() }).catch(() => {});
+    db('DELETE', `broadcastJobs/${runId}`).catch(() => {});
+    return st;
+  }
+  // Vaqt tugadi — qolganini yangi chaqiruv (yangi 60 soniya) davom ettiradi
+  await triggerBroadcastResume(runId, true);
   return st;
 }
 

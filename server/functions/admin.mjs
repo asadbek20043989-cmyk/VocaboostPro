@@ -8,7 +8,7 @@ import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStart
 
 import { finishWeek } from '../lib/week.mjs';
 import { loadRt, mergeRt, drainWeekRest, sampleMessage, sendAuto, DEFAULT_MILESTONES } from '../lib/engage.mjs';
-import { cleanMilestones, DEFAULT_REF_MILESTONES, DEFAULT_REF_FRIEND_TEXT, DEFAULT_REF_MILESTONE_TEXT } from '../lib/tg.mjs';
+import { triggerBroadcastResume, cleanMilestones, DEFAULT_REF_MILESTONES, DEFAULT_REF_FRIEND_TEXT, DEFAULT_REF_MILESTONE_TEXT } from '../lib/tg.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -433,6 +433,51 @@ export const handler = async event => {
 
       case 'broadcastStatus': {
         return json(200, { status: (await call('GET', 'adminState/broadcast')) || null });
+      }
+
+      // To'xtab qolgan yuborishni davom ettirish (faqat yangi tizimda boshlangan va tugamagan yuborish uchun)
+      case 'broadcastResume': {
+        const st = await call('GET', 'adminState/broadcast');
+        if (!st || !st.id || st.done) return json(400, { error: "Davom ettiriladigan yuborish yo'q" });
+        const job = await call('GET', `broadcastJobs/${st.id}`);
+        if (!job) return json(400, { error: "Bu yuborish eski tizimda boshlangan, davom ettirib bo'lmaydi. Qayta yuboring." });
+        if (Date.now() - (Number(st.lastTick) || 0) < 60000) return json(400, { error: 'Yuborish hozir ham ishlayapti — 1 daqiqa kuting va holatni yangilang' });
+        const ok = await triggerBroadcastResume(st.id, true);
+        if (!ok) return json(502, { error: "Davom ettirishni boshlab bo'lmadi (SITE_URL va ADMIN_CODE ni tekshiring)" });
+        return json(200, { ok: true });
+      }
+
+      // Eski tizimda yarmida to'xtagan yuborishning QOLGANLARINI aniqlaydi va (dry bo'lmasa) ularga yuboradi.
+      // Eski kod tgusers ni kalit tartibida yuborgan; shu tartib qayta tiklanadi: boshidagi (yuborildi + xato) tasi — olgan.
+      case 'broadcastRecover': {
+        const [st, users] = await Promise.all([call('GET', 'adminState/broadcast'), call('GET', 'tgusers')]);
+        if (!st || st.done || !st.startedAt) return json(400, { error: "Tugallanmagan yuborish topilmadi" });
+        const t0 = Number(st.startedAt);
+        const list = [];
+        for (const [id, u] of Object.entries(users || {})) {
+          if (!u || typeof u !== 'object' || !/^\d{3,15}$/.test(id)) continue;
+          if (Number(u.joined) >= t0) continue; // yuborish boshlangandan keyin qo'shilgan
+          if (Number(u.unblockedAt) >= t0) continue; // yuborish paytida bloklangan edi
+          if (u.blocked && !(Number(u.blockedAt) >= t0)) continue; // bloklangan (oldin yoki yuborish paytida)
+          list.push(id);
+        }
+        const done = (Number(st.sent) || 0) + (Number(st.failed) || 0);
+        const rest = list.slice(done).filter(id => !users[id].blocked);
+        const expected = (Number(st.total) || 0) - done - (Number(st.blocked) || 0);
+        if (body.dry) return json(200, { remaining: rest.length, expected, processed: done, total: Number(st.total) || 0, textHead: String(st.text || '').slice(0, 120) });
+        const text = String(body.text || '').trim().slice(0, 3500);
+        if (!text) return json(400, { error: 'Xabar matnini yozing (avvalgi yuborilgan matn bilan bir xil)' });
+        if (!rest.length) return json(400, { error: "Yuboriladigan qolgan foydalanuvchi yo'q" });
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const base = siteUrl();
+        if (!base) return json(400, { error: 'SITE_URL aniqlanmadi' });
+        const r = await fetch(`${base}/api/fn/broadcast-background`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: ADMIN_CODE, text, kind: 'manual', onlyIds: rest }),
+        });
+        if (r.status !== 202 && !r.ok) return json(502, { error: `Yuborishni boshlab bo'lmadi (${r.status})` });
+        return json(200, { ok: true, count: rest.length });
       }
 
       case 'testSend': {
@@ -1098,6 +1143,34 @@ export const handler = async event => {
         });
         if (r.status !== 202 && !r.ok) return json(502, { error: `Yuborishni boshlab bo'lmadi (${r.status})` });
         return json(200, { ok: true });
+      }
+
+      // ---------- Ilovaga kirganda chiqadigan pop-up ----------
+      case 'setPopup': {
+        const old = (await call('GET', 'config/popup')) || {};
+        const act = ['none', 'levelTest', 'tab', 'link', 'promo'].includes(body.btnAction) ? body.btnAction : 'none'; // eslint: body.action — so'rov turi, tugma amali alohida `btnAction`
+        let target = String(body.target || '').slice(0, 300);
+        if (act === 'tab' && !['home', 'words', 'games', 'leaderboard', 'shop'].includes(target)) target = 'home';
+        if (act === 'link' && target && !/^https?:\/\//i.test(target) && !/^t\.me\//i.test(target)) return json(400, { error: "Havola https:// yoki t.me/ bilan boshlanishi kerak" });
+        const next = {
+          active: !!body.active,
+          emoji: String(body.emoji || '').slice(0, 8),
+          title: String(body.title || '').slice(0, 80),
+          text: String(body.text || '').slice(0, 500),
+          btn: String(body.btn || '').slice(0, 30),
+          title_ru: String(body.title_ru || '').slice(0, 80), text_ru: String(body.text_ru || '').slice(0, 500), btn_ru: String(body.btn_ru || '').slice(0, 30),
+          title_en: String(body.title_en || '').slice(0, 80), text_en: String(body.text_en || '').slice(0, 500), btn_en: String(body.btn_en || '').slice(0, 30),
+          action: act,
+          target: act === 'none' || act === 'levelTest' ? '' : target,
+          who: body.who === 'old' ? 'old' : 'all',
+          freq: ['once', 'daily', 'always'].includes(body.freq) ? body.freq : 'once',
+        };
+        if (next.active && !next.title && !next.text) return json(400, { error: 'Sarlavha yoki matn kiriting' });
+        const same = ['emoji', 'title', 'text', 'btn', 'title_ru', 'text_ru', 'btn_ru', 'title_en', 'text_en', 'btn_en', 'action', 'target', 'who', 'freq'].every(k => String(old[k] || '') === String(next[k] || ''));
+        // Mazmun o'zgarsa yoki «qayta ko'rsat» belgilansa — yangi versiya: hamma yana ko'radi
+        next.id = !body.resend && same && old.id ? String(old.id) : String(Date.now());
+        await call('PUT', 'config/popup', next);
+        return json(200, { ok: true, id: next.id });
       }
 
       case 'setAnnouncement': {

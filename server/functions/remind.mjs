@@ -2,7 +2,7 @@
 //  1) Kunlik eslatma: admin belgilagan soatda (Toshkent vaqti) yuboradi. Sozlamalar: config/reminder
 //  2) Haftalik natija navbatini bo'shatish (TOP-20 dan tashqaridagilar, ertalab)
 //  3) Win-back va faollashtirish xabarlari (admin → 🚀 Retention)
-import { makeDb, siteUrl, tashkentDay, tashkentNow } from '../lib/tg.mjs';
+import { makeDb, siteUrl, tashkentDay, tashkentNow, triggerBroadcastResume } from '../lib/tg.mjs';
 import { loadRt, drainWeekRest, runWinback } from '../lib/engage.mjs';
 
 export const config = { schedule: '0 * * * *' };
@@ -28,10 +28,21 @@ async function dailyReminder(db) {
   return `started ${res.status}`;
 }
 
+// Zanjir uzilib, yarmida qolgan ommaviy yuborishni (oxirgi 6 soat ichida boshlangan) davom ettiradi
+async function resumeStaleBroadcast(db) {
+  const st = await db('GET', 'adminState/broadcast');
+  if (!st || !st.id || st.done) return 'none';
+  if (Date.now() - (Number(st.startedAt) || 0) > 6 * 3600 * 1000) return 'too-old';
+  if (Date.now() - (Number(st.lastTick) || Number(st.startedAt) || 0) < 120000) return 'running';
+  if (!(await db('GET', `broadcastJobs/${st.id}`))) return 'no-job';
+  return (await triggerBroadcastResume(st.id, false)) ? 'resumed' : 'failed';
+}
+
 export const handler = async () => {
   const db = makeDb();
   if (!db || !process.env.BOT_TOKEN) return { statusCode: 200, body: 'not configured' };
   const out = {};
+  try { out.broadcast = await resumeStaleBroadcast(db); } catch (e) { out.broadcast = 'error: ' + String(e?.message || e); }
   try { out.reminder = await dailyReminder(db); } catch (e) { out.reminder = 'error: ' + String(e?.message || e); }
   try {
     const rt = await loadRt(db);

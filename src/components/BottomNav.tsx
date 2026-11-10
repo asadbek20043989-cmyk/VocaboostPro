@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
+import { t as tt } from '../services/i18n';
 import { HomeIcon3D, BrainIcon3D, GameIcon3D, TrophyIcon3D, ShopIcon3D } from './NavIcons';
 
 type Tab = 'home' | 'words' | 'games' | 'leaderboard' | 'shop';
@@ -29,7 +30,7 @@ export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, dueWords } = useApp();
   const badges = useNavBadges();
   return (
-    <nav aria-label="Pastki navigatsiya" className="vb-nav fixed bottom-0 left-0 right-0 z-40 pb-safe px-3 pt-2">
+    <nav aria-label={tt("Pastki navigatsiya")} className="vb-nav fixed bottom-0 left-0 right-0 z-40 pb-safe px-3 pt-2">
       <div className="vb-nav-pill max-w-md mx-auto grid grid-cols-5 items-stretch">
         {ITEMS.map(({ id, label, Icon }, i) => {
           const on = activeTab === id;
@@ -48,7 +49,7 @@ export const BottomNav: React.FC = () => {
                   <Icon className="vb-nav-ico" />
                   {id === 'home' && dueWords.length > 0 && <span className="vb-nav-count">{dueWords.length > 99 ? '99+' : dueWords.length}</span>}
                 </span>
-                <span className="vb-nav-label">{label}</span>
+                <span className="vb-nav-label">{tt(label)}</span>
               </button>
               {badge && (
                 <span className={`vb-nav-badge ${gold ? 'is-gold' : id === 'games' ? 'is-violet' : ''}`}>

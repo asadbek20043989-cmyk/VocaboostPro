@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Flame, Rocket, ShieldAlert, Award } from 'lucide-react';
 import { triggerHaptic } from '../services/telegram';
 import { sfx } from '../services/sound';
+import { t as tt } from '../services/i18n';
 
 export type RankDelta = {
   prev: number;
@@ -205,7 +206,7 @@ export const RankChangePopup: React.FC<{
           {/* Interactive Rank Transition Box */}
           <div className="my-5 p-3.5 rounded-2xl bg-[#060c18]/80 border border-white/10 flex items-center justify-around shadow-inner">
             <div className="text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Oldin</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{tt("Oldin")}</span>
               <span className="text-2xl font-black tabular-nums text-slate-400">#{data.prev}</span>
             </div>
 
@@ -229,7 +230,7 @@ export const RankChangePopup: React.FC<{
             </div>
 
             <div className="text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Hozir</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{tt("Hozir")}</span>
               <span
                 className={`text-3xl font-black tabular-nums transition-all ${
                   up ? 'text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]' : down ? 'text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'text-amber-300'

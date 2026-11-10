@@ -456,7 +456,7 @@
         <h2>📣 Hozir hammaga yuborish</h2>
         <p class="small">Botga kirgan <b>barcha</b> foydalanuvchilarga bir vaqtda (soniyasiga ~20 ta) yuboriladi. Yuborilgach qaytarib bo'lmaydi.</p>
         <textarea id="b_text" class="emo" placeholder="Xabar matni... ({name} — ism)"></textarea>
-        <div class="row" style="margin-top:10px"><button id="bSend" class="bad">Hammaga yuborish 📣</button><button class="sec" id="bRefresh">Holatni yangilash</button></div>
+        <div class="row" style="margin-top:10px"><button id="bSend" class="bad">Hammaga yuborish 📣</button><button class="sec" id="bRefresh">Holatni yangilash</button><button class="sec" id="bResume" title="Yuborish yarmida to'xtab qolsa, qolganlariga yuborishni davom ettiradi">▶️ Davom ettirish</button><button class="sec" id="bRecover" title="Eski yuborish yarmida to'xtab qolgan bo'lsa: yuborilmaganlarni aniqlab, faqat ularga yuboradi">🔁 Qolganlarga yuborish</button></div>
         <div id="bStatus" class="small" style="margin-top:10px"></div>
         <div class="row" style="margin-top:14px"><input id="t_id" placeholder="Sinov uchun Telegram ID (masalan 123456789)" style="max-width:300px" /><button class="sec" id="tSend">Sinov xabari yuborish</button></div>
       </div>
@@ -862,6 +862,41 @@
         <textarea id="nText" placeholder="E'lon matni..."></textarea>
         <label class="chk"><input type="checkbox" id="nActive" /> Faol</label>
         <div class="row" style="margin-top:10px"><button id="saveN">Saqlash</button></div>
+      </div>
+      <div class="card">
+        <h2>🔔 Kirishdagi pop-up (ilovaga kirganda birinchi bo'lib chiqadi)</h2>
+        <p class="small">E'lon, yangi imkoniyat, daraja testini sinab ko'rish taklifi va hokazo. Foydalanuvchi ilovani ochganda bitta chiroyli oyna ko'rinadi.</p>
+        <div class="row">
+          <div style="flex:1"><label>Belgi (emoji)</label><input id="pEmoji" maxlength="4" placeholder="🎯" /></div>
+          <div style="flex:4"><label>Sarlavha</label><input id="pTitle" maxlength="80" placeholder="Darajangizni sinab ko'ring!" /></div>
+        </div>
+        <label>Matn</label><textarea id="pText" maxlength="500" placeholder="Pop-up matni..."></textarea>
+        <div class="row">
+          <div style="flex:1"><label>Tugma matni</label><input id="pBtn" maxlength="30" placeholder="Boshlash" /></div>
+          <div style="flex:1"><label>Tugma nima qiladi</label>
+            <select id="pAction">
+              <option value="none">Faqat yopadi</option>
+              <option value="levelTest">Daraja testini ochadi</option>
+              <option value="tab">Bo'limga o'tkazadi</option>
+              <option value="link">Havolani ochadi</option>
+              <option value="promo">Promokod oynasini ochadi</option>
+            </select></div>
+        </div>
+        <div class="row" id="pTargetRow">
+          <div style="flex:1" id="pTabBox"><label>Qaysi bo'lim</label>
+            <select id="pTab"><option value="home">Bugun</option><option value="words">So'zlar</option><option value="games">O'yinlar</option><option value="leaderboard">Liga</option><option value="shop">Do'kon</option></select></div>
+          <div style="flex:2" id="pTargetBox"><label id="pTargetLbl">Havola / promokod</label><input id="pTarget" placeholder="https://t.me/..." /></div>
+        </div>
+        <div class="row">
+          <div style="flex:1"><label>Kimga</label>
+            <select id="pWho"><option value="all">Hammaga</option><option value="old">Faqat eski foydalanuvchilarga (yangilarga emas)</option></select></div>
+          <div style="flex:1"><label>Qanchalik tez-tez</label>
+            <select id="pFreq"><option value="once">Har kimga 1 marta</option><option value="daily">Kuniga 1 marta</option><option value="always">Har kirganda</option></select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="pActive" /> Faol</label>
+        <label class="chk"><input type="checkbox" id="pResend" /> Hamma yana ko'rsin (avval ko'rganlarga ham qayta chiqadi)</label>
+        <div class="row" style="margin-top:10px"><button id="savePop">Saqlash</button></div>
+        <p class="small" id="pInfo"></p>
       </div>
       <div class="card">
         <h2>Foydalanuvchiga sovg'a</h2>
@@ -1771,12 +1806,20 @@ async function refreshBroadcast() {
   return b;
 }
 $('bRefresh').onclick = guard(refreshBroadcast);
+$('bRecover').onclick = guard(async () => {
+  const text = $('b_text').value.trim(); if (!text) return flash('Avval yuqoridagi maydonga avvalgi xabar matnini (bir xil) yozing', false);
+  const r = await api('broadcastRecover', { dry: true });
+  if (!confirm(`Avvalgi yuborish: ${r.processed} / ${r.total} qayta ishlangan.\nQolgan (yuborilmagan): ${r.remaining} ta (kutilgan: ${r.expected}).\nAvvalgi matn boshi: ${r.textHead}\n\nShu ${r.remaining} kishiga YOZGAN matningiz yuborilsinmi?`)) return;
+  await api('broadcastRecover', { text }); flash('Yuborish boshlandi ✅'); $('b_text').value = '';
+  for (let i = 0; i < 100; i++) { await new Promise(r => setTimeout(r, 3000)); const b = await refreshBroadcast(); if (b && b.done) break; }
+});
+$('bResume').onclick = guard(async () => { await api('broadcastResume'); flash('Davom ettirilmoqda ✅'); for (let i = 0; i < 60; i++) { await new Promise(r => setTimeout(r, 3000)); const b = await refreshBroadcast(); if (b && b.done) break; } });
 $('bSend').onclick = guard(async () => {
   const text = $('b_text').value.trim(); if (!text) return flash('Xabar matnini yozing', false);
   const n = Object.values(data.tgusers || {}).filter(u => u && !u.blocked).length;
   if (!confirm(`Xabar ${n} ta foydalanuvchiga yuboriladi. Davom etilsinmi?`)) return;
   await api('broadcast', { text }); flash('Yuborish boshlandi ✅'); $('b_text').value = '';
-  for (let i = 0; i < 40; i++) { await new Promise(r => setTimeout(r, 3000)); const b = await refreshBroadcast(); if (b && b.done) break; }
+  for (let i = 0; i < 100; i++) { await new Promise(r => setTimeout(r, 3000)); const b = await refreshBroadcast(); if (b && b.done) break; }
 });
 $('tSend').onclick = guard(async () => { await api('testSend', { userId: $('t_id').value.trim(), text: $('b_text').value.trim() || $('r_texts').value.split('\n')[0] || 'Sinov xabari' }); flash('Sinov xabari yuborildi ✅'); });
 
@@ -1917,10 +1960,30 @@ $('adSendAll').onclick = guard(async () => {
 /* ---------- sozlamalar ---------- */
 function renderSettings() {
   const s = data.config.settings || {};
-  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText'].includes(document.activeElement.id)) return;
+  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText','pEmoji','pTitle','pText','pBtn','pTarget'].includes(document.activeElement.id)) return;
   $('s_cap').value = s.reviewCap ?? 30; $('s_new').value = s.xpNewWord ?? 3; $('s_ok').value = s.xpCorrect ?? 2; $('s_bonus').value = s.xpDailyBonus ?? 10;
   const a = data.config.announcement || {}; $('nText').value = a.text || ''; $('nActive').checked = !!a.active;
+  const p = data.config.popup || {};
+  $('pEmoji').value = p.emoji || ''; $('pTitle').value = p.title || ''; $('pText').value = p.text || ''; $('pBtn').value = p.btn || '';
+  $('pAction').value = p.action || 'none'; $('pWho').value = p.who || 'all'; $('pFreq').value = p.freq || 'once'; $('pActive').checked = !!p.active; $('pResend').checked = false;
+  if ((p.action || 'none') === 'tab') $('pTab').value = p.target || 'home'; else $('pTarget').value = p.target || '';
+  popUi();
+  $('pInfo').textContent = p.id ? ('Joriy versiya: ' + new Date(Number(p.id) || 0).toLocaleString() + (p.active ? ' · faol' : ' · o\'chiq')) : 'Hali saqlanmagan.';
 }
+function popUi() {
+  const act = $('pAction').value;
+  $('pTabBox').style.display = act === 'tab' ? '' : 'none';
+  $('pTargetBox').style.display = (act === 'link' || act === 'promo') ? '' : 'none';
+  $('pTargetRow').style.display = (act === 'tab' || act === 'link' || act === 'promo') ? '' : 'none';
+  $('pTargetLbl').textContent = act === 'promo' ? 'Promokod (ixtiyoriy, oldindan to\'ldiriladi)' : 'Havola (https://...)';
+}
+$('pAction').onchange = popUi;
+$('savePop').onclick = guard(async () => {
+  const act = $('pAction').value;
+  const target = act === 'tab' ? $('pTab').value : $('pTarget').value.trim();
+  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), btnAction: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
+  flash('Pop-up saqlandi ✅'); await load();
+});
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
 $('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value, notify = $('gNotify') ? $('gNotify').checked : true; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value, notify }, giftNameOf(type, amt)); flash(grantMsg(r)); });

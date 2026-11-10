@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, X, Send, Sparkles, MessageSquareHeart, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic, getTelegramWebApp } from '../services/telegram';
+import { t as tt } from '../services/i18n';
 
 interface RatingModalProps {
   onClose: () => void;
@@ -93,7 +94,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ onClose }) => {
             <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-black text-white">Baholashingiz qabul qilindi!</h3>
+            <h3 className="text-xl font-black text-white">{tt("Baholashingiz qabul qilindi!")}</h3>
             <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
               Sizning xolis bahoyingiz va takliflaringiz botimizni yanada mukammal qilishga yordam beradi. Rahmat! ❤️
             </p>
@@ -102,16 +103,16 @@ export const RatingModal: React.FC<RatingModalProps> = ({ onClose }) => {
               onClick={onClose}
               className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-extrabold text-sm active:scale-95 transition-transform"
             >
-              Yopish
+              {tt("Yopish")}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-center pt-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
-                <MessageSquareHeart className="w-3.5 h-3.5" /> Botni baholash
+                <MessageSquareHeart className="w-3.5 h-3.5" /> {tt("Botni baholash")}
               </div>
-              <h3 className="text-xl font-extrabold text-white">Fikringiz biz uchun juda muhim!</h3>
+              <h3 className="text-xl font-extrabold text-white">{tt("Fikringiz biz uchun juda muhim!")}</h3>
               <p className="text-xs text-slate-400 mt-1">
                 Istalgan vaqtda botni baholang yoki taklif va shikoyatlaringizni yozib qoldiring.
               </p>
@@ -119,7 +120,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ onClose }) => {
 
             {/* 5-Yulduzli asosiy baholash */}
             <div className="bg-[#0B0F17] rounded-2xl p-4 border border-slate-800 text-center space-y-2">
-              <div className="text-xs font-semibold text-slate-300">Umumiy bahoyingiz:</div>
+              <div className="text-xs font-semibold text-slate-300">{tt("Umumiy bahoyingiz:")}</div>
               <div className="flex items-center justify-center gap-2 py-1">
                 {[1, 2, 3, 4, 5].map(n => (
                   <button
@@ -151,7 +152,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ onClose }) => {
 
             {/* Kriteriyalar bo'yicha qisqa baholash */}
             <div className="space-y-2.5">
-              <div className="text-xs font-bold text-slate-300">Qisqa mezonlar bo&apos;yicha baholang:</div>
+              <div className="text-xs font-bold text-slate-300">{tt("Qisqa mezonlar bo'yicha baholang:")}</div>
               {CRITERIA.map(c => (
                 <div
                   key={c.id}
