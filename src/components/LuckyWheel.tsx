@@ -7,6 +7,7 @@ import { triggerHaptic, shareReferral, getReferralLink, REFERRAL_TEXT } from '..
 import { sfx } from '../services/sound';
 import { HeaderActions } from './Brand';
 import { nowMs } from '../services/time';
+import { t as tt } from '../services/i18n';
 
 const SIZE = 320;
 const C = SIZE / 2;
@@ -186,11 +187,11 @@ export const LuckyWheel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }}
             className="h-10 pl-2.5 pr-3.5 rounded-xl bg-[#151C28] border border-slate-800 flex items-center gap-1.5 text-slate-200 text-sm font-semibold disabled:opacity-30"
           >
-            <ArrowLeft className="w-4 h-4" /> Orqaga
+            <ArrowLeft className="w-4 h-4" /> {tt("Orqaga")}
           </button>
           <div className="order-last"><HeaderActions /></div>
           <div className="flex-1 text-right">
-            <h2 className="text-lg font-bold text-white tracking-tight">Omadli Baraban</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight">{tt("Omadli Baraban")}</h2>
             <p className="text-[11px] text-slate-400">Har {DAILY_FREE_SPINS} urinishdan keyin kutish vaqti bor</p>
           </div>
         </div>
@@ -319,7 +320,7 @@ export const LuckyWheel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <div className="w-full rounded-2xl bg-[#151C28] border border-slate-800 p-4 text-center">
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
                 <Clock className="w-4 h-4" />
-                <span>Imkoniyatlar tugadi</span>
+                <span>{tt("Imkoniyatlar tugadi")}</span>
               </div>
               <div className="mt-1 text-base font-bold text-amber-400 tabular-nums">Keyingi imkoniyatga: {countdown} qoldi</div>
             </div>
@@ -343,8 +344,8 @@ export const LuckyWheel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <Users className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-white">Do&apos;stingni taklif qil</div>
-              <div className="text-[11px] text-slate-400">Yana +1 ta aylantirish huquqi oling</div>
+              <div className="text-sm font-bold text-white">{tt("Do'stingni taklif qil")}</div>
+              <div className="text-[11px] text-slate-400">{tt("Yana +1 ta aylantirish huquqi oling")}</div>
             </div>
             <Gift className="w-5 h-5 text-amber-400" />
           </button>
@@ -358,7 +359,7 @@ export const LuckyWheel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={handleCopy} className="h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center justify-center gap-1.5">
-                  <Copy className="w-4 h-4" /> Nusxalash
+                  <Copy className="w-4 h-4" /> {tt("Nusxalash")}
                 </button>
                 <button type="button" onClick={handleShare} className="h-11 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5">
                   <Send className="w-4 h-4" /> Telegramda yuborish

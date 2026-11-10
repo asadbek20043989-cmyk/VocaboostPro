@@ -4,7 +4,7 @@
 //   FIREBASE_DB_URL       — https://<project>-default-rtdb.firebaseio.com
 //   FIREBASE_DB_SECRET    — Realtime Database "Database secret" (Project settings > Service accounts > Database secrets)
 import { timingSafeEqual } from 'node:crypto';
-import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow } from '../lib/tg.mjs';
+import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow, cleanSegment, inSegment } from '../lib/tg.mjs';
 
 import { finishWeek } from '../lib/week.mjs';
 
@@ -447,6 +447,19 @@ export const handler = async event => {
       }
 
       // ---------- Reklama: statistika va yuborish ----------
+      // Tanlangan segmentga (daraja / necha kundan beri kirmagan / streak) nechta foydalanuvchi tushishini hisoblaydi
+      case 'segmentCount': {
+        const seg = cleanSegment(body.segment);
+        const [lb, tgu] = await Promise.all([call('GET', 'leaderboard'), call('GET', 'tgusers')]);
+        let n = 0, all = 0;
+        for (const [id, u] of Object.entries(tgu || {})) {
+          if (!u || u.blocked) continue;
+          all++;
+          if (inSegment(seg, u, (lb || {})[`tg_${id}`])) n++;
+        }
+        return json(200, { count: n, total: all, segment: seg });
+      }
+
       case 'adStats': {
         const [lb, tgu, bcast] = await Promise.all([call('GET', 'leaderboard'), call('GET', 'tgusers'), call('GET', 'adminState/broadcast')]);
         const tgList = Object.entries(tgu || {});
@@ -507,6 +520,7 @@ export const handler = async event => {
             customButtonsOnly: true,
             kind: 'ad',
             parseMode: 'HTML',
+            segment: cleanSegment(body.segment),
           }),
         });
         if (r.status !== 202 && !r.ok) return json(502, { error: `Reklama yuborishni boshlab bo'lmadi (${r.status})` });
@@ -830,12 +844,20 @@ export const handler = async event => {
 
       // ---------- Lo-Fi musiqa kutubxonasi (do'kon sozlamasidan alohida; tartib saqlanadi, 400 tagacha) ----------
       case 'setLofi': {
+        const normAudio = u => {
+          u = String(u || '').trim();
+          const d = /drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,})/.exec(u) || /drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([A-Za-z0-9_-]{10,})/.exec(u);
+          if (d) return `https://drive.google.com/uc?export=download&id=${d[1]}`;
+          if (/^https?:\/\/(www\.)?dropbox\.com\//i.test(u)) return u.replace(/^https?:\/\/(www\.)?dropbox\.com/i, 'https://dl.dropboxusercontent.com').replace(/([?&])dl=0/, '$1raw=1');
+          const g = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/i.exec(u);
+          return g ? `https://raw.githubusercontent.com/${g[1]}/${g[2]}/${g[3]}` : u;
+        };
         const src = Array.isArray(body.tracks) ? body.tracks : [];
         const seen = new Set();
         const tracks = [];
         for (const t of src) {
-          const url = String(t?.url || '').trim().slice(0, 600);
-          if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+          const url = normAudio(t?.url).slice(0, 600);
+          if (!(/^https?:\/\//i.test(url) || /^\/music\/[^\s]+/.test(url)) || seen.has(url)) continue;
           seen.add(url);
           tracks.push({ title: String(t?.title || '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 80) || `Lo-Fi ${tracks.length + 1}`, url, order: tracks.length });
           if (tracks.length >= 400) break;
@@ -978,6 +1000,34 @@ export const handler = async event => {
         });
         if (r.status !== 202 && !r.ok) return json(502, { error: `Yuborishni boshlab bo'lmadi (${r.status})` });
         return json(200, { ok: true });
+      }
+
+      // ---------- Ilovaga kirganda chiqadigan pop-up ----------
+      case 'setPopup': {
+        const old = (await call('GET', 'config/popup')) || {};
+        const act = ['none', 'levelTest', 'tab', 'link', 'promo'].includes(body.action) ? body.action : 'none';
+        let target = String(body.target || '').slice(0, 300);
+        if (act === 'tab' && !['home', 'words', 'games', 'leaderboard', 'shop'].includes(target)) target = 'home';
+        if (act === 'link' && target && !/^https?:\/\//i.test(target) && !/^t\.me\//i.test(target)) return json(400, { error: "Havola https:// yoki t.me/ bilan boshlanishi kerak" });
+        const next = {
+          active: !!body.active,
+          emoji: String(body.emoji || '').slice(0, 8),
+          title: String(body.title || '').slice(0, 80),
+          text: String(body.text || '').slice(0, 500),
+          btn: String(body.btn || '').slice(0, 30),
+          title_ru: String(body.title_ru || '').slice(0, 80), text_ru: String(body.text_ru || '').slice(0, 500), btn_ru: String(body.btn_ru || '').slice(0, 30),
+          title_en: String(body.title_en || '').slice(0, 80), text_en: String(body.text_en || '').slice(0, 500), btn_en: String(body.btn_en || '').slice(0, 30),
+          action: act,
+          target: act === 'none' || act === 'levelTest' ? '' : target,
+          who: body.who === 'old' ? 'old' : 'all',
+          freq: ['once', 'daily', 'always'].includes(body.freq) ? body.freq : 'once',
+        };
+        if (next.active && !next.title && !next.text) return json(400, { error: 'Sarlavha yoki matn kiriting' });
+        const same = ['emoji', 'title', 'text', 'btn', 'title_ru', 'text_ru', 'btn_ru', 'title_en', 'text_en', 'btn_en', 'action', 'target', 'who', 'freq'].every(k => String(old[k] || '') === String(next[k] || ''));
+        // Mazmun o'zgarsa yoki «qayta ko'rsat» belgilansa — yangi versiya: hamma yana ko'radi
+        next.id = !body.resend && same && old.id ? String(old.id) : String(Date.now());
+        await call('PUT', 'config/popup', next);
+        return json(200, { ok: true, id: next.id });
       }
 
       case 'setAnnouncement': {

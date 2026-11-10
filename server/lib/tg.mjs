@@ -198,12 +198,43 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
  * Jarayon `adminState/broadcast` ga yoziladi — admin panelda ko'rinadi.
  * opts: { text, kind: 'manual' | 'daily', respectOptOut, skipActiveToday }
  */
+/**
+ * Segment: { levels?: ['B1',...], inactiveDays?: N (kamida N kundan beri kirmagan), minStreak?: N, maxStreak?: N }
+ * Maydonlar bo'sh bo'lsa — shart qo'llanmaydi.
+ */
+export function inSegment(seg, tgUser, lbEntry) {
+  if (!seg) return true;
+  const e = lbEntry || {};
+  if (Array.isArray(seg.levels) && seg.levels.length) {
+    const lv = String(e.level || tgUser?.level || '').toUpperCase();
+    if (!seg.levels.includes(lv)) return false;
+  }
+  if (seg.inactiveDays > 0) {
+    const last = Number(e.ts || tgUser?.lastSeen || 0);
+    if (last && Date.now() - last < seg.inactiveDays * 86400000) return false;
+  }
+  const st = Number(e.streak) || 0;
+  if (seg.minStreak > 0 && st < seg.minStreak) return false;
+  if (seg.maxStreak >= 0 && seg.maxStreak != null && seg.maxStreak !== '' && Number.isFinite(seg.maxStreak) && st > seg.maxStreak) return false;
+  return true;
+}
+export const cleanSegment = raw => {
+  if (!raw || typeof raw !== 'object') return null;
+  const LV = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  const levels = Array.isArray(raw.levels) ? raw.levels.map(x => String(x).toUpperCase()).filter(x => LV.includes(x)) : [];
+  const num = (v, max) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? Math.min(max, n) : 0; };
+  const seg = { levels, inactiveDays: num(raw.inactiveDays, 365), minStreak: num(raw.minStreak, 3650) };
+  const mx = raw.maxStreak === '' || raw.maxStreak == null ? null : Math.round(Number(raw.maxStreak));
+  if (mx !== null && Number.isFinite(mx) && mx >= 0) seg.maxStreak = Math.min(3650, mx);
+  return levels.length || seg.inactiveDays || seg.minStreak || seg.maxStreak !== undefined ? seg : null;
+};
+
 export async function runBroadcast(opts) {
   const token = process.env.BOT_TOKEN;
   const db = makeDb();
   if (!token || !db) throw new Error('BOT_TOKEN yoki Firebase sozlanmagan');
   const users = (await db('GET', 'tgusers')) || {};
-  const lb = opts.skipActiveToday ? (await db('GET', 'leaderboard')) || {} : {};
+  const lb = opts.skipActiveToday || opts.segment ? (await db('GET', 'leaderboard')) || {} : {};
   const dayStart = tashkentStartOfDayMs();
   const markup = opts.customButtonsOnly ? makeCustomButtonsMarkup(opts.buttons) : (opts.buttons && opts.buttons.length ? makeCustomButtonsMarkup(opts.buttons) : openAppMarkup());
   const parseMode = opts.parseMode || 'HTML';
@@ -221,6 +252,7 @@ export async function runBroadcast(opts) {
     if (!u || u.blocked) return false;
     if (opts.respectOptOut && u.remind === false) return false;
     if (opts.skipActiveToday && Number(lb[`tg_${id}`]?.ts) >= dayStart) return false;
+    if (opts.segment && !inSegment(opts.segment, u, lb[`tg_${id}`])) return false;
     return true;
   });
 

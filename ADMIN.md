@@ -332,3 +332,20 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 - **🗓 Kontent kalendari** (Bugungi mashqlar): keyingi 28 kun; bo'sh kunni bossangiz ommaviy yuklash shu sanadan boshlanadi.
 - **⬇️ CSV eksport** (Liga): foydalanuvchilar ro'yxati Excel uchun (UTF-8).
 - **Ilova**: bosh sahifada «N-hafta · tugashiga ... qoldi · keyingi o'ringacha X XP» kartochkasi; Lo-Fi uyqu taymeri (15/30/60 daqiqa); «Darajam» kartochkasida test eslatmasi.
+
+## v5.9.1 — qo'shimchalar
+- **Kun rejimi tuzatildi**: bosh sahifadagi hafta kartochkasi, «Jihozlarim» va «Darajam» yozuvlari kunduzi ham ko'rinadi (gradient oxiri va och rangli yozuvlar uchun qoidalar).
+- **🎯 Reklama segmenti** (Reklama bo'limi): daraja, «kamida N kundan beri kirmagan», streak oralig'i bo'yicha tanlab yuborish; yuborishdan oldin nechta kishi mosligi ko'rinadi.
+- **🔁 Retention** (Statistika): qo'shilgan hafta bo'yicha 1+ kun / 7+ kun qaytganlar va oxirgi 7 kunda faollar.
+- **Lo-Fi**: Google Drive / Dropbox / GitHub havolalari avtomatik to'g'rilanadi; `public/music/` dagi fayllar `/music/fayl.mp3` ko'rinishida ishlaydi.
+
+
+## 🔔 Kirishdagi pop-up (v11)
+Admin panel → **Sozlamalar** → «Kirishdagi pop-up». Foydalanuvchi ilovani ochganda boshqa oynalardan OLDIN bitta chiroyli oyna chiqadi.
+- Belgi, sarlavha, matn, tugma matni; ixtiyoriy ruscha/inglizcha matn (bo'sh qolsa o'zbekcha ko'rinadi).
+- Tugma: faqat yopadi / **daraja testini ochadi** / bo'limga o'tkazadi / havolani ochadi / promokod oynasini ochadi.
+- Kimga: hammaga yoki faqat eski foydalanuvchilarga. Chastota: 1 marta, kuniga 1 marta yoki har kirganda.
+- Matn o'zgarsa yoki «Hamma yana ko'rsin» belgilansa — yangi versiya sifatida hamma qayta ko'radi.
+
+## 🌐 Interfeys tili (v11)
+O'zbekcha / Русский / English. Birinchi kirishda Telegram tiliga qarab tanlanadi; Onboarding va Sozlamalarda o'zgartiriladi. Tarjimalar `src/services/i18n.ts` da («o'zbekcha matn → ruscha, inglizcha»); yangi matn qo'shish uchun shu ro'yxatga qator qo'shing va kodda `t("...")` ishlating.

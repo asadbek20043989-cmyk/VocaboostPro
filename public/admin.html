@@ -158,6 +158,11 @@
         <p class="small">Vaqt — Toshkent vaqti bilan. Statistika ilova yangilangandan keyin yig'ila boshlaydi (ilgarigi kunlar bo'yicha ma'lumot yo'q). Foydalanuvchi ilovani soatiga bir marta «ochilgan» deb hisoblanadi.</p>
         <div id="as_body"></div>
       </div>
+      <div class="card" id="retCard">
+        <h2>🔁 Foydalanuvchilar qolishi (retention) <span class="small">— qo'shilgan haftalar bo'yicha</span></h2>
+        <p class="small">Har bir hafta qo'shilganlarning qanchasi <b>1 kundan keyin</b>, <b>7 kundan keyin</b> qaytgani va <b>oxirgi 7 kunda faol</b> ekani. Ma'lumot ligadagi «qo'shilgan sana» va «oxirgi kirish» maydonlaridan olinadi.</p>
+        <div class="scroll"><table><thead><tr><th>Hafta (boshlanishi)</th><th>Qo'shildi</th><th>1+ kun qaytdi</th><th>7+ kun qaytdi</th><th>7 kunda faol</th></tr></thead><tbody id="retBody"></tbody></table></div>
+      </div>
     </section>
 
     <section id="t-words" class="hide">
@@ -525,6 +530,15 @@
         <div class="row" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
           <input id="ad_test_id" placeholder="Sinov uchun Telegram ID (masalan: 123456789)" style="max-width:280px" />
           <button type="button" class="sec" id="adSendTest">🔍 Sinov reklamasi (O'zimga yuborish)</button>
+        <div class="card" style="background:#0E1524;margin:12px 0">
+          <b>🎯 Kimlarga yuborilsin? <span class="small">(bo'sh qoldirsangiz — hammaga)</span></b>
+          <div class="f3" style="margin-top:8px">
+            <div><label>Daraja</label><div id="ad_seg_lv" class="row" style="gap:10px;flex-wrap:wrap"><label class="chk" style="margin:0"><input type="checkbox" value="A1"> A1</label><label class="chk" style="margin:0"><input type="checkbox" value="A2"> A2</label><label class="chk" style="margin:0"><input type="checkbox" value="B1"> B1</label><label class="chk" style="margin:0"><input type="checkbox" value="B2"> B2</label><label class="chk" style="margin:0"><input type="checkbox" value="C1"> C1</label><label class="chk" style="margin:0"><input type="checkbox" value="C2"> C2</label></div></div>
+            <div><label>Kamida N kundan beri kirmagan</label><input id="ad_seg_inactive" type="number" min="0" placeholder="masalan: 5"></div>
+            <div><label>Streak (dan — gacha)</label><div class="row"><input id="ad_seg_smin" type="number" min="0" placeholder="dan" style="max-width:90px"><input id="ad_seg_smax" type="number" min="0" placeholder="gacha" style="max-width:90px"></div></div>
+          </div>
+          <div class="small" id="ad_seg_info" style="margin-top:6px"></div>
+        </div>
           <button type="button" class="bad" id="adSendAll" style="padding:10px 20px;font-size:14px">📢 BARCHA FOYDALANUVCHILARGA YUBORISH</button>
         </div>
         <div id="adStatus" class="small" style="margin-top:12px"></div>
@@ -694,7 +708,7 @@
       <div class="card">
         <h2>🎧 Lo-Fi musiqa kutubxonasi <span class="small" id="lf_count"></span></h2>
         <p class="small">Ko'p trekni birdan qo'shing: har qatorga <code>Nomi | https://.../trek.mp3</code> yoki faqat <code>https://.../trek.mp3</code> yozing (nom havoladan olinadi). Tartib — ro'yxatdagi tartib (↑↓ bilan o'zgartiring); ilova treklarni shu tartibda ijro etadi. Ochilmaydigan havola ilovada avtomatik o'tkazib yuboriladi — <b>▶</b> bilan oldindan tekshirib ko'ring. To'g'ridan-to'g'ri audio havola kerak (mp3/ogg/m4a).</p>
-        <textarea id="lf_paste" style="min-height:90px" placeholder="Rainy Cafe | https://example.com/rainy.mp3&#10;https://example.com/night-walk.mp3"></textarea>
+        <textarea id="lf_paste" style="min-height:90px" placeholder="Rainy Cafe | https://example.com/rainy.mp3&#10;https://drive.google.com/file/d/.../view&#10;/music/night-walk.mp3"></textarea>
         <div class="row" style="margin-top:8px"><button class="sec" id="lf_add">➕ Ro'yxatga qo'shish</button><label class="chk" style="margin:0"><input type="checkbox" id="lf_shuf"> Ilovada aralash tartibda ijro etilsin (standart: yo'q — tartib bilan)</label></div>
         <div class="scroll" style="max-height:380px;margin-top:8px"><table><thead><tr><th>#</th><th>Nomi</th><th>Havola</th><th></th></tr></thead><tbody id="lf_body"></tbody></table></div>
         <div class="row" style="margin-top:10px"><button id="lf_save">💾 Kutubxonani saqlash</button><button class="sec" id="lf_clear">Hammasini tozalash</button><span class="small" id="lf_info"></span></div>
@@ -770,6 +784,49 @@
         <textarea id="nText" placeholder="E'lon matni..."></textarea>
         <label class="chk"><input type="checkbox" id="nActive" /> Faol</label>
         <div class="row" style="margin-top:10px"><button id="saveN">Saqlash</button></div>
+      </div>
+      <div class="card">
+        <h2>🔔 Kirishdagi pop-up (ilovaga kirganda birinchi bo'lib chiqadi)</h2>
+        <p class="small">E'lon, yangi imkoniyat, daraja testini sinab ko'rish taklifi va hokazo. Foydalanuvchi ilovani ochganda bitta chiroyli oyna ko'rinadi.</p>
+        <div class="row">
+          <div style="flex:1"><label>Belgi (emoji)</label><input id="pEmoji" maxlength="4" placeholder="🎯" /></div>
+          <div style="flex:4"><label>Sarlavha</label><input id="pTitle" maxlength="80" placeholder="Darajangizni sinab ko'ring!" /></div>
+        </div>
+        <label>Matn</label><textarea id="pText" maxlength="500" placeholder="Pop-up matni..."></textarea>
+        <details style="margin:8px 0"><summary class="small" style="cursor:pointer">🌐 Ruscha va inglizcha matn (ixtiyoriy — bo'sh qolsa o'zbekcha ko'rinadi)</summary>
+          <label>🇷🇺 Sarlavha</label><input id="pTitleRu" maxlength="80" />
+          <label>🇷🇺 Matn</label><textarea id="pTextRu" maxlength="500"></textarea>
+          <label>🇷🇺 Tugma</label><input id="pBtnRu" maxlength="30" />
+          <label>🇬🇧 Title</label><input id="pTitleEn" maxlength="80" />
+          <label>🇬🇧 Text</label><textarea id="pTextEn" maxlength="500"></textarea>
+          <label>🇬🇧 Button</label><input id="pBtnEn" maxlength="30" />
+        </details>
+        <div class="row">
+          <div style="flex:1"><label>Tugma matni</label><input id="pBtn" maxlength="30" placeholder="Boshlash" /></div>
+          <div style="flex:1"><label>Tugma nima qiladi</label>
+            <select id="pAction">
+              <option value="none">Faqat yopadi</option>
+              <option value="levelTest">Daraja testini ochadi</option>
+              <option value="tab">Bo'limga o'tkazadi</option>
+              <option value="link">Havolani ochadi</option>
+              <option value="promo">Promokod oynasini ochadi</option>
+            </select></div>
+        </div>
+        <div class="row" id="pTargetRow">
+          <div style="flex:1" id="pTabBox"><label>Qaysi bo'lim</label>
+            <select id="pTab"><option value="home">Bugun</option><option value="words">So'zlar</option><option value="games">O'yinlar</option><option value="leaderboard">Liga</option><option value="shop">Do'kon</option></select></div>
+          <div style="flex:2" id="pTargetBox"><label id="pTargetLbl">Havola / promokod</label><input id="pTarget" placeholder="https://t.me/..." /></div>
+        </div>
+        <div class="row">
+          <div style="flex:1"><label>Kimga</label>
+            <select id="pWho"><option value="all">Hammaga</option><option value="old">Faqat eski foydalanuvchilarga (yangilarga emas)</option></select></div>
+          <div style="flex:1"><label>Qanchalik tez-tez</label>
+            <select id="pFreq"><option value="once">Har kimga 1 marta</option><option value="daily">Kuniga 1 marta</option><option value="always">Har kirganda</option></select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="pActive" /> Faol</label>
+        <label class="chk"><input type="checkbox" id="pResend" /> Hamma yana ko'rsin (avval ko'rganlarga ham qayta chiqadi)</label>
+        <div class="row" style="margin-top:10px"><button id="savePop">Saqlash</button></div>
+        <p class="small" id="pInfo"></p>
       </div>
       <div class="card">
         <h2>Foydalanuvchiga sovg'a</h2>
@@ -1778,8 +1835,25 @@ function getAdPayload() {
     { text: $('ad_b2_t').value.trim(), url: $('ad_b2_u').value.trim(), style: $('ad_b2_s').value, icon: $('ad_b2_i').value.trim() },
     { text: $('ad_b3_t').value.trim(), url: $('ad_b3_u').value.trim(), style: $('ad_b3_s').value, icon: $('ad_b3_i').value.trim() },
   ].filter(b => b.text && b.url);
-  return { text, photoUrl: photoUrl || null, buttons };
+  return { text, photoUrl: photoUrl || null, buttons, segment: getAdSegment() };
 }
+/* Segment: daraja / necha kundan beri kirmagan / streak oralig'i */
+function getAdSegment() {
+  const levels = [...document.querySelectorAll('#ad_seg_lv input:checked')].map(i => i.value);
+  const inactiveDays = +$('ad_seg_inactive').value || 0;
+  const minStreak = +$('ad_seg_smin').value || 0;
+  const mx = $('ad_seg_smax').value;
+  const seg = { levels, inactiveDays, minStreak };
+  if (mx !== '') seg.maxStreak = +mx;
+  return levels.length || inactiveDays || minStreak || mx !== '' ? seg : null;
+}
+async function refreshSegInfo() {
+  const seg = getAdSegment();
+  if (!seg) { $('ad_seg_info').textContent = 'Segment tanlanmagan — reklama hamma faol foydalanuvchilarga ketadi.'; return null; }
+  try { const r = await api('segmentCount', { segment: seg }); $('ad_seg_info').innerHTML = `Segmentga mos: <b>${r.count}</b> ta foydalanuvchi (jami ${r.total} tadan)`; return r; } catch (e) { $('ad_seg_info').textContent = e.message; return null; }
+}
+['ad_seg_inactive', 'ad_seg_smin', 'ad_seg_smax'].forEach(id => $(id).addEventListener('change', refreshSegInfo));
+document.querySelectorAll('#ad_seg_lv input').forEach(i => i.addEventListener('change', refreshSegInfo));
 
 $('adSendTest').onclick = guard(async () => {
   const p = getAdPayload();
@@ -1794,7 +1868,9 @@ $('adSendAll').onclick = guard(async () => {
   const p = getAdPayload();
   if (!p.text) return flash('Reklama matnini yozing', false);
   const s = await api('adStats');
-  if (!confirm(`DIQQAT! Ushbu reklama ${s.eligibleUsers} ta foydalanuvchiga yuboriladi.\nDavom ettirilsinmi?`)) return;
+  const sg = p.segment ? await api('segmentCount', { segment: p.segment }) : null;
+  if (sg && !sg.count) return flash('Tanlangan segmentga hech kim mos kelmadi', false);
+  if (!confirm(`DIQQAT! Ushbu reklama ${sg ? sg.count + ' ta (tanlangan segment)' : s.eligibleUsers + ' ta'} foydalanuvchiga yuboriladi.\nDavom ettirilsinmi?`)) return;
   await api('sendAd', { ...p, isTest: false });
   flash("Reklama yuborish fon rejimida boshlandi! 🚀");
   for (let i = 0; i < 30; i++) {
@@ -1806,10 +1882,31 @@ $('adSendAll').onclick = guard(async () => {
 /* ---------- sozlamalar ---------- */
 function renderSettings() {
   const s = data.config.settings || {};
-  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText'].includes(document.activeElement.id)) return;
+  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText','pEmoji','pTitle','pText','pBtn','pTarget','pTitleRu','pTextRu','pBtnRu','pTitleEn','pTextEn','pBtnEn'].includes(document.activeElement.id)) return;
   $('s_cap').value = s.reviewCap ?? 30; $('s_new').value = s.xpNewWord ?? 3; $('s_ok').value = s.xpCorrect ?? 2; $('s_bonus').value = s.xpDailyBonus ?? 10;
   const a = data.config.announcement || {}; $('nText').value = a.text || ''; $('nActive').checked = !!a.active;
+  const p = data.config.popup || {};
+  $('pEmoji').value = p.emoji || ''; $('pTitle').value = p.title || ''; $('pText').value = p.text || ''; $('pBtn').value = p.btn || '';
+  $('pTitleRu').value = p.title_ru || ''; $('pTextRu').value = p.text_ru || ''; $('pBtnRu').value = p.btn_ru || ''; $('pTitleEn').value = p.title_en || ''; $('pTextEn').value = p.text_en || ''; $('pBtnEn').value = p.btn_en || '';
+  $('pAction').value = p.action || 'none'; $('pWho').value = p.who || 'all'; $('pFreq').value = p.freq || 'once'; $('pActive').checked = !!p.active; $('pResend').checked = false;
+  if ((p.action || 'none') === 'tab') $('pTab').value = p.target || 'home'; else $('pTarget').value = p.target || '';
+  popUi();
+  $('pInfo').textContent = p.id ? ('Joriy versiya: ' + new Date(Number(p.id) || 0).toLocaleString() + (p.active ? ' · faol' : ' · o\'chiq')) : 'Hali saqlanmagan.';
 }
+function popUi() {
+  const act = $('pAction').value;
+  $('pTabBox').style.display = act === 'tab' ? '' : 'none';
+  $('pTargetBox').style.display = (act === 'link' || act === 'promo') ? '' : 'none';
+  $('pTargetRow').style.display = (act === 'tab' || act === 'link' || act === 'promo') ? '' : 'none';
+  $('pTargetLbl').textContent = act === 'promo' ? 'Promokod (ixtiyoriy, oldindan to\'ldiriladi)' : 'Havola (https://...)';
+}
+$('pAction').onchange = popUi;
+$('savePop').onclick = guard(async () => {
+  const act = $('pAction').value;
+  const target = act === 'tab' ? $('pTab').value : $('pTarget').value.trim();
+  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), title_ru: $('pTitleRu').value.trim(), text_ru: $('pTextRu').value.trim(), btn_ru: $('pBtnRu').value.trim(), title_en: $('pTitleEn').value.trim(), text_en: $('pTextEn').value.trim(), btn_en: $('pBtnEn').value.trim(), action: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
+  flash('Pop-up saqlandi ✅'); await load();
+});
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
 $('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value, notify = $('gNotify') ? $('gNotify').checked : true; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value, notify }, giftNameOf(type, amt)); flash(grantMsg(r)); });
@@ -2632,11 +2729,21 @@ function lfRender() {
     };
   });
 }
+/* Google Drive / Dropbox / GitHub «ulashish» havolalarini to'g'ridan-to'g'ri ijro havolasiga aylantiradi */
+function normAudio(u) {
+  u = String(u || '').trim();
+  const d = /drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,})/.exec(u) || /drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([A-Za-z0-9_-]{10,})/.exec(u);
+  if (d) return 'https://drive.google.com/uc?export=download&id=' + d[1];
+  if (/^https?:\/\/(www\.)?dropbox\.com\//i.test(u)) return u.replace(/^https?:\/\/(www\.)?dropbox\.com/i, 'https://dl.dropboxusercontent.com').replace(/([?&])dl=0/, '$1raw=1');
+  const g = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/i.exec(u);
+  if (g) return `https://raw.githubusercontent.com/${g[1]}/${g[2]}/${g[3]}`;
+  return u;
+}
 $('lf_add').onclick = () => {
   const have = new Set(lfTracks.map(t => t.url)); let added = 0, dup = 0;
   $('lf_paste').value.split(/\r?\n/).forEach(line => {
-    const m = line.match(/https?:\/\/[^\s|]+/); if (!m) return;
-    const url = m[0].trim(); if (have.has(url)) { dup++; return; }
+    const m = line.match(/(?:https?:\/\/|\/music\/)[^\s|]+/); if (!m) return;
+    const url = normAudio(m[0].trim()); if (have.has(url)) { dup++; return; }
     const title = line.replace(m[0], '').replace(/^[\s|,;\t\-–—]+|[\s|,;\t\-–—]+$/g, '').trim() || lfTitleFrom(url) || `Lo-Fi ${lfTracks.length + 1}`;
     lfTracks.push({ title, url }); have.add(url); added++;
   });
@@ -2717,6 +2824,26 @@ function renderAttn() {
 const _renderPacks = renderPacks; renderPacks = function () { _renderPacks(); try { renderCal(); } catch (e) { console.error(e); } };
 const _renderStats = renderStats; renderStats = function () { _renderStats(); try { renderAttn(); } catch (e) { console.error(e); } };
 
+
+/* ---------- 🔁 Retention (qo'shilgan hafta bo'yicha) ---------- */
+function renderRetention() {
+  const rows = Object.values(data.leaderboard || {}).filter(u => u && !u.deleted && u.joined);
+  const now = Date.now(), DAY = 86400000;
+  const weekStart = d => { const t = new Date(d + 'T00:00:00Z'); if (isNaN(t)) return ''; const wd = (t.getUTCDay() + 6) % 7; t.setUTCDate(t.getUTCDate() - wd); return t.toISOString().slice(0, 10); };
+  const by = {};
+  rows.forEach(u => {
+    const j = String(u.joined).slice(0, 10), w = weekStart(j); if (!w) return;
+    const jm = Date.parse(j + 'T00:00:00Z'), last = +u.ts || 0;
+    const c = by[w] || (by[w] = { n: 0, d1: 0, d7: 0, act: 0 });
+    c.n++;
+    if (last - jm >= DAY) c.d1++;
+    if (last - jm >= 7 * DAY) c.d7++;
+    if (now - last <= 7 * DAY) c.act++;
+  });
+  const pc = (a, n) => n ? `${a} <span class="small">(${Math.round(a / n * 100)}%)</span>` : '—';
+  $('retBody').innerHTML = Object.keys(by).sort().reverse().slice(0, 10).map(w => { const c = by[w]; return `<tr><td>${w}</td><td><b>${c.n}</b></td><td>${pc(c.d1, c.n)}</td><td>${pc(c.d7, c.n)}</td><td>${pc(c.act, c.n)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="small">Hozircha ma\'lumot yo\'q</td></tr>';
+}
+document.querySelector('#tabs [data-t="astats"]').addEventListener('click', renderRetention);
 </script>
 </body>
 </html>

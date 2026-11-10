@@ -1,7 +1,7 @@
 // Orqa fon funksiyasi (nomi "-background" bilan tugagani uchun 15 daqiqagacha ishlaydi): ko'p foydalanuvchiga xabar yuborish.
 // Faqat admin.mjs yoki remind.mjs chaqiradi; admin kodi bilan himoyalangan.
 import { timingSafeEqual } from 'node:crypto';
-import { parseBody, runBroadcast } from '../lib/tg.mjs';
+import { parseBody, runBroadcast, cleanSegment } from '../lib/tg.mjs';
 
 const safeEq = (a, b) => {
   const A = Buffer.from(String(a));
@@ -24,6 +24,7 @@ export const handler = async event => {
       kind: body.kind === 'daily' ? 'daily' : body.kind === 'ad' ? 'ad' : 'manual',
       respectOptOut: body.kind === 'daily',
       skipActiveToday: !!body.skipActiveToday,
+      segment: cleanSegment(body.segment),
       parseMode: body.parseMode || 'HTML',
       invite: body.invite && typeof body.invite === 'object' ? { label: String(body.invite.label || ''), mode: body.invite.mode === 'link' ? 'link' : 'share' } : null,
     });

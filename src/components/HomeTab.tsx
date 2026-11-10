@@ -11,6 +11,7 @@ import { LevelPicker } from './LevelPicker';
 import { WordMap } from './WordMap';
 import { VocabStory } from './Learning';
 import { nowMs, todayKey, addDays, dayDiff } from '../services/time';
+import { t as tt } from '../services/i18n';
 
 
 /** 3D uslubidagi sovg'a qutisi */
@@ -233,12 +234,12 @@ export const HomeTab: React.FC = () => {
                     </span>
                     <span className="text-[10px] font-bold text-slate-400">· {lt.ielts}</span>
                   </div>
-                  <h2 className="text-lg font-black leading-tight text-white mt-1">Bugungi mashq</h2>
+                  <h2 className="text-lg font-black leading-tight text-white mt-1">{tt("Bugungi mashq")}</h2>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-2xl font-black text-white tabular-nums leading-none">{introducedToday}</div>
-                <div className="text-[10px] text-slate-400 mt-1">bugun o&apos;rganildi</div>
+                <div className="text-[10px] text-slate-400 mt-1">{tt("bugun o'rganildi")}</div>
               </div>
             </div>
 
@@ -247,7 +248,7 @@ export const HomeTab: React.FC = () => {
               <div className="relative space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-300 font-medium">
-                    {curLvl} lug&apos;ati: <b className="text-white">{levelMastered} / {levelWords.length}</b> yodlandi
+                    {curLvl} lug&apos;ati: <b className="text-white">{levelMastered} / {levelWords.length}</b> {tt("yodlandi")}
                   </span>
                   <span className={`font-extrabold ${lt.titleColor}`}>{levelPct}%</span>
                 </div>
@@ -260,11 +261,11 @@ export const HomeTab: React.FC = () => {
             <div className="relative grid grid-cols-2 gap-2.5">
               <div className={`rounded-2xl border px-3 py-2 flex items-center gap-2.5 ${lt.statsBg}`}>
                 <div className="text-2xl font-extrabold text-sky-400 tabular-nums leading-none">{newQueue.length}</div>
-                <div className="text-[11px] leading-tight text-slate-400">yangi<br />so&apos;z</div>
+                <div className="text-[11px] leading-tight text-slate-400">{tt("yangi")}<br />{tt("so'z")}</div>
               </div>
               <div className={`rounded-2xl border px-3 py-2 flex items-center gap-2.5 ${lt.statsBg}`}>
                 <div className="text-2xl font-extrabold text-emerald-400 tabular-nums leading-none">{dueWords.length}</div>
-                <div className="text-[11px] leading-tight text-slate-400">takrorlash<br />kerak</div>
+                <div className="text-[11px] leading-tight text-slate-400">{tt("takrorlash")}<br />{tt("kerak")}</div>
               </div>
             </div>
 
@@ -274,16 +275,16 @@ export const HomeTab: React.FC = () => {
               disabled={allDone}
               className={`w-full h-12 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2 shadow-lg disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98] transition-all ${lt.btnBg}`}
             >
-              {allDone ? <><CheckCircle2 className="w-5 h-5" /> Bugungi reja bajarildi</> : <><Play className="w-5 h-5 fill-current" /> Mashqni boshlash</>}
+              {allDone ? <><CheckCircle2 className="w-5 h-5" /> {tt("Bugungi reja bajarildi")}</> : <><Play className="w-5 h-5 fill-current" /> {tt("Mashqni boshlash")}</>}
             </button>
 
             {todayPacks.length > 0 && (
               <div className="flex items-center gap-2 rounded-xl bg-sky-500/10 border border-sky-500/30 px-3 py-2 text-[11px] text-sky-300">
                 <BookMarked className="w-4 h-4 shrink-0" />
-                <span className="truncate">Bugungi lug‘at: <b>{todayPacks.map(p => p.title).join(', ')}</b></span>
+                <span className="truncate">{tt("Bugungi lug'at:")} <b>{todayPacks.map(p => p.title).join(', ')}</b></span>
               </div>
             )}
-            {allDone && <p className="text-[11px] text-slate-400 text-center">Ajoyib! O&apos;yinlar bo&apos;limida so&apos;zlarni mustahkamlang yoki ertaga qayting.</p>}
+            {allDone && <p className="text-[11px] text-slate-400 text-center">{tt("Ajoyib! O'yinlar bo'limida so'zlarni mustahkamlang yoki ertaga qayting.")}</p>}
           </section>
         );
       })()}
@@ -318,12 +319,12 @@ export const HomeTab: React.FC = () => {
             <path d="M14 6h20l9 12-19 24L5 18z" fill="url(#gm)" stroke="#F0ABFC" strokeWidth="1.5" strokeLinejoin="round" />
             <path d="M5 18h38M17 18l7 24 7-24M14 6l3 12 7-12 7 12 3-12" fill="none" stroke="#FAE8FF" strokeOpacity=".8" strokeWidth="1.2" strokeLinejoin="round" />
           </svg>
-          <div className="mt-1.5 text-sm font-black text-white">Jihozlarim</div>
-          <div className="text-[11px] text-fuchsia-200/80">Ramka, aura, mavzu</div>
+          <div className="mt-1.5 text-sm font-black text-white">{tt("Jihozlarim")}</div>
+          <div className="text-[11px] text-fuchsia-200/80">{tt("Ramka, aura, mavzu")}</div>
         </button>
         <button type="button" onClick={() => { triggerHaptic('selection'); setShowLevel(true); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-amber-500/30 via-orange-500/10 to-[#151C28] border border-amber-400/50 active:scale-[0.97] transition-all">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-xl font-black text-slate-950 shadow-lg shadow-amber-500/30">{profile.level}</div>
-          <div className="mt-1.5 text-sm font-black text-white">Darajam</div>
+          <div className="mt-1.5 text-sm font-black text-white">{tt("Darajam")}</div>
           <div className="text-[11px] text-amber-200/90 font-semibold">{profile.placement ? 'O‘zgartirish · Test' : '🎯 Testdan o‘ting'}</div>
         </button>
       </div>
@@ -334,8 +335,8 @@ export const HomeTab: React.FC = () => {
       {/* Maxsus mavzular: kunlik TOP 20 lug'at */}
       <section className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Maxsus mavzular</h3>
-          <span className="text-[11px] text-slate-400">Har kuni yangi mavzu</span>
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {tt("Maxsus mavzular")}</h3>
+          <span className="text-[11px] text-slate-400">{tt("Har kuni yangi mavzu")}</span>
         </div>
         {topicToday ? (() => {
           const pr = packProgress(topicToday);
@@ -358,11 +359,11 @@ export const HomeTab: React.FC = () => {
             </div>
           );
         })() : (
-          <div className="rounded-2xl bg-[#151C28] border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">Bugungi maxsus mavzu tez orada e&apos;lon qilinadi ✨</div>
+          <div className="rounded-2xl bg-[#151C28] border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">{tt("Bugungi maxsus mavzu tez orada e'lon qilinadi ✨")}</div>
         )}
         {topicPast.length > 0 && (
           <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Oldingi mavzular</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">{tt("Oldingi mavzular")}</div>
             {topicPast.map(p => {
               const pr = packProgress(p);
               return (
@@ -384,7 +385,7 @@ export const HomeTab: React.FC = () => {
       {/* Qo'shimcha lug'at to'plamlari (admin yuklagan) */}
       {openPacks.length > 0 && (
         <section className="space-y-2.5">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2"><BookMarked className="w-4 h-4 text-sky-400" /> Lug‘at to‘plamlari</h3>
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><BookMarked className="w-4 h-4 text-sky-400" /> {tt("Lug'at to'plamlari")}</h3>
           {openPacks.map(p => {
             const pr = packProgress(p);
             const done = pr.learned >= pr.total;
@@ -413,7 +414,7 @@ export const HomeTab: React.FC = () => {
       {/* Haftalik Streak Kalendari */}
       <section className="rounded-2xl bg-[#151C28] border border-slate-800 p-4 space-y-3">
         <div className="flex items-center justify-between text-xs font-bold">
-          <span className="text-white flex items-center gap-1.5"><Flame className="w-4 h-4 text-orange-500 fill-orange-500" /> Haftalik faollik seriyasi</span>
+          <span className="text-white flex items-center gap-1.5"><Flame className="w-4 h-4 text-orange-500 fill-orange-500" /> {tt("Haftalik faollik seriyasi")}</span>
           <span className="text-amber-400 font-extrabold">{profile.streak} kun uzluksiz</span>
         </div>
         <div className="grid grid-cols-7 gap-1.5 text-center">
@@ -464,16 +465,16 @@ export const HomeTab: React.FC = () => {
       {/* Progress */}
       <section className="rounded-2xl bg-[#151C28] border border-slate-800 p-4 space-y-2.5">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-white">So&apos;zlar xaritasi</span>
-          <button type="button" onClick={() => setShowMap(true)} className="text-amber-400 font-semibold">So&apos;zlar xaritasini ko&apos;rish →</button>
+          <span className="font-bold text-white">{tt("So'zlar xaritasi")}</span>
+          <button type="button" onClick={() => setShowMap(true)} className="text-amber-400 font-semibold">{tt("So'zlar xaritasini ko'rish →")}</button>
         </div>
         <div className="h-3 rounded-full bg-slate-800 overflow-hidden flex">
           <div className="h-full bg-emerald-500" style={{ width: `${pctMastered}%` }} />
           <div className="h-full bg-amber-400" style={{ width: `${Math.max(0, pctLearned - pctMastered)}%` }} />
         </div>
         <div className="flex justify-between text-[11px] text-slate-400">
-          <span><b className="text-emerald-400">{masteredCount}</b> yodlandi</span>
-          <span><b className="text-amber-400">{savedWords.length - masteredCount}</b> o&apos;rganilmoqda</span>
+          <span><b className="text-emerald-400">{masteredCount}</b> {tt("yodlandi")}</span>
+          <span><b className="text-amber-400">{savedWords.length - masteredCount}</b> {tt("o'rganilmoqda")}</span>
           <span>jami {bank.length}</span>
         </div>
       </section>
@@ -487,10 +488,10 @@ export const HomeTab: React.FC = () => {
         <div className="absolute -right-10 -bottom-12 w-44 h-44 rounded-full bg-fuchsia-400/20 blur-2xl" />
         <GiftArt className="absolute top-4 right-4 w-14 h-16 rotate-[8deg] drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]" />
         <div className="relative">
-          <div className="text-[12px] font-extrabold tracking-wide text-amber-300 uppercase">Kunlik sovg&apos;a</div>
+          <div className="text-[12px] font-extrabold tracking-wide text-amber-300 uppercase">{tt("Kunlik sovg'a")}</div>
           <div className="mt-2 flex items-center gap-2.5 pr-16">
             <WheelArt className="w-9 h-9 text-amber-200 shrink-0" />
-            <h3 className="text-[22px] leading-none font-extrabold text-white tracking-tight">Omadli Baraban</h3>
+            <h3 className="text-[22px] leading-none font-extrabold text-white tracking-tight">{tt("Omadli Baraban")}</h3>
           </div>
           <p className="mt-2.5 text-xs text-purple-100/85 pr-10">
             {totalSpinsLeft > 0 ? `${totalSpinsLeft} ta aylantirish imkoniyati bor` : `Keyingi imkoniyat uchun kuting (har ${wheelFreeSpins} ta urinishdan keyin)`}
@@ -501,7 +502,7 @@ export const HomeTab: React.FC = () => {
               {isPro && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/25 text-amber-100 inline-flex items-center gap-1"><Crown className="w-3 h-3" />VIP</span>}
               {wheel.streakSavers > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-400/25 text-cyan-100 inline-flex items-center gap-1"><Snowflake className="w-3 h-3" />×{wheel.streakSavers}</span>}
             </div>
-            <span className="shrink-0 px-4 py-2 rounded-full bg-amber-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-amber-500/30">Aylantirish →</span>
+            <span className="shrink-0 px-4 py-2 rounded-full bg-amber-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-amber-500/30">{tt("Aylantirish →")}</span>
           </div>
         </div>
       </button>
@@ -514,7 +515,7 @@ export const HomeTab: React.FC = () => {
             <div className="text-sm font-bold text-white truncate">{liveChallenges[0].title}</div>
             <div className="text-[11px] text-slate-300">{liveChallenges.length > 1 ? `${liveChallenges.length} ta faol chellenj` : 'Faol chellenj'} · {liveChallenges[0].joined ? 'Siz qatnashyapsiz' : 'Qatnashing!'}</div>
           </div>
-          <span className="text-xs font-bold text-emerald-400">Ochish →</span>
+          <span className="text-xs font-bold text-emerald-400">{tt("Ochish →")}</span>
         </button>
       )}
 
@@ -522,16 +523,16 @@ export const HomeTab: React.FC = () => {
       <button type="button" onClick={() => { triggerHaptic('selection'); try { sessionStorage.setItem('vb_liga_sub', 'duel'); } catch { /* ignore */ } setActiveTab('leaderboard'); }} className="w-full text-left rounded-2xl bg-[#151C28] border border-slate-800 p-4 flex items-center gap-3 active:scale-[0.98] transition-all">
         <div className="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0"><Swords className="w-5 h-5" /></div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-white">Raqib bilan bellashuv</div>
+          <div className="text-sm font-bold text-white">{tt("Raqib bilan bellashuv")}</div>
           <div className="text-[11px] text-slate-400">{activeDuels > 0 ? `${activeDuels} ta faol bellashuv bor` : 'Do‘stingizni chaqiring va XP bo‘yicha bellashing'}</div>
         </div>
-        <span className="text-xs font-bold text-amber-400">Ochish →</span>
+        <span className="text-xs font-bold text-amber-400">{tt("Ochish →")}</span>
       </button>
 
       {/* Kunlik missiyalar */}
       <section className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> Kunlik missiyalar</h3>
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> {tt("Kunlik missiyalar")}</h3>
           <span className="text-[11px] text-slate-400">{dailyQuests.filter(q => q.claimed).length} / {dailyQuests.length} {claimable > 0 ? `· ${claimable} ta olinadi` : ''}</span>
         </div>
         {dailyQuests.map(q => (
@@ -560,7 +561,7 @@ export const HomeTab: React.FC = () => {
                 }}
                 className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-sky-500/25 border border-sky-400/40 active:scale-95 transition-all flex items-center gap-1 shrink-0 animate-pulse"
               >
-                <span>Boshlash</span>
+                <span>{tt("Boshlash")}</span>
                 <span className="text-sky-200 font-extrabold">→</span>
               </button>
             ) : null}
