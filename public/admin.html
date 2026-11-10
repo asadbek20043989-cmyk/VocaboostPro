@@ -136,6 +136,7 @@
       <button data-t="ad">📢 Reklama</button>
       <button data-t="remind">🔔 Eslatmalar</button>
       <button data-t="refs">📣 Taklif</button>
+      <button data-t="retain">🚀 Avto-xabarlar</button>
       <button data-t="promo">🎟️ Promokodlar</button>
       <button data-t="gifts">🎁 Sovg'alar</button>
       <span class="tg">Do'kon va tizim</span>
@@ -735,6 +736,83 @@
       </div>
     </section>
 
+    <section id="t-retain" class="hide">
+      <div class="card">
+        <h2>🚀 Avto-xabarlar: foydalanuvchini ushlab qolish</h2>
+        <p class="small">Bot foydalanuvchilarga <b>o'zi</b> yozadi: streak xavfi, marralar, qaytarish (win-back), haftalik natija. Bir foydalanuvchiga kuniga belgilangan limitdan ortiq avtomatik xabar bormaydi (bloklanishdan saqlaydi). Matnlarda ishlatiladi: <code>{name}</code> ism, <code>{streak}</code> kunlar, <code>{gift}</code> sovg'a nomi.</p>
+        <div class="row"><button id="rtReload" class="sec">🔄 Holatni yangilash</button><button id="rtSaveTop">💾 Hammasini saqlash</button><input id="rt_tgid" placeholder="Sinov uchun Telegram ID (o'zingizniki)" style="max-width:260px" /></div>
+        <div id="rtStatus" style="margin-top:12px"><div class="small">Yuklanmoqda…</div></div>
+      </div>
+
+      <div class="card">
+        <h2>🔥 Streak xabarlari <span class="small">(streakli HAMMA foydalanuvchiga)</span></h2>
+        <label class="chk"><input type="checkbox" id="rt_st_on" checked /> Yoqilgan</label>
+        <div class="grid">
+          <div><label>Kamida necha kunlik streak</label><input id="rt_st_min" type="number" min="1" value="3" /></div>
+          <div><label>«Xavf» xabari soati (Toshkent, 19–22)</label><input id="rt_st_risk" type="number" min="0" max="23" value="20" /></div>
+          <div><label>«Uzildi» xabari soati (10–12)</label><input id="rt_st_frozen" type="number" min="0" max="23" value="10" /></div>
+          <div><label>Kunlik limit (avto-xabar/kishi)</label><input id="rt_cap" type="number" min="1" max="10" value="2" /></div>
+        </div>
+        <label>«Streak xavf ostida» matnlari — har matn orasiga <code>---</code> yozilgan alohida qator qo'ying (foydalanuvchilarga navbat bilan boradi)</label>
+        <textarea id="rt_st_risktx" style="min-height:130px"></textarea>
+        <label>«Streak uzildi» matnlari (<code>---</code> bilan ajrating)</label>
+        <textarea id="rt_st_losttx" style="min-height:100px"></textarea>
+        <p class="small">Streakni muzlatish (❄️) borlarga «muzlaydi/muzladi» matni alohida yuboriladi.</p>
+        <h3 style="margin:14px 0 6px;font-size:14px">🏆 Streak marralari — sovg'a bilan tabrik</h3>
+        <label class="chk"><input type="checkbox" id="rt_ms_on" checked /> Marraga yetganda tabrik xabari + sovg'a</label>
+        <div id="rt_ms_rows"></div>
+        <label>Marra xabari matni</label>
+        <textarea id="rt_ms_text" style="min-height:90px"></textarea>
+        <div class="row"><button class="sec" data-rtest="risk">📨 Sinov: xavf</button><button class="sec" data-rtest="lost">📨 Sinov: uzildi</button><button class="sec" data-rtest="milestone">📨 Sinov: marra</button></div>
+      </div>
+
+      <div class="card">
+        <h2>👋 Qaytarish (win-back) va faollashtirish</h2>
+        <label class="chk"><input type="checkbox" id="rt_wb_on" checked /> Win-back yoqilgan (ilovadan chiqib ketganlarga)</label>
+        <div class="grid">
+          <div><label>Xabar yuboriladigan soatlar: dan</label><input id="rt_wb_from" type="number" min="6" max="22" value="10" /></div>
+          <div><label>gacha (Toshkent)</label><input id="rt_wb_to" type="number" min="6" max="23" value="20" /></div>
+          <div><label>Necha kundan keyin «yo'qolgan»ga yozmaslik</label><input id="rt_wb_max" type="number" min="7" max="365" value="45" /></div>
+        </div>
+        <p class="small">Har «yo'qolish davri»da har qadam <b>bir marta</b> yuboriladi. Kun soni bo'sh qoldirilsa, qadam o'chirilgan hisoblanadi.</p>
+        <div id="rt_wb_rows"></div>
+        <label class="chk" style="margin-top:12px"><input type="checkbox" id="rt_ac_on" checked /> Faollashtirish yoqilgan (/start bosgan, lekin ilovani HECH OCHMAGANlarga)</label>
+        <div id="rt_ac_rows"></div>
+        <div class="row"><button class="sec" data-rtest="winback">📨 Sinov: win-back</button><button class="sec" data-rtest="activation">📨 Sinov: faollashtirish</button></div>
+      </div>
+
+      <div class="card">
+        <h2>🏁 Haftalik xulosa — TOP-20 dan TASHQARIdagilarga</h2>
+        <p class="small">Hafta tugaganda (🏆 Liga → «Yangi hafta» yoki avtomatik) TOP-20 ga tabrik darhol boradi. Qolgan faol o'quvchilarga <b>shaxsiy xulosa</b> (o'rni, TOP-20 ga yetmagan XP) navbatga qo'yiladi va <b>ertalab</b> yuboriladi. Matnda: <code>{week}</code> <code>{xp}</code> <code>{place}</code> <code>{total}</code> <code>{gap}</code> (TOP-20 gacha XP) <code>{nextGap}</code> (bitta o'rin yuqorigacha XP).</p>
+        <label class="chk"><input type="checkbox" id="rt_wr_on" checked /> Yoqilgan</label>
+        <div class="grid">
+          <div><label>Yuborish soati (Toshkent)</label><input id="rt_wr_hour" type="number" min="6" max="20" value="9" /></div>
+          <div><label>Tugma matni</label><input id="rt_wr_btn" maxlength="40" /></div>
+        </div>
+        <label>Xabar matni</label>
+        <textarea id="rt_wr_text" style="min-height:120px"></textarea>
+        <label class="chk"><input type="checkbox" id="rt_wr_zero" /> Bu hafta XP olmaganlarga ham (oxirgi 30 kunda kirganlarga) yuborilsin</label>
+        <label>XP olmaganlar uchun matn</label>
+        <textarea id="rt_wr_zerotx" style="min-height:80px"></textarea>
+        <div class="row"><button class="sec" data-rtest="rest">📨 Sinov: haftalik xulosa</button><button class="bad" id="rtRestNow">⏩ Navbatni hozir yuborish</button></div>
+      </div>
+
+      <div class="card">
+        <h2>👥 Taklif bonuslari <span class="small">(ikki tomonlama + marralar)</span></h2>
+        <p class="small">Taklif qiluvchining XP si «📣 Taklif» bo'limida. Bu yerda: <b>taklif qilingan do'stga</b> ham birinchi kirishda sovg'a va taklif qiluvchiga <b>marra sovg'alari</b> (3, 5, 10, 25 ta do'st...).</p>
+        <div class="grid">
+          <div><label>Do'stga: baraban aylantirish soni</label><input id="rt_rf_spins" type="number" min="0" max="50" value="1" /></div>
+          <div><label>Do'stga: XP (ixtiyoriy)</label><input id="rt_rf_xp" type="number" min="0" value="0" /></div>
+        </div>
+        <label>Do'stga yuboriladigan xabar ({name}, {gift})</label>
+        <textarea id="rt_rf_text" style="min-height:80px"></textarea>
+        <div id="rt_rf_rows" style="margin-top:8px"></div>
+        <label>Marra xabari ({count}, {gift}) — taklif qiluvchiga qo'shiladi</label>
+        <textarea id="rt_rf_mtext" style="min-height:60px"></textarea>
+      </div>
+      <div class="card"><div class="row"><button id="rtSave">💾 Hammasini saqlash</button><span class="small">O'zgarishlar keyingi avtomatik ishga tushishda kuchga kiradi (qayta deploy kerak emas).</span></div></div>
+    </section>
+
     <section id="t-refs" class="hide">
       <div class="card">
         <h2>👥 Do'st taklif qilish sozlamalari</h2>
@@ -784,41 +862,6 @@
         <textarea id="nText" placeholder="E'lon matni..."></textarea>
         <label class="chk"><input type="checkbox" id="nActive" /> Faol</label>
         <div class="row" style="margin-top:10px"><button id="saveN">Saqlash</button></div>
-      </div>
-      <div class="card">
-        <h2>🔔 Kirishdagi pop-up (ilovaga kirganda birinchi bo'lib chiqadi)</h2>
-        <p class="small">E'lon, yangi imkoniyat, daraja testini sinab ko'rish taklifi va hokazo. Foydalanuvchi ilovani ochganda bitta chiroyli oyna ko'rinadi.</p>
-        <div class="row">
-          <div style="flex:1"><label>Belgi (emoji)</label><input id="pEmoji" maxlength="4" placeholder="🎯" /></div>
-          <div style="flex:4"><label>Sarlavha</label><input id="pTitle" maxlength="80" placeholder="Darajangizni sinab ko'ring!" /></div>
-        </div>
-        <label>Matn</label><textarea id="pText" maxlength="500" placeholder="Pop-up matni..."></textarea>
-        <div class="row">
-          <div style="flex:1"><label>Tugma matni</label><input id="pBtn" maxlength="30" placeholder="Boshlash" /></div>
-          <div style="flex:1"><label>Tugma nima qiladi</label>
-            <select id="pAction">
-              <option value="none">Faqat yopadi</option>
-              <option value="levelTest">Daraja testini ochadi</option>
-              <option value="tab">Bo'limga o'tkazadi</option>
-              <option value="link">Havolani ochadi</option>
-              <option value="promo">Promokod oynasini ochadi</option>
-            </select></div>
-        </div>
-        <div class="row" id="pTargetRow">
-          <div style="flex:1" id="pTabBox"><label>Qaysi bo'lim</label>
-            <select id="pTab"><option value="home">Bugun</option><option value="words">So'zlar</option><option value="games">O'yinlar</option><option value="leaderboard">Liga</option><option value="shop">Do'kon</option></select></div>
-          <div style="flex:2" id="pTargetBox"><label id="pTargetLbl">Havola / promokod</label><input id="pTarget" placeholder="https://t.me/..." /></div>
-        </div>
-        <div class="row">
-          <div style="flex:1"><label>Kimga</label>
-            <select id="pWho"><option value="all">Hammaga</option><option value="old">Faqat eski foydalanuvchilarga (yangilarga emas)</option></select></div>
-          <div style="flex:1"><label>Qanchalik tez-tez</label>
-            <select id="pFreq"><option value="once">Har kimga 1 marta</option><option value="daily">Kuniga 1 marta</option><option value="always">Har kirganda</option></select></div>
-        </div>
-        <label class="chk"><input type="checkbox" id="pActive" /> Faol</label>
-        <label class="chk"><input type="checkbox" id="pResend" /> Hamma yana ko'rsin (avval ko'rganlarga ham qayta chiqadi)</label>
-        <div class="row" style="margin-top:10px"><button id="savePop">Saqlash</button></div>
-        <p class="small" id="pInfo"></p>
       </div>
       <div class="card">
         <h2>Foydalanuvchiga sovg'a</h2>
@@ -1874,30 +1917,10 @@ $('adSendAll').onclick = guard(async () => {
 /* ---------- sozlamalar ---------- */
 function renderSettings() {
   const s = data.config.settings || {};
-  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText','pEmoji','pTitle','pText','pBtn','pTarget'].includes(document.activeElement.id)) return;
+  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText'].includes(document.activeElement.id)) return;
   $('s_cap').value = s.reviewCap ?? 30; $('s_new').value = s.xpNewWord ?? 3; $('s_ok').value = s.xpCorrect ?? 2; $('s_bonus').value = s.xpDailyBonus ?? 10;
   const a = data.config.announcement || {}; $('nText').value = a.text || ''; $('nActive').checked = !!a.active;
-  const p = data.config.popup || {};
-  $('pEmoji').value = p.emoji || ''; $('pTitle').value = p.title || ''; $('pText').value = p.text || ''; $('pBtn').value = p.btn || '';
-  $('pAction').value = p.action || 'none'; $('pWho').value = p.who || 'all'; $('pFreq').value = p.freq || 'once'; $('pActive').checked = !!p.active; $('pResend').checked = false;
-  if ((p.action || 'none') === 'tab') $('pTab').value = p.target || 'home'; else $('pTarget').value = p.target || '';
-  popUi();
-  $('pInfo').textContent = p.id ? ('Joriy versiya: ' + new Date(Number(p.id) || 0).toLocaleString() + (p.active ? ' · faol' : ' · o\'chiq')) : 'Hali saqlanmagan.';
 }
-function popUi() {
-  const act = $('pAction').value;
-  $('pTabBox').style.display = act === 'tab' ? '' : 'none';
-  $('pTargetBox').style.display = (act === 'link' || act === 'promo') ? '' : 'none';
-  $('pTargetRow').style.display = (act === 'tab' || act === 'link' || act === 'promo') ? '' : 'none';
-  $('pTargetLbl').textContent = act === 'promo' ? 'Promokod (ixtiyoriy, oldindan to\'ldiriladi)' : 'Havola (https://...)';
-}
-$('pAction').onchange = popUi;
-$('savePop').onclick = guard(async () => {
-  const act = $('pAction').value;
-  const target = act === 'tab' ? $('pTab').value : $('pTarget').value.trim();
-  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), btnAction: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
-  flash('Pop-up saqlandi ✅'); await load();
-});
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });
 $('saveN').onclick = guard(async () => { await api('setAnnouncement', { text: $('nText').value, active: $('nActive').checked }); flash('Saqlandi ✅'); await load(); });
 $('gSend').onclick = guard(async () => { const type = $('gType').value, amt = +$('gAmt').value, notify = $('gNotify') ? $('gNotify').checked : true; const r = await grantNotified({ userId: $('gUser').value.trim(), type, amount: amt, validHours: +$('gValid').value, notify }, giftNameOf(type, amt)); flash(grantMsg(r)); });
@@ -2835,6 +2858,88 @@ function renderRetention() {
   $('retBody').innerHTML = Object.keys(by).sort().reverse().slice(0, 10).map(w => { const c = by[w]; return `<tr><td>${w}</td><td><b>${c.n}</b></td><td>${pc(c.d1, c.n)}</td><td>${pc(c.d7, c.n)}</td><td>${pc(c.act, c.n)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="small">Hozircha ma\'lumot yo\'q</td></tr>';
 }
 document.querySelector('#tabs [data-t="astats"]').addEventListener('click', renderRetention);
+
+/* ================= v11: 🚀 Avto-xabarlar (retention) ================= */
+const RT_TYPES = [['', "— sovg'asiz —"], ['spins', 'ta aylantirish'], ['vip', 'soat VIP'], ['xp', 'XP'], ['coins', 'tanga']];
+const rtTypeSel = (id, v) => `<select id="${id}" style="min-width:130px">${RT_TYPES.map(([k, t]) => `<option value="${k}"${k === (v || '') ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+// qator: [kalit(kun/soat/do'st) | tur | miqdor | (ixtiyoriy) matn]
+function rtRows(box, pfx, n, items, o) {
+  $(box).innerHTML = Array.from({ length: n }, (_, i) => {
+    const it = items[i] || {};
+    return `<div style="border:1px solid #1f2a3d;border-radius:12px;padding:8px;margin:8px 0">
+      <div class="row"><div style="width:110px"><label>${o.keyLabel}</label><input id="${pfx}_k${i}" type="number" min="0" value="${it[o.key] || ''}" /></div>
+      <div><label>Sovg'a</label>${rtTypeSel(`${pfx}_t${i}`, it.type)}</div>
+      <div style="width:100px"><label>Miqdor</label><input id="${pfx}_a${i}" type="number" min="0" value="${it.amount || ''}" /></div></div>
+      ${o.text ? `<textarea id="${pfx}_x${i}" style="min-height:70px;margin-top:6px" placeholder="Xabar matni">${esc(it.text || '')}</textarea>` : ''}</div>`;
+  }).join('');
+}
+const rtRead = (pfx, n, key, withText) => Array.from({ length: n }, (_, i) => ({ [key]: +$(`${pfx}_k${i}`).value || 0, type: $(`${pfx}_t${i}`).value, amount: +$(`${pfx}_a${i}`).value || 0, ...(withText ? { text: $(`${pfx}_x${i}`).value } : {}) }));
+const rtSplit = v => String(v || '').split(/\n\s*---\s*\n/).map(x => x.trim()).filter(Boolean);
+const rtJoin = a => (a || []).join('\n---\n');
+
+let rtLoaded = false;
+function rtFill(r) {
+  const rt = r.rt, st = rt.streak, wb = rt.winback, wr = rt.weekRest, rf = r.referral;
+  $('rt_cap').value = rt.cap;
+  $('rt_st_on').checked = st.enabled; $('rt_st_min').value = st.minStreak; $('rt_st_risk').value = st.riskHour; $('rt_st_frozen').value = st.frozenHour;
+  $('rt_st_risktx').value = rtJoin(st.riskTexts); $('rt_st_losttx').value = rtJoin(st.lostTexts);
+  $('rt_ms_on').checked = st.milestoneOn; $('rt_ms_text').value = st.milestoneText;
+  rtRows('rt_ms_rows', 'rt_ms', 5, st.milestones, { key: 'days', keyLabel: 'Streak (kun)' });
+  $('rt_wb_on').checked = wb.enabled; $('rt_wb_from').value = wb.hourFrom; $('rt_wb_to').value = wb.hourTo; $('rt_wb_max').value = wb.maxDays;
+  rtRows('rt_wb_rows', 'rt_wb', 3, wb.steps, { key: 'days', keyLabel: 'Necha kun kirmasa', text: true });
+  $('rt_ac_on').checked = wb.activationOn;
+  rtRows('rt_ac_rows', 'rt_ac', 2, wb.activation, { key: 'hours', keyLabel: '/start dan necha soat', text: true });
+  $('rt_wr_on').checked = wr.enabled; $('rt_wr_hour').value = wr.hour; $('rt_wr_btn').value = wr.button; $('rt_wr_text').value = wr.text;
+  $('rt_wr_zero').checked = wr.zero; $('rt_wr_zerotx').value = wr.zeroText;
+  $('rt_rf_spins').value = rf.friendSpins; $('rt_rf_xp').value = rf.friendXp; $('rt_rf_text').value = rf.friendText; $('rt_rf_mtext').value = rf.milestoneText;
+  rtRows('rt_rf_rows', 'rt_rf', 4, rf.milestones, { key: 'count', keyLabel: 'Do\'stlar soni' });
+}
+function rtCollect() {
+  const rt = {
+    cap: +$('rt_cap').value || 2,
+    streak: {
+      enabled: $('rt_st_on').checked, minStreak: +$('rt_st_min').value || 3, riskHour: +$('rt_st_risk').value, frozenHour: +$('rt_st_frozen').value,
+      riskTexts: rtSplit($('rt_st_risktx').value), lostTexts: rtSplit($('rt_st_losttx').value),
+      milestoneOn: $('rt_ms_on').checked, milestoneText: $('rt_ms_text').value,
+      milestones: rtRead('rt_ms', 5, 'days', false),
+    },
+    winback: {
+      enabled: $('rt_wb_on').checked, hourFrom: +$('rt_wb_from').value, hourTo: +$('rt_wb_to').value, maxDays: +$('rt_wb_max').value || 45,
+      steps: rtRead('rt_wb', 3, 'days', true), activationOn: $('rt_ac_on').checked, activation: rtRead('rt_ac', 2, 'hours', true),
+    },
+    weekRest: { enabled: $('rt_wr_on').checked, hour: +$('rt_wr_hour').value, button: $('rt_wr_btn').value, text: $('rt_wr_text').value, zero: $('rt_wr_zero').checked, zeroText: $('rt_wr_zerotx').value },
+  };
+  const referral = { friendSpins: +$('rt_rf_spins').value || 0, friendXp: +$('rt_rf_xp').value || 0, friendText: $('rt_rf_text').value, milestoneText: $('rt_rf_mtext').value, milestones: rtRead('rt_rf', 4, 'count', false) };
+  return { rt, referral };
+}
+function rtRenderStatus(s) {
+  const b = s.buckets, live = Math.max(1, s.total - s.blocked);
+  const rows = [['Bugun faol', b.today, '#22c55e'], ['1–2 kun oldin', b.d12, '#84cc16'], ['3–7 kun', b.d37, '#facc15'], ['8–14 kun', b.d814, '#fb923c'], ['15–30 kun', b.d1530, '#f87171'], ['30+ kun', b.d30, '#ef4444'], ['Ilovani hech ochmagan', b.never, '#94a3b8']];
+  const bar = ([n, v, c]) => `<div class="hrow"><span class="nm">${n}</span><div class="bar"><i style="width:${Math.round(v / live * 100)}%;background:${c}"></i></div><span class="small" style="width:110px;text-align:right"><b>${v}</b> · ${Math.round(v / live * 100)}%</span></div>`;
+  const eng = s.engage.length ? `<div class="scroll"><table><thead><tr><th>Kun</th><th>Xavf</th><th>Uzildi</th><th>Marra</th><th>Win-back</th><th>Faollash.</th><th>Hafta</th><th>Sovg'a</th><th>Bloklagan</th></tr></thead><tbody>${s.engage.map(e => `<tr><td>${esc(e.day)}</td><td>${e.streakRisk || 0}</td><td>${e.streakLost || 0}</td><td>${e.milestone || 0}</td><td>${e.winback || 0}</td><td>${e.activation || 0}</td><td>${e.weekRest || 0}</td><td>${e.gifts || 0}</td><td>${e.blocked || 0}</td></tr>`).join('')}</tbody></table></div>` : '<div class="small">Avtomatik xabarlar hali yuborilmagan.</div>';
+  const q = s.rest ? `<div class="msg s" style="margin-top:8px">⏳ Haftalik xulosa navbati: ${s.rest.week}-hafta — qoldi <b>${s.rest.left}</b> / ${s.rest.queued} (yuborildi ${s.rest.sent}). Soat ${s.rest.hour}:00 dan keyin avtomatik ketadi.</div>` : (s.restLast ? `<div class="small" style="margin-top:8px">Oxirgi haftalik xulosa: ${s.restLast.week}-hafta — yuborildi <b>${s.restLast.sent}</b>, bloklagan ${s.restLast.blocked}, xato ${s.restLast.failed}.</div>` : '');
+  $('rtStatus').innerHTML = `<h3 style="margin:0 0 6px;font-size:14px">Foydalanuvchilar faolligi (bot a'zolari: ${s.total}, bloklagan: ${s.blocked})</h3>${rows.map(bar).join('')}
+    <div class="grid" style="margin-top:8px"><div class="stat"><b>${s.streak.s3}</b><span class="small">🔥 3+ kunlik streak (faol)</span></div><div class="stat"><b>${s.streak.s7}</b><span class="small">7+ kun</span></div><div class="stat"><b>${s.streak.s30}</b><span class="small">30+ kun</span></div><div class="stat"><b>${s.refUsers}</b><span class="small">👥 taklif qilganlar (jami ${s.refTotal} do'st)</span></div></div>${q}
+    <h3 style="margin:14px 0 6px;font-size:14px">Oxirgi 7 kun: yuborilgan avto-xabarlar</h3>${eng}`;
+}
+async function loadRetain(force) {
+  if (!rtLoaded || force === true) { rtFill(await api('getRetention')); rtLoaded = true; }
+  rtRenderStatus(await api('retentionStatus'));
+}
+document.querySelector('#tabs button[data-t="retain"]').addEventListener('click', guard(() => loadRetain(false)));
+$('rtReload').onclick = guard(async () => { rtRenderStatus(await api('retentionStatus')); flash('Yangilandi'); });
+const rtSave = guard(async () => { await api('setRetention', rtCollect()); rtLoaded = false; await loadRetain(true); flash('Saqlandi ✅ Keyingi avtomatik ishga tushishda kuchga kiradi'); });
+$('rtSave').onclick = rtSave; $('rtSaveTop').onclick = rtSave;
+document.querySelectorAll('[data-rtest]').forEach(b => b.onclick = guard(async () => {
+  await api('testRetention', { tgId: $('rt_tgid').value.trim(), kind: b.dataset.rtest, rt: rtCollect().rt });
+  flash('Sinov xabari yuborildi ✅ (Telegramni tekshiring)');
+}));
+$('rtRestNow').onclick = guard(async () => {
+  if (!confirm('Haftalik xulosa navbatidagi hammaga hozir yuborilsinmi?')) return;
+  const r = await api('weekRestNow');
+  flash(r.none ? 'Navbat bo\'sh' : `Yuborildi: ${r.sent || 0}, bloklagan: ${r.blocked || 0}, qoldi: ${r.left || 0}`);
+  rtRenderStatus(await api('retentionStatus'));
+});
 </script>
 </body>
 </html>

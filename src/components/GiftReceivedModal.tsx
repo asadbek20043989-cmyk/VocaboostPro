@@ -1,7 +1,6 @@
 import React from 'react';
 import { Gift, X, Sparkles, Diamond, RotateCw, Crown, Coins, Shield } from 'lucide-react';
 import { triggerHaptic } from '../services/telegram';
-import { t as tt } from '../services/i18n';
 
 export interface ReceivedGrantItem {
   type: string;
@@ -69,7 +68,7 @@ export const GiftReceivedModal: React.FC<GiftReceivedModalProps> = ({ items, onC
             <div className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5" /> Sovg&apos;a qabul qilindi!
             </div>
-            <h3 className="text-xl font-black text-white">{tt("Sizga sovg'a berildi! 🎁")}</h3>
+            <h3 className="text-xl font-black text-white">Sizga sovg&apos;a berildi! 🎁</h3>
             <p className="text-xs text-slate-300 mt-0.5">
               Admin tomonidan hisobingizga quyidagi sovg&apos;alar o&apos;tkazildi:
             </p>

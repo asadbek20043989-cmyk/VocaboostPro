@@ -6,7 +6,6 @@ import { ClozeTest, VocabStory, WritingPractice } from './Learning';
 import { CustomPacksView } from './CustomPacksView';
 import { BankWord } from '../types';
 import { triggerHaptic } from '../services/telegram';
-import { t as tt } from '../services/i18n';
 
 type Filter = 'all' | 'new' | 'learning' | 'mastered' | 'due';
 type SubTab = 'bank' | 'custom';
@@ -39,7 +38,7 @@ export const WordsTab: React.FC = () => {
   return (
     <div className="space-y-4 pb-6">
       <div>
-        <h2 className="text-xl font-extrabold text-white">{tt("So'zlar")}</h2>
+        <h2 className="text-xl font-extrabold text-white">So&apos;zlar</h2>
         <p className="text-xs text-slate-400 mt-0.5">Hammasi — eng muhim so&apos;zlar. «Yodlandi» — 3 xil kunda to&apos;g&apos;ri javob bergan so&apos;zlar</p>
       </div>
 
@@ -60,7 +59,7 @@ export const WordsTab: React.FC = () => {
           className={`vb-premium-tab ${subTab === 'custom' ? 'is-on' : ''} py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all`}
         >
           <span className="vb-premium-ico"><Crown className="w-3.5 h-3.5" /></span>
-          <span className="relative z-[1]">{tt("Shaxsiy to'plamlarim")}</span>
+          <span className="relative z-[1]">Shaxsiy to‘plamlarim</span>
           {customPacks.length > 0 && (
             <span className="relative z-[1] text-[10px] font-black px-1.5 rounded-full bg-black/35 text-amber-200 border border-amber-300/40">
               {customPacks.length}
@@ -95,7 +94,7 @@ export const WordsTab: React.FC = () => {
 
           <div className="relative">
             <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input value={q} onChange={e => { setQ(e.target.value); setShown(PAGE); }} placeholder={tt("So'z qidirish...")} className="w-full bg-[#151C28] border border-slate-800 rounded-2xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-amber-500" />
+            <input value={q} onChange={e => { setQ(e.target.value); setShown(PAGE); }} placeholder="So'z qidirish..." className="w-full bg-[#151C28] border border-slate-800 rounded-2xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-amber-500" />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {([['all', 'Barchasi'], ['new', 'Yangi'], ['due', 'Takrorlash'], ['learning', "O'rganilmoqda"], ['mastered', 'Yodlangan']] as [Filter, string][]).map(([id, label]) => (
@@ -104,7 +103,7 @@ export const WordsTab: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {list.length === 0 && <div className="text-center text-sm text-slate-500 py-10">{tt("So'z topilmadi.")}</div>}
+            {list.length === 0 && <div className="text-center text-sm text-slate-500 py-10">So&apos;z topilmadi.</div>}
             {list.slice(0, shown).map(b => {
               const e = srs[b.id];
               const badge = !e ? { t: 'yangi', c: 'bg-sky-500/15 text-sky-300' } : e.mastered ? { t: 'yodlandi', c: 'bg-emerald-500/15 text-emerald-400' } : dueSet.has(b.id) ? { t: 'takrorlash', c: 'bg-amber-500/15 text-amber-300' } : { t: `${e.days.length}/3 kun`, c: 'bg-slate-800 text-slate-400' };

@@ -2,7 +2,6 @@ import React from 'react';
 import { Volume2, VolumeX, Sun, Moon, Star, Ticket, Gift, BadgeCheck } from 'lucide-react';
 import { useSfx } from '../services/sound';
 import { useTheme } from '../services/theme';
-import { t as tt } from '../services/i18n';
 
 export const APP_NAME = 'VocaBoost';
 
@@ -25,7 +24,7 @@ export const BrandMark: React.FC<{ className?: string }> = ({ className = '' }) 
     <span className="text-[17px] font-extrabold tracking-tight text-white truncate">
       Voca<span className="text-amber-400">Boost</span>
     </span>
-    <BadgeCheck className="vb-verified w-5 h-5" strokeWidth={2.2} aria-label={tt("Rasmiy tasdiqlangan")} role="img" />
+    <BadgeCheck className="vb-verified w-5 h-5" strokeWidth={2.2} aria-label="Rasmiy tasdiqlangan" role="img" />
   </div>
 );
 
@@ -39,9 +38,9 @@ export const SoundButton: React.FC<{ className?: string; small?: boolean }> = ({
       type="button"
       data-nosfx
       onClick={() => setOn(!on)}
-      aria-label={on ? tt("Tovushni o'chirish") : tt('Tovushni yoqish')}
+      aria-label={on ? "Tovushni o'chirish" : 'Tovushni yoqish'}
       aria-pressed={!on}
-      title={on ? tt("Tovushni o'chirish") : tt('Tovushni yoqish')}
+      title={on ? "Tovushni o'chirish" : 'Tovushni yoqish'}
       style={{ ['--d' as any]: '3.6s' }}
       className={`${hb('', small)} ${on ? '' : 'opacity-70'} ${className}`}
     >
@@ -59,8 +58,8 @@ export const ThemeButton: React.FC<{ className?: string; small?: boolean }> = ({
       type="button"
       data-nosfx
       onClick={() => setTheme(light ? 'dark' : 'light')}
-      aria-label={light ? tt('Tun rejimiga o‘tish') : tt('Kun rejimiga o‘tish')}
-      title={light ? tt('Tun rejimi') : tt('Kun rejimi')}
+      aria-label={light ? 'Tun rejimiga o‘tish' : 'Kun rejimiga o‘tish'}
+      title={light ? 'Tun rejimi' : 'Kun rejimi'}
       style={{ ['--d' as any]: '2.7s' }}
       className={`${hb('', small)} ${className}`}
     >
@@ -85,8 +84,8 @@ export const HeaderActions: React.FC<{
         type="button"
         data-nosfx
         onClick={onPromoClick}
-        aria-label={tt("Promokod")}
-        title={tt("Promokod kiritish")}
+        aria-label="Promokod"
+        title="Promokod kiritish"
         className={hb('', small)}
       >
         <Ticket />
@@ -97,8 +96,8 @@ export const HeaderActions: React.FC<{
         type="button"
         data-nosfx
         onClick={onRateClick}
-        aria-label={tt("Botni baholash")}
-        title={tt("Botni baholash (5 ballik shkala)")}
+        aria-label="Botni baholash"
+        title="Botni baholash (5 ballik shkala)"
         style={{ ['--d' as any]: '0.9s' }}
         className={hb('vb-hbtn--star', small)}
       >
@@ -110,8 +109,8 @@ export const HeaderActions: React.FC<{
         type="button"
         data-nosfx
         onClick={onGiftClick}
-        aria-label={tt("Omadli baraban")}
-        title={tt("Omadli baraban (Sovg'a)")}
+        aria-label="Omadli baraban"
+        title="Omadli baraban (Sovg'a)"
         style={{ ['--d' as any]: '1.8s' }}
         className={hb('vb-hbtn--gift', small)}
       >

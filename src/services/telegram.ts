@@ -45,7 +45,6 @@ interface TelegramWebApp {
   setBackgroundColor?: (c: string) => void;
   close: () => void;
   openTelegramLink: (url: string) => void;
-  openLink?: (url: string) => void;
 }
 
 declare global {

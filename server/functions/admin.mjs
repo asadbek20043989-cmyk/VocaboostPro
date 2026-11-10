@@ -7,6 +7,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow, cleanSegment, inSegment } from '../lib/tg.mjs';
 
 import { finishWeek } from '../lib/week.mjs';
+import { loadRt, mergeRt, drainWeekRest, sampleMessage, sendAuto, DEFAULT_MILESTONES } from '../lib/engage.mjs';
+import { cleanMilestones, DEFAULT_REF_MILESTONES, DEFAULT_REF_FRIEND_TEXT, DEFAULT_REF_MILESTONE_TEXT } from '../lib/tg.mjs';
 
 const json = (status, body) => ({
   statusCode: status,
@@ -961,8 +963,104 @@ export const handler = async event => {
           shareText: String(v.shareText || '').trim().slice(0, 900),
           notifyText: String(v.notifyText || '').trim().slice(0, 900),
         };
-        await call('PUT', 'config/referral', out);
+        await call('PATCH', 'config/referral', out); // PATCH: v11 maydonlari (friendXp, marralar...) o'chib ketmasin
         return json(200, { ok: true });
+      }
+
+      // ---------- v11: Retention (streak, win-back, haftalik xulosa, taklif bonuslari) ----------
+      case 'getRetention': {
+        const [raw, legacy, ref] = await Promise.all([call('GET', 'config/retention'), call('GET', 'config/streakWarn'), call('GET', 'config/referral')]);
+        const rt = mergeRt(raw, legacy || {});
+        const r = ref || {};
+        const referral = {
+          friendSpins: Number.isFinite(Number(r.friendSpins)) && r.friendSpins !== '' && r.friendSpins != null ? Number(r.friendSpins) : 1,
+          friendXp: Number(r.friendXp) || 0,
+          friendText: String(r.friendText || DEFAULT_REF_FRIEND_TEXT),
+          milestoneText: String(r.milestoneText || DEFAULT_REF_MILESTONE_TEXT),
+          milestones: r.milestones === undefined ? DEFAULT_REF_MILESTONES : cleanMilestones(r.milestones),
+        };
+        return json(200, { rt, referral });
+      }
+
+      case 'setRetention': {
+        const rt = mergeRt(body.rt && typeof body.rt === 'object' ? body.rt : {});
+        await call('PUT', 'config/retention', rt);
+        const v = body.referral && typeof body.referral === 'object' ? body.referral : null;
+        if (v) {
+          await call('PATCH', 'config/referral', {
+            friendSpins: Math.max(0, Math.min(50, Math.round(Number(v.friendSpins)) || 0)),
+            friendXp: Math.max(0, Math.min(100000, Math.round(Number(v.friendXp)) || 0)),
+            friendText: String(v.friendText || '').trim().slice(0, 900),
+            milestoneText: String(v.milestoneText || '').trim().slice(0, 900),
+            milestones: cleanMilestones(v.milestones),
+          });
+        }
+        return json(200, { ok: true });
+      }
+
+      // Sozlangan matnni bitta Telegram ID ga sinab ko'rish (saqlanmagan o'zgarishlar bilan ham ishlaydi)
+      case 'testRetention': {
+        const id = String(body.tgId || '').replace(/^tg_/, '');
+        if (!/^\d{3,15}$/.test(id)) return json(400, { error: 'Telegram ID kiriting (faqat raqamlar)' });
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const rt = mergeRt(body.rt && typeof body.rt === 'object' ? body.rt : await call('GET', 'config/retention'));
+        const m = sampleMessage(String(body.kind || ''), rt);
+        if (!m) return json(400, { error: 'Bu turdagi xabar sozlanmagan (kamida bitta qadam kiriting)' });
+        try {
+          await sendAuto(process.env.BOT_TOKEN, Number(id), m.text, m.label);
+        } catch (e) {
+          return json(502, { error: `Telegram: ${e.message}` });
+        }
+        return json(200, { ok: true });
+      }
+
+      // Haftalik xulosa navbatini hozir yuborish (soat tekshirilmaydi)
+      case 'weekRestNow': {
+        if (!process.env.BOT_TOKEN) return json(400, { error: 'BOT_TOKEN kiritilmagan' });
+        const rt = await loadRt(call);
+        const r = await drainWeekRest(call, process.env.BOT_TOKEN, rt, { force: true, budgetMs: 45000 });
+        return json(200, { ok: true, ...r });
+      }
+
+      // Retention holati: foydalanuvchilar «faollik» bo'yicha, avtomatik xabarlar statistikasi, navbat
+      case 'retentionStatus': {
+        const [lb, tgu, eng, restLast, restMeta, restItems] = await Promise.all([
+          call('GET', 'leaderboard'), call('GET', 'tgusers'), call('GET', 'adminState/engage'), call('GET', 'adminState/weekRestLast'),
+          call('GET', 'weekRest/meta'), call('GET', 'weekRest/items'),
+        ]);
+        const t = tashkentNow();
+        const dayStart = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()) - 5 * 3600 * 1000;
+        const DAYMS = 86400000;
+        const b = { today: 0, d12: 0, d37: 0, d814: 0, d1530: 0, d30: 0, never: 0 };
+        let total = 0, blocked = 0;
+        for (const [id, u] of Object.entries(tgu || {})) {
+          if (!u || typeof u !== 'object' || !/^\d{3,15}$/.test(id)) continue;
+          total++;
+          if (u.blocked) { blocked++; continue; }
+          const last = Number((lb || {})[`tg_${id}`]?.ts || u.lastSeen || 0);
+          if (!last) { b.never++; continue; }
+          if (last >= dayStart) b.today++;
+          else {
+            const d = Math.ceil((dayStart - last) / DAYMS);
+            if (d <= 2) b.d12++; else if (d <= 7) b.d37++; else if (d <= 14) b.d814++; else if (d <= 30) b.d1530++; else b.d30++;
+          }
+        }
+        const day = tashkentDay();
+        const yest = new Date(Date.parse(day + 'T00:00:00Z') - DAYMS).toISOString().slice(0, 10);
+        let s3 = 0, s7 = 0, s30 = 0, refUsers = 0, refTotal = 0;
+        for (const e of Object.values(lb || {})) {
+          if (!e || e.deleted) continue;
+          const st = Number(e.streak) || 0;
+          if ((e.lr === day || e.lr === yest) && st >= 3) { s3++; if (st >= 7) s7++; if (st >= 30) s30++; }
+          const rf = Number(e.refs) || 0;
+          if (rf > 0) { refUsers++; refTotal += rf; }
+        }
+        const engage = Object.entries(eng || {}).sort((a, c) => (a[0] < c[0] ? 1 : -1)).slice(0, 7).map(([d, v]) => ({ day: d, ...(v || {}) }));
+        return json(200, {
+          total, blocked, buckets: b, streak: { s3, s7, s30 }, refUsers, refTotal, engage,
+          rest: restMeta ? { week: restMeta.week, queued: restMeta.queued, left: Object.keys(restItems || {}).length, sent: restMeta.sent || 0, hour: restMeta.hour, at: restMeta.at } : null,
+          restLast: restLast || null,
+        });
       }
 
       case 'listReferrals': {
@@ -1000,34 +1098,6 @@ export const handler = async event => {
         });
         if (r.status !== 202 && !r.ok) return json(502, { error: `Yuborishni boshlab bo'lmadi (${r.status})` });
         return json(200, { ok: true });
-      }
-
-      // ---------- Ilovaga kirganda chiqadigan pop-up ----------
-      case 'setPopup': {
-        const old = (await call('GET', 'config/popup')) || {};
-        const act = ['none', 'levelTest', 'tab', 'link', 'promo'].includes(body.btnAction) ? body.btnAction : 'none'; // eslint: body.action — so'rov turi, tugma amali alohida `btnAction`
-        let target = String(body.target || '').slice(0, 300);
-        if (act === 'tab' && !['home', 'words', 'games', 'leaderboard', 'shop'].includes(target)) target = 'home';
-        if (act === 'link' && target && !/^https?:\/\//i.test(target) && !/^t\.me\//i.test(target)) return json(400, { error: "Havola https:// yoki t.me/ bilan boshlanishi kerak" });
-        const next = {
-          active: !!body.active,
-          emoji: String(body.emoji || '').slice(0, 8),
-          title: String(body.title || '').slice(0, 80),
-          text: String(body.text || '').slice(0, 500),
-          btn: String(body.btn || '').slice(0, 30),
-          title_ru: String(body.title_ru || '').slice(0, 80), text_ru: String(body.text_ru || '').slice(0, 500), btn_ru: String(body.btn_ru || '').slice(0, 30),
-          title_en: String(body.title_en || '').slice(0, 80), text_en: String(body.text_en || '').slice(0, 500), btn_en: String(body.btn_en || '').slice(0, 30),
-          action: act,
-          target: act === 'none' || act === 'levelTest' ? '' : target,
-          who: body.who === 'old' ? 'old' : 'all',
-          freq: ['once', 'daily', 'always'].includes(body.freq) ? body.freq : 'once',
-        };
-        if (next.active && !next.title && !next.text) return json(400, { error: 'Sarlavha yoki matn kiriting' });
-        const same = ['emoji', 'title', 'text', 'btn', 'title_ru', 'text_ru', 'btn_ru', 'title_en', 'text_en', 'btn_en', 'action', 'target', 'who', 'freq'].every(k => String(old[k] || '') === String(next[k] || ''));
-        // Mazmun o'zgarsa yoki «qayta ko'rsat» belgilansa — yangi versiya: hamma yana ko'radi
-        next.id = !body.resend && same && old.id ? String(old.id) : String(Date.now());
-        await call('PUT', 'config/popup', next);
-        return json(200, { ok: true, id: next.id });
       }
 
       case 'setAnnouncement': {

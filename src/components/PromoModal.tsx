@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Ticket, X, Sparkles, Gift, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic, getTelegramWebApp } from '../services/telegram';
-import { t as tt } from '../services/i18n';
 
 interface PromoModalProps {
   initialCode?: string;
@@ -72,32 +71,32 @@ export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClos
               <Gift className="w-9 h-9" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-white">{tt("Tabriklaymiz! 🎉")}</h3>
-              <p className="text-xs text-slate-300 mt-1">{tt("Sovg'angiz muvaffaqiyatli berildi:")}</p>
+              <h3 className="text-xl font-black text-white">Tabriklaymiz! 🎉</h3>
+              <p className="text-xs text-slate-300 mt-1">Sovg&apos;angiz muvaffaqiyatli berildi:</p>
             </div>
 
             <div className="rounded-2xl bg-[#0B0F17] border border-amber-500/30 p-3.5 space-y-2 text-left">
               {claimedRewards.xp > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-                  <span>{tt("💎 XP bonusi:")}</span>
+                  <span>💎 XP bonusi:</span>
                   <span>+{claimedRewards.xp} XP</span>
                 </div>
               )}
               {claimedRewards.spins > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-emerald-300">
-                  <span>{tt("🎡 Baraban aylantirish:")}</span>
+                  <span>🎡 Baraban aylantirish:</span>
                   <span>+{claimedRewards.spins} ta</span>
                 </div>
               )}
               {claimedRewards.vipHours > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-purple-300">
-                  <span>{tt("👑 VIP maqomi:")}</span>
+                  <span>👑 VIP maqomi:</span>
                   <span>{claimedRewards.vipHours} soat</span>
                 </div>
               )}
               {claimedRewards.coins > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-yellow-300">
-                  <span>{tt("🪙 Tangalar:")}</span>
+                  <span>🪙 Tangalar:</span>
                   <span>+{claimedRewards.coins.toLocaleString()}</span>
                 </div>
               )}
@@ -105,14 +104,14 @@ export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClos
                 const it = catalog.find(x => x.id === id);
                 return (
                   <div key={id} className="flex items-center justify-between text-xs font-bold text-pink-300">
-                    <span>{tt("🛍️ Do'kon sovg'asi:")}</span>
+                    <span>🛍️ Do&apos;kon sovg&apos;asi:</span>
                     <span>{it ? `${it.icon} ${it.title}` : id}</span>
                   </div>
                 );
               })}
               {claimedRewards.streakSaver > 0 && (
                 <div className="flex items-center justify-between text-xs font-bold text-sky-300">
-                  <span>{tt("❄️ Streak muzlatgich:")}</span>
+                  <span>❄️ Streak muzlatgich:</span>
                   <span>+{claimedRewards.streakSaver} ta</span>
                 </div>
               )}
@@ -132,7 +131,7 @@ export const PromoModal: React.FC<PromoModalProps> = ({ initialCode = '', onClos
               <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-2">
                 <Ticket className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-black text-white">{tt("Promokodni kiriting")}</h3>
+              <h3 className="text-lg font-black text-white">Promokodni kiriting</h3>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                 Telegram kanal yoki guruhlarda e&apos;lon qilingan maxsus kodni kiriting va sovg&apos;ani oling!
               </p>

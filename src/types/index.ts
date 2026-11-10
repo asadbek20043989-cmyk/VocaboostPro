@@ -245,16 +245,3 @@ export interface Challenge {
   joined: boolean;
   myGain: number;
 }
-
-/** Admin paneldagi «Kirishdagi pop-up» sozlamasi */
-export interface AdminPopupCfg {
-  id: string;
-  emoji: string;
-  title: string; text: string; btn: string;
-  title_ru: string; text_ru: string; btn_ru: string;
-  title_en: string; text_en: string; btn_en: string;
-  action: 'none' | 'levelTest' | 'tab' | 'link' | 'promo';
-  target: string;
-  who: 'all' | 'old';
-  freq: 'once' | 'daily' | 'always';
-}

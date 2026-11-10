@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Logo } from './Brand';
 import { sfx } from '../services/sound';
 import { getTelegramUserData, triggerHaptic } from '../services/telegram';
-import { t as tt } from '../services/i18n';
 
 const KEY = 'vb_welcome_seen_v1';
 
@@ -79,7 +78,7 @@ export const WelcomePopup: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={tt("VocaBoostga xush kelibsiz")}
+      aria-label="VocaBoostga xush kelibsiz"
       className="vb-wl-backdrop fixed inset-0 z-[300] flex items-center justify-center p-5 overflow-hidden"
       style={{ background: 'radial-gradient(circle at 50% 30%, rgba(30,58,138,.92), rgba(5,8,16,.97) 70%)', backdropFilter: 'blur(6px)' }}
     >

@@ -2,6 +2,7 @@
 //  1) TOP-20 «Tarix zali»ga qotiriladi; 2) hammaning liga XP si 0 ga tushadi; 3) yangi hafta boshlanadi;
 //  4) TOP-20 o'quvchiga bot orqali tabrik xabari + «Mashqni davom ettirish» tugmasi yuboriladi.
 import { issueCertificate, statsFromLb, tashkentDay, sendMessage, openAppMarkup, escHtml } from './tg.mjs';
+import { loadRt, enqueueWeekRest } from './engage.mjs';
 
 export const DEFAULT_WEEK_TEXT = "🏁{week}-hafta tugadi.\n\n🎉 Siz {xp}XP bilan {place}-o'rinni oldingiz va kuchli TOP20 talikka kirdingiz. Tabriklaymiz 🎊🎊🎊";
 export const DEFAULT_WEEK_BUTTON = '▶️ Mashqni davom ettirish';
@@ -90,11 +91,12 @@ export async function finishWeek(db, o = {}) {
     throw err;
   }
 
-  const ranked = Object.entries(lb)
+  // v11: butun reyting (TOP-20 dan tashqaridagilar uchun ham haftalik xulosa tayyorlanadi)
+  const allRanked = Object.entries(lb)
     .filter(([, e]) => e && !e.deleted && !e.hidden && shownOf(e) > 0)
     .map(([uid, e]) => ({ uid, e, xp: shownOf(e) }))
-    .sort((a, b) => b.xp - a.xp || (Number(a.e.ts) || 0) - (Number(b.e.ts) || 0))
-    .slice(0, 20);
+    .sort((a, b) => b.xp - a.xp || (Number(a.e.ts) || 0) - (Number(b.e.ts) || 0));
+  const ranked = allRanked.slice(0, 20);
   const top = ranked.map((r, i) => ({
     place: i + 1,
     uid: r.uid,
@@ -140,6 +142,16 @@ export async function finishWeek(db, o = {}) {
   // MUHIM: PATCH — `auto`, `msgText` kabi sozlamalar o'chib ketmasin
   await db('PATCH', 'config/league', { week: week + 1, startedAt: endedAt, lastFinishedAt: endedAt });
 
+  // v11: TOP-20 dan tashqaridagilarga shaxsiy hafta xulosasi — navbatga qo'yiladi, ertalab (admin belgilagan soatda) yuboriladi
+  let rest = null;
+  if (o.notify !== false) {
+    try {
+      rest = await enqueueWeekRest(db, allRanked, week, await loadRt(db));
+    } catch (e) {
+      rest = { queued: 0, error: String(e?.message || e) };
+    }
+  }
+
   // TOP-20 ga tabrik xabari (XP 0 ga tushishidan OLDINGI natija bilan)
   let notify = null;
   if (o.notify !== false && ranked.length) {
@@ -150,5 +162,5 @@ export async function finishWeek(db, o = {}) {
       notify = { sent: 0, blocked: 0, failed: ranked.length, error: String(e?.message || e) };
     }
   }
-  return { week, archived: top.length, rewarded, count: Object.keys(upd).length / 4, notify };
+  return { week, archived: top.length, rewarded, count: Object.keys(upd).length / 4, notify, rest };
 }

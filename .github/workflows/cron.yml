@@ -6,8 +6,8 @@
 name: scheduled-bot-tasks
 on:
   schedule:
-    - cron: '0 * * * *'            # remind — har soat
-    - cron: '10 5-7,14-17 * * *'   # streak-warn
+    - cron: '0 * * * *'            # remind — har soat (kunlik eslatma + haftalik xulosa navbati + win-back/faollashtirish)
+    - cron: '10 5-7,14-17 * * *'   # streak-warn — streak xavfi/uzildi + marralar (hamma streakli foydalanuvchiga)
     - cron: '5 19 * * 0'           # week-end — dushanba 00:05 (Toshkent): haftani yakunlash + TOP-20 ga xabar
   workflow_dispatch: {}            # qo'lda sinash: ikkalasini ham chaqiradi
 jobs:

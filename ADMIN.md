@@ -340,10 +340,26 @@ Barcha 16 shablon yagona art-deko uslubda: oltin ramka va burchak nurlari, fon r
 - **Lo-Fi**: Google Drive / Dropbox / GitHub havolalari avtomatik to'g'rilanadi; `public/music/` dagi fayllar `/music/fayl.mp3` ko'rinishida ishlaydi.
 
 
-## 🔔 Kirishdagi pop-up (v11)
-Admin panel → **Sozlamalar** → «Kirishdagi pop-up». Foydalanuvchi ilovani ochganda boshqa oynalardan OLDIN bitta chiroyli oyna chiqadi.
-- Belgi, sarlavha, matn, tugma matni; ixtiyoriy ruscha/inglizcha matn (bo'sh qolsa o'zbekcha ko'rinadi).
-- Tugma: faqat yopadi / **daraja testini ochadi** / bo'limga o'tkazadi / havolani ochadi / promokod oynasini ochadi.
-- Kimga: hammaga yoki faqat eski foydalanuvchilarga. Chastota: 1 marta, kuniga 1 marta yoki har kirganda.
-- Matn o'zgarsa yoki «Hamma yana ko'rsin» belgilansa — yangi versiya sifatida hamma qayta ko'radi.
+---
 
+## v11 (5.10.0) — Avto-xabarlar va retention
+
+Admin panel → **Marketing → 🚀 Avto-xabarlar**. Hammasi shu yerdan boshqariladi, qayta deploy kerak emas.
+
+| Mexanizm | Kimga | Qachon |
+|---|---|---|
+| 🔥 **Streak xavfi** | Streaki ≥ N kun (standart 3), kecha mashq qilgan, bugun hali yo'q | Kechqurun (standart 20:10 dan) |
+| 💔 **Streak uzildi** (muzlatishi borlarga: «muzladi») | 2 kun oldin mashq qilgan | Ertalab (10:10 dan) |
+| 🏆 **Streak marralari** | Bugun mashq qilib 7/14/30/60/100 kunlik marraga yetganlar | Kechqurungi ishga tushishda; sovg'a (baraban/VIP/XP/tanga) ilova ochilganda avtomatik qo'shiladi |
+| 👋 **Win-back** | 3 / 7 / 14 kundan beri kirmaganlar (qadamlar o'zgartiriladi, ixtiyoriy sovg'a bilan) | Kunduzi (standart 10–20 soat), har «yo'qolish davri»da har qadam bir marta |
+| 🚀 **Faollashtirish** | /start bosgan, lekin ilovani hech ochmaganlar (24 va 96 soatdan keyin) | Win-back bilan bir xil |
+| 🏁 **Haftalik xulosa** | TOP-20 dan **tashqaridagi** faol o'quvchilar (o'rni va TOP-20 gacha yetmagan XP) | Hafta tugaganda navbatga qo'yiladi, ertalab (standart 09:00) yuboriladi |
+| 👥 **Taklif bonuslari** | Taklif qilingan do'stga birinchi kirishda sovg'a; taklif qiluvchiga 3/5/10/25 do'st marralari | Do'st havola orqali Start bosganda |
+
+**Kunlik limit:** bir foydalanuvchiga kuniga standart 2 tadan ko'p avtomatik xabar bormaydi (bloklanishdan saqlaydi).
+Kunlik eslatma (🔔 Eslatmalar) va qo'lda yuboriladigan reklama bu limitga kirmaydi — ularni oldingi kabi o'zingiz boshqarasiz.
+Maslahat: kunlik eslatma soatini streak xavfi soatidan (20:00) oldinroqqa qo'ying (masalan 13:00 yoki 18:00).
+
+Panelning yuqorisida **faollik taqsimoti** (bugun / 1–2 kun / 3–7 / 8–14 / 15–30 / 30+ kun / hech ochmagan), streakli o'quvchilar soni va oxirgi 7 kunda yuborilgan avto-xabarlar jadvali ko'rinadi.
+
+Cron: yangi jadval kerak emas — mavjud `remind` (har soat) va `streak-warn` (kuniga 7 marta) ishlatiladi.

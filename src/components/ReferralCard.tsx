@@ -5,6 +5,9 @@ import { shareUrl, triggerHaptic } from '../services/telegram';
 import { DEFAULT_SHARE_TEXT } from '../services/shop';
 
 /** Profil ichidagi «Do'stlarni taklif qilish»: shaxsiy havola, ulashish va taklif qilinganlar soni */
+const giftLabel = (type: string, n: number) =>
+  type === 'spins' ? `${n} ta baraban aylantirish 🎡` : type === 'vip' ? (n >= 24 && n % 24 === 0 ? `${n / 24} kunlik VIP 👑` : `${n} soatlik VIP 👑`) : type === 'xp' ? `${n} XP 💎` : `${n} tanga 🪙`;
+
 export const ReferralCard: React.FC = () => {
   const { inviteLink, refCount, refInfo, refLeague, accountId } = useApp();
   const [copied, setCopied] = useState(false);
@@ -35,6 +38,27 @@ export const ReferralCard: React.FC = () => {
           <div className="text-[11px] text-slate-300 leading-snug">Havolangiz orqali botga start bosgan har bir do'st uchun <b className="text-amber-300">+{refInfo.xp} XP</b> olasiz.</div>
         </div>
       </div>
+      {refInfo.friendSpins > 0 && (
+        <div className="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 leading-snug">
+          🎁 Do'stingiz ham birinchi kirishda <b>{refInfo.friendSpins} ta baraban aylantirish</b> sovg'a oladi — taklif qilish osonroq!
+        </div>
+      )}
+      {(() => {
+        const next = refInfo.milestones.find(m => m.count > refCount);
+        const prevCount = [...refInfo.milestones].reverse().find(m => m.count <= refCount)?.count || 0;
+        if (!next) return refInfo.milestones.length ? <div className="text-[11px] text-amber-300 text-center">🏆 Barcha marralarni oldingiz — rahmat!</div> : null;
+        const pct = Math.min(100, Math.round(((refCount - prevCount) / (next.count - prevCount)) * 100));
+        return (
+          <div className="rounded-xl bg-[#0E1524] border border-slate-800 p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-300">🎯 Keyingi marra: <b className="text-white">{next.count} ta do'st</b></span>
+              <span className="text-slate-400 tabular-nums">{refCount}/{next.count}</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-800 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-fuchsia-400" style={{ width: `${pct}%` }} /></div>
+            <div className="text-[11px] text-amber-300">Sovg'a: <b>{giftLabel(next.type, next.amount)}</b></div>
+          </div>
+        );
+      })()}
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="rounded-xl bg-[#0E1524] border border-slate-800 py-2"><div className="text-lg font-black text-emerald-400 tabular-nums">{refCount}</div><div className="text-[10px] text-slate-400">Taklif qilinganlar</div></div>
         <div className="rounded-xl bg-[#0E1524] border border-slate-800 py-2"><div className="text-lg font-black text-amber-400 tabular-nums">{refCount * refInfo.xp}</div><div className="text-[10px] text-slate-400">Olingan XP</div></div>

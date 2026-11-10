@@ -23,11 +23,7 @@ import { RatingModal } from './components/RatingModal';
 import { PromoModal } from './components/PromoModal';
 import { SurveyModal, SurveyData } from './components/SurveyModal';
 import { GiftReceivedModal } from './components/GiftReceivedModal';
-import { AdminPopup, shouldShowPopup, markPopupShown } from './components/AdminPopup';
-import { LevelTest } from './components/LevelTest';
 import { getTelegramWebApp } from './services/telegram';
-import { useLang } from './services/i18n';
-import { t as tt } from './services/i18n';
 
 /** E'lon matnidagi havolalarni (http, https, t.me) avtomatik ko'k rangda bosiladigan qiluvchi komponent */
 const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
@@ -59,7 +55,7 @@ const AnnouncementBanner: React.FC<{ text: string }> = ({ text }) => {
       <div className="flex items-center gap-2 mb-1.5">
         <span className="px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-300 font-extrabold text-[10px] tracking-wider uppercase border border-amber-400/40 flex items-center gap-1">
           <Megaphone className="w-3 h-3 text-amber-400 shrink-0" />
-          {tt("DIQQAT E'LON")}
+          DIQQAT E'LON
         </span>
       </div>
       <div className="leading-relaxed whitespace-pre-line text-slate-200 text-xs font-medium pl-0.5">
@@ -73,7 +69,7 @@ const MainScreen: React.FC = () => {
   const {
     profile, activeTab, overlay, announcement, certificateView, showCertificate, notice, syncReady,
     realtimeOn, totalSpinsLeft, coins, setActiveTab, shopConf, leagueUsers, leagueLive,
-    receivedGrants, setReceivedGrants, adminPopup, updateProfile
+    receivedGrants, setReceivedGrants
   } = useApp();
   const [showWheelModal, setShowWheelModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -82,37 +78,6 @@ const MainScreen: React.FC = () => {
   const [activeSurvey, setActiveSurvey] = useState<SurveyData | null>(null);
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [rankDelta, setRankDelta] = useState<RankDelta | null>(null);
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [popupTest, setPopupTest] = useState(false);
-  const wasNewUser = useRef(!profile.hasCompletedOnboarding); // shu seansda ro'yxatdan o'tayotgan bo'lsa — yangi foydalanuvchi
-  const popupDecided = useRef(false);
-
-  // Admin pop-upi: ilovaga kirganda BIRINCHI bo'lib chiqadi (boshqa oynalardan oldin)
-  useEffect(() => {
-    if (popupDecided.current || !adminPopup || !profile.hasCompletedOnboarding) return;
-    popupDecided.current = true;
-    if (!shouldShowPopup(adminPopup, wasNewUser.current)) return;
-    const id = window.setTimeout(() => { markPopupShown(adminPopup); setPopupOpen(true); }, 500);
-    return () => window.clearTimeout(id);
-  }, [adminPopup, profile.hasCompletedOnboarding]);
-
-  const runPopupAction = () => {
-    const p = adminPopup;
-    setPopupOpen(false);
-    if (!p) return;
-    if (p.action === 'levelTest') setPopupTest(true);
-    else if (p.action === 'tab') setActiveTab((['home', 'words', 'games', 'leaderboard', 'shop'].includes(p.target) ? p.target : 'home') as any);
-    else if (p.action === 'promo') { setPromoCodeToClaim(p.target || ''); setShowPromoModal(true); }
-    else if (p.action === 'link' && p.target) {
-      const url = /^https?:\/\//i.test(p.target) ? p.target : `https://${p.target}`;
-      try {
-        const tg = getTelegramWebApp();
-        if (/^https?:\/\/t\.me\//i.test(url) && tg?.openTelegramLink) tg.openTelegramLink(url);
-        else if (tg?.openLink) tg.openLink(url);
-        else window.open(url, '_blank', 'noopener');
-      } catch { /* ignore */ }
-    }
-  };
 
   // Ilovadagi har bir tugmaga qisqa "ping" tovushi
   useEffect(() => {
@@ -190,7 +155,7 @@ const MainScreen: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-center gap-4 text-sm text-slate-400">
         <Logo className="w-24 h-24 animate-pulse" glow />
-        {tt("Yuklanmoqda…")}
+        Yuklanmoqda…
       </div>
     );
   }
@@ -231,24 +196,24 @@ const MainScreen: React.FC = () => {
 
         {/* Faol so'rovnoma taklif kartasi */}
         {activeSurvey && activeTab === 'home' && (
-          <div className="vb-survey mb-3.5 p-3 rounded-2xl border border-cyan-500/40 shadow-lg flex items-center justify-between gap-3">
+          <div className="mb-3.5 p-3 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-blue-950/50 to-indigo-950/60 border border-cyan-500/40 shadow-lg flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-center gap-2.5">
-              <span className="vb-survey-ico w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center shrink-0">
+              <span className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center shrink-0">
                 <ClipboardList className="w-5 h-5" />
               </span>
               <div className="min-w-0">
-                <div className="vb-survey-title text-xs font-black text-white truncate">{activeSurvey.title}</div>
-                <div className="vb-survey-sub text-[10px] text-cyan-300 font-bold flex items-center gap-1 mt-0.5">
-                  <Sparkles className="w-3 h-3" /> {tt("Fikringizni bildiring va sovg'a oling")}
+                <div className="text-xs font-black text-white truncate">{activeSurvey.title}</div>
+                <div className="text-[10px] text-cyan-300 font-bold flex items-center gap-1 mt-0.5">
+                  <Sparkles className="w-3 h-3" /> Fikringizni bildiring va sovg&apos;a oling
                 </div>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setShowSurveyModal(true)}
-              className="vb-survey-btn px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-black shrink-0 active:scale-95 transition-all shadow-md"
+              className="px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-black shrink-0 active:scale-95 transition-all shadow-md"
             >
-              {tt("Qatnashish")}
+              Qatnashish
             </button>
           </div>
         )}
@@ -301,20 +266,10 @@ const MainScreen: React.FC = () => {
         />
       )}
 
-      {/* Admin belgilagan kirish pop-upi */}
-      {popupOpen && adminPopup && <AdminPopup data={adminPopup} onClose={() => setPopupOpen(false)} onAction={runPopupAction} />}
-      {popupTest && (
-        <LevelTest
-          currentLevel={profile.level}
-          onClose={() => setPopupTest(false)}
-          onApply={o => { updateProfile({ level: o.level, placement: { level: o.level, score: o.score, max: o.max, ts: Date.now(), mode: o.mode } }); setPopupTest(false); }}
-        />
-      )}
-
       {/* Streak oynasi: mashq/o'yin tugab, bosh sahifaga qaytilganda ko'rinadi */}
       <StreakPopup />
       {/* Reyting o'zgarishi (birinchi kirishdan tashqari) */}
-      {rankDelta && !welcome && !popupOpen && (
+      {rankDelta && !welcome && (
         <RankChangePopup data={rankDelta} onClose={() => setRankDelta(null)} />
       )}
     </div>
@@ -322,7 +277,6 @@ const MainScreen: React.FC = () => {
 };
 
 export default function App() {
-  useLang(); // til almashganda butun interfeys qayta chiziladi
   return (
     <AppProvider>
       <MainScreen />

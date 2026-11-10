@@ -473,6 +473,54 @@ const clampInt = (v, lo, hi, d) => {
  * 2) taklif qiluvchining Telegramiga xabar yuboriladi.
  * Qaytarish: { count, xp } yoki null (hisobga olinmadi).
  */
+// ---------- v11: sovg'a yordamchilari (taklif, streak marralari, win-back ular bilan yozadi) ----------
+/** Sovg'a nomi (bot xabarlarida) */
+export const giftText = (type, amount) => {
+  const n = Math.round(Number(amount) || 0);
+  if (type === 'spins') return `${n} ta baraban aylantirish 🎡`;
+  if (type === 'vip') return n >= 24 && n % 24 === 0 ? `${n / 24} kunlik VIP 👑` : `${n} soatlik VIP 👑`;
+  if (type === 'xp') return `${n} XP 💎`;
+  if (type === 'coins') return `${n} tanga 🪙`;
+  return "sovg'a 🎁";
+};
+export const GIFT_CAPS = { spins: 50, vip: 720, xp: 100000, coins: 100000000 };
+/** {kalit} o'rinlariga qiymat qo'yadi (name — HTML-xavfsiz, faqat birinchi so'z) */
+export const fillTpl = (tpl, vars = {}) =>
+  String(tpl ?? '').replace(/\{(\w+)\}/g, (m, k) => {
+    const key = Object.keys(vars).find(x => x.toLowerCase() === k.toLowerCase());
+    if (key === undefined) return m;
+    return key === 'name' ? escHtml(String(vars[key] || '').trim().split(/\s+/)[0] || "do'st") : String(vars[key]);
+  });
+/** Ko'p joyga yoziladigan o'zgartirishlar (db('PATCH','',upd)) uchun sovg'a yozuvi. flag — reytingda yozuvi bor foydalanuvchiga hasGrant bayrog'i */
+export function grantUpdates(uid, { type, amount, note }, { flag = false } = {}) {
+  const n = Math.round(Number(amount) || 0);
+  if (!GIFT_CAPS[type] || !(n > 0) || n > GIFT_CAPS[type]) return {};
+  const gid = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
+  const upd = { [`grants/${uid}/${gid}`]: { type, amount: n, validHours: 0, note: String(note || '').slice(0, 80), ts: Date.now(), keep: true } };
+  if (flag) upd[`leaderboard/${uid}/hasGrant`] = true;
+  return upd;
+}
+export const cleanGift = g => {
+  const type = String(g?.type || '');
+  const amount = Math.round(Number(g?.amount) || 0);
+  return GIFT_CAPS[type] && amount > 0 ? { type, amount: Math.min(GIFT_CAPS[type], amount) } : null;
+};
+/** Taklif marralari: [{count, type, amount}] — tartiblanadi, noto'g'rilari tashlanadi */
+export const cleanMilestones = arr =>
+  (Array.isArray(arr) ? arr : Object.values(arr || {}))
+    .map(m => ({ count: Math.round(Number(m?.count) || 0), ...(cleanGift(m) || {}) }))
+    .filter(m => m.count > 0 && m.type)
+    .sort((a, b) => a.count - b.count)
+    .slice(0, 8);
+export const DEFAULT_REF_MILESTONES = [
+  { count: 3, type: 'spins', amount: 2 },
+  { count: 5, type: 'vip', amount: 24 },
+  { count: 10, type: 'vip', amount: 72 },
+  { count: 25, type: 'vip', amount: 168 },
+];
+export const DEFAULT_REF_FRIEND_TEXT = "🎁 Xush kelibsiz, {name}! Siz do'stingiz taklifi bilan keldingiz — sizga <b>{gift}</b> sovg'a tayyor.\n\nIlovani oching, sovg'a avtomatik qo'shiladi 👇";
+export const DEFAULT_REF_MILESTONE_TEXT = "🏆 <b>{count} ta do'st</b> marrasi! Qo'shimcha sovg'a: <b>{gift}</b> 🎁";
+
 export async function processReferral(db, token, friend, refId) {
   const fid = String(friend?.id || '');
   if (!fid || !/^\d{3,15}$/.test(String(refId)) || fid === String(refId)) return null;
@@ -494,14 +542,41 @@ export async function processReferral(db, token, friend, refId) {
     upd[`leaderboard/${refUid}/hasGrant`] = true;
   }
   upd[`leaderboard/${refUid}/refs`] = count;
+
+  // v11: taklif marrasi (3/5/10/25... do'st) — taklif qiluvchiga qo'shimcha sovg'a
+  const milestones = cfg.milestones === undefined ? DEFAULT_REF_MILESTONES : cleanMilestones(cfg.milestones);
+  const ms = milestones.find(m => m.count === count);
+  const nextMs = milestones.find(m => m.count > count);
+  if (ms) Object.assign(upd, grantUpdates(refUid, { ...ms, note: `${count} ta do'st marrasi` }, { flag: true }));
+
+  // v11: ikki tomonlama bonus — taklif qilingan do'st ham birinchi kirishda sovg'a oladi (ilova ochilganda o'zi qo'shiladi)
+  const friendSpins = clampInt(cfg.friendSpins, 0, 50, 1);
+  const friendXp = clampInt(cfg.friendXp, 0, 100000, 0);
+  const fGifts = [];
+  if (friendSpins > 0) fGifts.push({ type: 'spins', amount: friendSpins });
+  if (friendXp > 0) fGifts.push({ type: 'xp', amount: friendXp });
+  // Do'st ilovada allaqachon bo'lsa (reytingda yozuvi bor) — hasGrant bayrog'i bilan; bo'lmasa ilova birinchi ochilganda o'zi oladi
+  const friendInApp = fGifts.length ? !!(await db('GET', `leaderboard/tg_${fid}/ts`).catch(() => null)) : false;
+  for (const g of fGifts) Object.assign(upd, grantUpdates(`tg_${fid}`, { ...g, note: 'Xush kelibsiz bonusi' }, { flag: friendInApp }));
+
   await db('PATCH', '', upd);
   db('PATCH', `tgusers/${fid}`, { ref: String(refId) }).catch(() => {});
   const tpl = String(cfg.notifyText || DEFAULT_REF_NOTIFY);
-  const msg = tpl.replace(/\{name\}/gi, escHtml(fname)).replace(/\{xp\}/gi, String(xp)).replace(/\{count\}/gi, String(count));
+  let msg = tpl.replace(/\{name\}/gi, escHtml(fname)).replace(/\{xp\}/gi, String(xp)).replace(/\{count\}/gi, String(count));
+  if (ms) msg += '\n\n' + fillTpl(cfg.milestoneText || DEFAULT_REF_MILESTONE_TEXT, { count, gift: giftText(ms.type, ms.amount) });
+  if (nextMs) msg += `\n\n🎯 Keyingi marra: <b>${nextMs.count} ta do'st</b> — ${giftText(nextMs.type, nextMs.amount)}`;
   try {
     await sendMessage(token, Number(refId), msg, openAppMarkup('🚀 VocaBoostni ochish'));
   } catch {
-    /* taklif qiluvchi botni bloklagan bo'lishi mumkin — XP baribir berilgan */
+    /* taklif qiluvchi botni bloklagan bo'lishi mumkin — sovg'alar baribir berilgan */
+  }
+  if (fGifts.length) {
+    try {
+      const gift = fGifts.map(g => giftText(g.type, g.amount)).join(' + ');
+      await sendMessage(token, Number(fid), fillTpl(cfg.friendText || DEFAULT_REF_FRIEND_TEXT, { name: fname, gift }), openAppMarkup("🎁 Sovg'ani olish"));
+    } catch {
+      /* do'st xabarni olmasa ham sovg'a ilova ochilganda qo'shiladi */
+    }
   }
   return { count, xp };
 }

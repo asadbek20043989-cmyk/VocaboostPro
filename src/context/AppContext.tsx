@@ -1,4 +1,3 @@
-import type { AdminPopupCfg } from '../types';
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import {
   UserProfile, SavedWord, DailyQuest, AchievementBadge, EnglishLevel, WheelState,
@@ -171,15 +170,13 @@ interface AppContextType {
   inviteLink: string;
   refCount: number;
   refLeague: (LeaderboardUser & { refs: number })[];
-  refInfo: { enabled: boolean; xp: number; shareText: string };
+  refInfo: { enabled: boolean; xp: number; shareText: string; friendSpins: number; milestones: { count: number; type: string; amount: number }[] };
   // liga
   leagueUsers: LeaderboardUser[];
   leagueLive: boolean;
   challengesLive: boolean;
   realtimeOn: boolean;
   announcement: { text: string; active: boolean } | null;
-  /** Admin paneldan belgilanadigan, ilovaga kirganda chiqadigan pop-up */
-  adminPopup: AdminPopupCfg | null;
   /** Joriy liga haftasi (admin «Yangi hafta» bosganda oshadi) */
   leagueWeek: { week: number; startedAt: number } | null;
   // sertifikatlar
@@ -700,19 +697,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ? { text: String(config.announcement.text), active: true }
       : null;
 
-  const adminPopup: AdminPopupCfg | null = (() => {
-    const p = config?.popup;
-    if (!p || !p.active || !p.id || !(p.title || p.text)) return null;
-    const g = (k: string) => String(p[k] || '');
-    return {
-      id: String(p.id), emoji: g('emoji'), title: g('title'), text: g('text'), btn: g('btn'),
-      title_ru: g('title_ru'), text_ru: g('text_ru'), btn_ru: g('btn_ru'),
-      title_en: g('title_en'), text_en: g('text_en'), btn_en: g('btn_en'),
-      action: (['none', 'levelTest', 'tab', 'link', 'promo'].includes(p.action) ? p.action : 'none') as AdminPopupCfg['action'],
-      target: g('target'), who: p.who === 'old' ? 'old' : 'all', freq: p.freq === 'daily' || p.freq === 'always' ? p.freq : 'once',
-    };
-  })();
-
   const leagueWeek = config?.league && Number(config.league.week) > 0 ? { week: Number(config.league.week), startedAt: Number(config.league.startedAt) || 0 } : null;
 
 // ---------- qurilmalar o'rtasida sinxronlash (telefon <-> noutbuk) ----------
@@ -1055,7 +1039,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Taklif: havola, hisoblagich va «Targ'ibotchilar» reytingi
   const refCfg = config?.referral || {};
-  const refInfo = { enabled: refCfg.enabled !== false, xp: Number.isFinite(Number(refCfg.xp)) && refCfg.xp !== '' && refCfg.xp !== undefined ? Number(refCfg.xp) : 50, shareText: String(refCfg.shareText || '') };
+  const refMilestonesRaw: any[] = refCfg.milestones === undefined
+    ? [{ count: 3, type: 'spins', amount: 2 }, { count: 5, type: 'vip', amount: 24 }, { count: 10, type: 'vip', amount: 72 }, { count: 25, type: 'vip', amount: 168 }]
+    : (Array.isArray(refCfg.milestones) ? refCfg.milestones : Object.values(refCfg.milestones || {}));
+  const refMilestones = refMilestonesRaw
+    .map((m: any) => ({ count: Math.round(Number(m?.count) || 0), type: String(m?.type || ''), amount: Math.round(Number(m?.amount) || 0) }))
+    .filter(m => m.count > 0 && m.amount > 0 && ['spins', 'vip', 'xp', 'coins'].includes(m.type))
+    .sort((a, b) => a.count - b.count);
+  const friendSpinsCfg = Number(refCfg.friendSpins);
+  const refInfo = {
+    enabled: refCfg.enabled !== false,
+    xp: Number.isFinite(Number(refCfg.xp)) && refCfg.xp !== '' && refCfg.xp !== undefined ? Number(refCfg.xp) : 50,
+    shareText: String(refCfg.shareText || ''),
+    friendSpins: refCfg.friendSpins === undefined || refCfg.friendSpins === '' || !Number.isFinite(friendSpinsCfg) ? 1 : Math.max(0, friendSpinsCfg),
+    milestones: refMilestones,
+  };
   const tgIdNow = getTelegramUserId();
   const inviteLink = inviteLinkFor(tgIdNow, botNameFrom(refCfg.botUsername));
   const refCount = Math.max(0, Number(leagueRaw?.[myId.current]?.refs) || 0);
@@ -2219,7 +2217,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         goBack, canGoBack, packs, todayPacks, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
-        realtimeOn: realtimeEnabled, announcement, adminPopup, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
+        realtimeOn: realtimeEnabled, announcement, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
         claimGrants, receivedGrants, setReceivedGrants,
       }}
