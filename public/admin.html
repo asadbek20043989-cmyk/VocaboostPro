@@ -793,14 +793,6 @@
           <div style="flex:4"><label>Sarlavha</label><input id="pTitle" maxlength="80" placeholder="Darajangizni sinab ko'ring!" /></div>
         </div>
         <label>Matn</label><textarea id="pText" maxlength="500" placeholder="Pop-up matni..."></textarea>
-        <details style="margin:8px 0"><summary class="small" style="cursor:pointer">🌐 Ruscha va inglizcha matn (ixtiyoriy — bo'sh qolsa o'zbekcha ko'rinadi)</summary>
-          <label>🇷🇺 Sarlavha</label><input id="pTitleRu" maxlength="80" />
-          <label>🇷🇺 Matn</label><textarea id="pTextRu" maxlength="500"></textarea>
-          <label>🇷🇺 Tugma</label><input id="pBtnRu" maxlength="30" />
-          <label>🇬🇧 Title</label><input id="pTitleEn" maxlength="80" />
-          <label>🇬🇧 Text</label><textarea id="pTextEn" maxlength="500"></textarea>
-          <label>🇬🇧 Button</label><input id="pBtnEn" maxlength="30" />
-        </details>
         <div class="row">
           <div style="flex:1"><label>Tugma matni</label><input id="pBtn" maxlength="30" placeholder="Boshlash" /></div>
           <div style="flex:1"><label>Tugma nima qiladi</label>
@@ -1882,12 +1874,11 @@ $('adSendAll').onclick = guard(async () => {
 /* ---------- sozlamalar ---------- */
 function renderSettings() {
   const s = data.config.settings || {};
-  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText','pEmoji','pTitle','pText','pBtn','pTarget','pTitleRu','pTextRu','pBtnRu','pTitleEn','pTextEn','pBtnEn'].includes(document.activeElement.id)) return;
+  if (document.activeElement && ['s_cap','s_new','s_ok','s_bonus','nText','pEmoji','pTitle','pText','pBtn','pTarget'].includes(document.activeElement.id)) return;
   $('s_cap').value = s.reviewCap ?? 30; $('s_new').value = s.xpNewWord ?? 3; $('s_ok').value = s.xpCorrect ?? 2; $('s_bonus').value = s.xpDailyBonus ?? 10;
   const a = data.config.announcement || {}; $('nText').value = a.text || ''; $('nActive').checked = !!a.active;
   const p = data.config.popup || {};
   $('pEmoji').value = p.emoji || ''; $('pTitle').value = p.title || ''; $('pText').value = p.text || ''; $('pBtn').value = p.btn || '';
-  $('pTitleRu').value = p.title_ru || ''; $('pTextRu').value = p.text_ru || ''; $('pBtnRu').value = p.btn_ru || ''; $('pTitleEn').value = p.title_en || ''; $('pTextEn').value = p.text_en || ''; $('pBtnEn').value = p.btn_en || '';
   $('pAction').value = p.action || 'none'; $('pWho').value = p.who || 'all'; $('pFreq').value = p.freq || 'once'; $('pActive').checked = !!p.active; $('pResend').checked = false;
   if ((p.action || 'none') === 'tab') $('pTab').value = p.target || 'home'; else $('pTarget').value = p.target || '';
   popUi();
@@ -1904,7 +1895,7 @@ $('pAction').onchange = popUi;
 $('savePop').onclick = guard(async () => {
   const act = $('pAction').value;
   const target = act === 'tab' ? $('pTab').value : $('pTarget').value.trim();
-  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), title_ru: $('pTitleRu').value.trim(), text_ru: $('pTextRu').value.trim(), btn_ru: $('pBtnRu').value.trim(), title_en: $('pTitleEn').value.trim(), text_en: $('pTextEn').value.trim(), btn_en: $('pBtnEn').value.trim(), action: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
+  await api('setPopup', { emoji: $('pEmoji').value.trim(), title: $('pTitle').value.trim(), text: $('pText').value.trim(), btn: $('pBtn').value.trim(), action: act, target, who: $('pWho').value, freq: $('pFreq').value, active: $('pActive').checked, resend: $('pResend').checked });
   flash('Pop-up saqlandi ✅'); await load();
 });
 $('sSave').onclick = guard(async () => { await api('setConfig', { key: 'settings', value: { reviewCap: +$('s_cap').value, xpNewWord: +$('s_new').value, xpCorrect: +$('s_ok').value, xpDailyBonus: +$('s_bonus').value } }); flash('Saqlandi ✅'); await load(); });

@@ -78,19 +78,6 @@ const MEDAL: Record<Rank, { ring: string; glow: string; plate: string; plateText
   3: { ring: 'conic-gradient(from 210deg,#FED7AA,#F97316,#9A3412,#FDBA74,#FED7AA)', glow: 'rgba(249,115,22,.65)', plate: 'linear-gradient(180deg,rgba(124,58,18,.85),rgba(60,25,8,.9))', plateText: '#FFE9D2', icon: '🥉', leaf: '#FB923C' },
 };
 
-/** Dafna novdasi (medalning ikki yonida) */
-const Laurel: React.FC<{ color: string; h: number; flip?: boolean }> = ({ color, h, flip }) => (
-  <svg viewBox="0 0 34 80" height={h} width={(h * 34) / 80} aria-hidden style={{ transform: flip ? 'scaleX(-1)' : undefined, overflow: 'visible' }}>
-    <path d="M26 76 C6 62 2 30 16 4" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
-    {[[22, 68, -60], [14, 58, -50], [8, 46, -35], [7, 34, -20], [10, 22, -5], [15, 11, 10]].map(([x, y, r], i) => (
-      <ellipse key={i} cx={x} cy={y} rx="3.1" ry="7.2" fill={color} transform={`rotate(${r} ${x} ${y})`} opacity={0.95 - i * 0.04} />
-    ))}
-    {[[28, 60, 40], [22, 48, 52], [18, 36, 62], [18, 24, 72]].map(([x, y, r], i) => (
-      <ellipse key={`b${i}`} cx={x} cy={y} rx="2.6" ry="6" fill={color} transform={`rotate(${r} ${x} ${y})`} opacity={0.75} />
-    ))}
-  </svg>
-);
-
 /** Toj (har bir o'rin uchun o'z rangida) */
 const RankCrown: React.FC<{ rank: Rank; w: number }> = ({ rank, w }) => {
   if (rank === 1) return <Crown w={w} />;
@@ -117,9 +104,7 @@ const Medal: React.FC<{ rank: Rank; src?: string; name: string; size: number; au
   const ring = Math.max(5, Math.round(size * 0.1));
   const outer = size + ring * 2;
   return (
-    <div className="pd-medal-wrap" style={{ width: outer + size * 0.5, marginTop: rank === 1 ? Math.round(size * 0.42) : Math.round(size * 0.34) }}>
-      <span className="pd-laurel pd-laurel-l" style={{ bottom: 2 }}><Laurel color={m.leaf} h={Math.round(outer * 0.95)} /></span>
-      <span className="pd-laurel pd-laurel-r" style={{ bottom: 2 }}><Laurel color={m.leaf} h={Math.round(outer * 0.95)} flip /></span>
+    <div className="pd-medal-wrap" style={{ width: outer + 8, marginTop: rank === 1 ? Math.round(size * 0.42) : Math.round(size * 0.34) }}>
       <div className="pd-medal" style={{ width: outer, height: outer, background: m.ring, boxShadow: `0 0 ${rank === 1 ? 30 : 20}px ${m.glow}, inset 0 0 0 1.5px rgba(255,255,255,.55)` }}>
         {aura && <span className="absolute -inset-[8px] rounded-full vb-aura pointer-events-none" style={{ ['--au' as any]: aura.color }} />}
         <span className="pd-medal-in" style={{ width: size, height: size }}>
@@ -137,16 +122,13 @@ const Medal: React.FC<{ rank: Rank; src?: string; name: string; size: number; au
 /** Silindrsimon podium bloki: yuqori sirt (ellips), old yuzasi va katta raqam */
 const Block: React.FC<{ rank: Rank }> = ({ rank }) => {
   const h = rank === 1 ? 104 : rank === 2 ? 76 : 60;
-  const lw = rank === 1 ? 34 : 24;
   const m = MEDAL[rank];
   return (
     <div className={`pd-block ${THEME[rank].cls}`} style={{ height: h + 14 }}>
       <div className="pd-block-top" />
       <div className="pd-block-front" style={{ height: h }}>
         <span className="pd-block-num">
-          {rank === 1 && <span className="pd-block-leaf" style={{ left: '4%' }}><Laurel color="#FFF3B0" h={lw * 1.7} /></span>}
           {THEME[rank].label}
-          {rank === 1 && <span className="pd-block-leaf" style={{ right: '4%' }}><Laurel color="#FFF3B0" h={lw * 1.7} flip /></span>}
         </span>
         <span className="pd-block-shine" />
       </div>
@@ -190,7 +172,7 @@ export const Podium: React.FC<{
             <div key={rank} className={`pd-col pd-r${rank}`}>
               <Medal rank={rank} src={u.avatar} name={u.name} size={rank === 1 ? 66 : 52} au={u.cos?.au} />
               <span className="pd-plate" style={{ background: m.plate, color: m.plateText }}>
-                <span className="pd-plate-ico" aria-hidden>{m.icon}</span>
+                {rank === 1 && <span className="pd-plate-ico" aria-hidden>{m.icon}</span>}
                 <span className="pd-plate-name"><CosName name={u.name} cos={u.cos} showTitle className="pd-nm" /></span>
               </span>
               {b && b.gold > 0 && <span className="pd-champ">🏆 {champLabel(b)}</span>}

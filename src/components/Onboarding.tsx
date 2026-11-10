@@ -5,7 +5,6 @@ import { EnglishLevel } from '../types';
 import { triggerHaptic } from '../services/telegram';
 import { Logo, HeaderActions } from './Brand';
 import { LevelTest } from './LevelTest';
-import { LangSwitch } from './LangSwitch';
 import { t as tt } from '../services/i18n';
 
 const LEVELS: { id: EnglishLevel; t: string; d: string }[] = [
@@ -51,7 +50,6 @@ export const Onboarding: React.FC = () => {
 
         {step === 1 ? (
           <div className="space-y-5">
-            <LangSwitch />
             <div className="text-center">
               <Logo className="w-28 h-28 mx-auto" glow />
               <div className="mt-3 text-sm font-extrabold tracking-[0.25em] text-amber-400 uppercase">VocaBoost</div>

@@ -677,3 +677,7 @@ html.light .text-amber-100\/80 { color: #78350F; }
 /* Admin pop-up: har ikki rejimda bir xil to'q premium fon */
 .vb-admin-pop { background: radial-gradient(90% 60% at 50% 0%, rgba(56,189,248,.22), transparent 70%), linear-gradient(180deg, #14224A 0%, #0B1535 60%, #070D24 100%); color: #F8FAFC; animation: sp-pop .3s ease-out both; }
 html.light .vb-admin-pop h2 { color: #FFFFFF; }
+
+/* Podium ism lavhasi: do'kondagi rang/effektlar lavha ustida o'qilmay qolmasin — matn lavha rangida bo'ladi */
+.pd-plate .pd-plate-name, .pd-plate .pd-plate-name * { color: inherit !important; -webkit-text-fill-color: currentColor !important; background: none !important; -webkit-background-clip: border-box !important; background-clip: border-box !important; animation: none !important; filter: none !important; text-shadow: none !important; }
+.pd-r1 .pd-plate-name, .pd-r1 .pd-plate-name * { font-weight: 900; }

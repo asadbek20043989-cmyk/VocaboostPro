@@ -347,5 +347,3 @@ Admin panel → **Sozlamalar** → «Kirishdagi pop-up». Foydalanuvchi ilovani 
 - Kimga: hammaga yoki faqat eski foydalanuvchilarga. Chastota: 1 marta, kuniga 1 marta yoki har kirganda.
 - Matn o'zgarsa yoki «Hamma yana ko'rsin» belgilansa — yangi versiya sifatida hamma qayta ko'radi.
 
-## 🌐 Interfeys tili (v11)
-O'zbekcha / Русский / English. Birinchi kirishda Telegram tiliga qarab tanlanadi; Onboarding va Sozlamalarda o'zgartiriladi. Tarjimalar `src/services/i18n.ts` da («o'zbekcha matn → ruscha, inglizcha»); yangi matn qo'shish uchun shu ro'yxatga qator qo'shing va kodda `t("...")` ishlating.

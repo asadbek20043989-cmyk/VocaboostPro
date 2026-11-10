@@ -31,7 +31,6 @@ import { ChallengesTab } from './ChallengesTab';
 import { Podium, GlowAvatar } from './Podium';
 import { levelLabel } from '../data/levels';
 import { LevelTest } from './LevelTest';
-import { LangSwitch } from './LangSwitch';
 import { HallOfHistory } from './HallOfHistory';
 import { loadHall, championCounts, champLabel } from '../services/hall';
 import { BANNERS } from '../data/shopDefaults';
@@ -594,8 +593,6 @@ export const LeaderboardTab: React.FC = () => {
                 })}
               </div>
             </div>
-
-            <LangSwitch />
 
             {/* English Level Selection */}
             <div className="space-y-1">

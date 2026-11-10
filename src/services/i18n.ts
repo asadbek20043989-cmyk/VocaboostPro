@@ -11,23 +11,13 @@ export const LANGS: { id: Lang; label: string; flag: string }[] = [
 const KEY = 'vb_lang_v1';
 const listeners = new Set<() => void>();
 
-const detect = (): Lang => {
-  try {
-    const saved = localStorage.getItem(KEY);
-    if (saved === 'uz' || saved === 'ru' || saved === 'en') return saved;
-  } catch { /* ignore */ }
-  try {
-    const tg = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.language_code || navigator.language || '';
-    const c = String(tg).slice(0, 2).toLowerCase();
-    if (c === 'ru') return 'ru';
-    if (c === 'en') return 'en';
-  } catch { /* ignore */ }
-  return 'uz';
-};
+/** Interfeys faqat o'zbek tilida (ruscha/inglizcha tanlash o'chirilgan). */
+const detect = (): Lang => 'uz';
 let current: Lang = typeof window === 'undefined' ? 'uz' : detect();
 
 export const getLang = (): Lang => current;
-export function setLang(l: Lang): void {
+export function setLang(_l: Lang): void {
+  const l: Lang = 'uz';
   current = l;
   try { localStorage.setItem(KEY, l); } catch { /* ignore */ }
   try { document.documentElement.lang = l; } catch { /* ignore */ }
