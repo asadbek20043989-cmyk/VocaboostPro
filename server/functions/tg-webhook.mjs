@@ -83,7 +83,18 @@ export const handler = async event => {
       await upsert();
       // Xabar matni va tugma yozuvi admin paneldan (🤖 Bot) o'zgartiriladi
       const cfg = (db && (await db('GET', 'config/botStart'))) || {};
-      if (cfg.enabled !== false) {
+      // Do'st taklifi (t.me/<bot>?start=bd_KOD yoki duel_KOD): Telegram bunday havolada ilovaga parametr bermaydi,
+      // shuning uchun kodni ilova manziliga qo'shib, to'g'ridan-to'g'ri duelga olib boradigan tugma yuboramiz
+      const duelM = /^(bd|duel)_([A-Za-z0-9]{4,12})$/.exec(refParam);
+      if (duelM && siteUrl().startsWith('https://')) {
+        const q = duelM[1] === 'bd' ? 'bd' : 'duel';
+        try {
+          await sendMessage(token, m.chat.id, `⚔️ <b>Do'stingiz sizni Blitz Duelga chaqirdi!</b>\n\nQo'shilish uchun pastdagi tugmani bosing 👇`, {
+            inline_keyboard: [[{ text: '⚔️ Duelga qo\'shilish', web_app: { url: `${siteUrl()}/?${q}=${duelM[2].toUpperCase()}` } }]],
+          });
+        } catch { /* ignore */ }
+      }
+      if (cfg.enabled !== false && !(duelM && !wasNew)) {
         // Ism Telegramdagi profildan olinadi (first_name); faqat u umuman bo'lmasa "do'st" deyiladi
         const name = firstNameOf(m.from) || "do'st";
         const text = String(cfg.text || DEFAULT_START_TEXT).replace(/\{name\}/g, escHtml(name));

@@ -4,7 +4,7 @@ import {
   UserProfile, SavedWord, DailyQuest, AchievementBadge, EnglishLevel, WheelState,
   Certificate, LeaderboardUser, BankWord, SrsEntry, WordPack, CustomWordPack, Duel, DuelMetric, DuelPlayer, Challenge,
 } from '../types';
-import { getTelegramUserData, getTelegramUserId, getStartParam, initTelegramApp, triggerHaptic, askBotWriteAccess, configureBackButton, getTelegramWebApp } from '../services/telegram';
+import { getTelegramUserData, getTelegramUserId, getStartParam, initTelegramApp, triggerHaptic, askBotWriteAccess, configureBackButton, getTelegramWebApp, setBotUsername } from '../services/telegram';
 import { DEFAULT_AVATAR, telegramPhotoProxy, shrinkDataUrl } from '../services/avatar';
 import { sfx } from '../services/sound';
 import { botRegister, botSendCertificate, canUseBot } from '../services/bot';
@@ -1078,6 +1078,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     milestones: refMilestones,
   };
   const tgIdNow = getTelegramUserId();
+  useEffect(() => { setBotUsername(refCfg.botUsername); }, [refCfg.botUsername]);
   const inviteLink = inviteLinkFor(tgIdNow, botNameFrom(refCfg.botUsername));
   const refCount = Math.max(0, Number(leagueRaw?.[myId.current]?.refs) || 0);
 

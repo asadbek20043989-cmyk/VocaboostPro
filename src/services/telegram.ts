@@ -164,6 +164,25 @@ export function configureBackButton(visible: boolean, onClick?: () => void): voi
 // ---------- Referral helpers ----------
 // Set VITE_TELEGRAM_APP_LINK in your env, e.g. https://t.me/YourBot/app
 const APP_LINK: string = (import.meta as any).env?.VITE_TELEGRAM_APP_LINK || '';
+// Bot username (Mini App havolasi bo'lmasa, havolalar bot orqali yasaladi): env yoki admin paneldagi qiymat
+let BOT_NAME: string = String((import.meta as any).env?.VITE_BOT_USERNAME || '').replace(/^@/, '').trim() || (/t\.me\/([A-Za-z0-9_]{4,})/.exec(APP_LINK)?.[1] ?? '');
+export function setBotUsername(name?: string) {
+  const n = String(name || '').replace(/^@/, '').trim();
+  if (/^[A-Za-z0-9_]{4,}$/.test(n)) BOT_NAME = n;
+}
+
+/**
+ * Telegram ichida ochiladigan havola (hech qachon oddiy brauzer sahifasiga olib bormaydi, agar bot ma'lum bo'lsa):
+ *  1) Mini App havolasi bor (VITE_TELEGRAM_APP_LINK) → to'g'ridan-to'g'ri ilova: t.me/Bot/app?startapp=<param>
+ *  2) Faqat bot ma'lum → bot chati: t.me/Bot?start=<param> (bot «Ilovani ochish» tugmasini yuboradi, parametr ilovaga uzatiladi)
+ *  3) Hech narsa yo'q → sayt manzili (faqat zaxira, brauzerda ochiladi)
+ */
+function tgLink(param: string, webQuery: string): string {
+  if (APP_LINK) return `${APP_LINK}${APP_LINK.includes('?') ? '&' : '?'}startapp=${param}`;
+  if (BOT_NAME) return `https://t.me/${BOT_NAME}?start=${param}`;
+  const base = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${base}/?${webQuery}`;
+}
 
 export function getTelegramUserId(): number | null {
   return getTelegramWebApp()?.initDataUnsafe?.user?.id ?? null;
@@ -175,10 +194,9 @@ export function getStartParam(): string | null {
 
 export function getReferralLink(): string {
   const id = getTelegramUserId();
-  const base = APP_LINK || (typeof window !== 'undefined' ? window.location.origin : '');
-  if (!base) return '';
-  if (APP_LINK) return id ? `${APP_LINK}?startapp=ref_${id}` : APP_LINK;
-  return base;
+  if (APP_LINK) return id ? `${APP_LINK}${APP_LINK.includes('?') ? '&' : '?'}startapp=ref_${id}` : APP_LINK;
+  if (BOT_NAME) return id ? `https://t.me/${BOT_NAME}?start=ref_${id}` : `https://t.me/${BOT_NAME}`;
+  return typeof window !== 'undefined' ? window.location.origin : '';
 }
 
 export const REFERRAL_TEXT =
@@ -215,16 +233,12 @@ export function shareUrl(link: string, text: string): boolean {
 
 /** Boshqa foydalanuvchini bellashuvga taklif qilish havolasi */
 export function getDuelLink(code: string): string {
-  if (APP_LINK) return `${APP_LINK}${APP_LINK.includes('?') ? '&' : '?'}startapp=duel_${code}`;
-  const base = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${base}/?duel=${code}`;
+  return tgLink(`duel_${code}`, `duel=${code}`);
 }
 
 /** Do'stni «Blitz Duel»ga chaqirish havolasi (Telegram: startapp=bd_KOD, brauzerda: ?bd=KOD) */
 export function getFriendDuelLink(code: string): string {
-  if (APP_LINK) return `${APP_LINK}${APP_LINK.includes('?') ? '&' : '?'}startapp=bd_${code}`;
-  const base = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${base}/?bd=${code}`;
+  return tgLink(`bd_${code}`, `bd=${code}`);
 }
 
 /** Ilova do'st duel havolasi orqali ochilgan bo'lsa — xona kodini qaytaradi */

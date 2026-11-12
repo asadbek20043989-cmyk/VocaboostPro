@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
-import { Crown, Users, Globe2, Swords } from 'lucide-react';
+import { Users, Globe2 } from 'lucide-react';
 import type { EnglishLevel, LeaderboardUser } from '../types';
-import { LEVEL_NAMES } from '../data/levels';
 import { triggerHaptic } from '../services/telegram';
 
 export type LeagueView = 'all' | EnglishLevel;
@@ -27,7 +26,7 @@ interface Props {
   myLevel: EnglishLevel;
 }
 
-/** Darajalar «yo'li»: 6 ta liga kartasi + umumiy reyting, tanlangan liga uchun katta sahna */
+/** Darajalar «yo'li»: 6 ta liga kartasi + umumiy reyting */
 export const LevelLeagues: React.FC<Props> = ({ users, view, onView, myLevel }) => {
   const stats = useMemo(() => {
     const m: Record<string, { count: number; xp: number; top?: LeaderboardUser }> = { all: { count: users.length, xp: 0, top: users[0] } };
@@ -43,10 +42,6 @@ export const LevelLeagues: React.FC<Props> = ({ users, view, onView, myLevel }) 
   }, [users]);
 
   const items: LeagueView[] = ['all', ...LEAGUE_LEVELS];
-  const th = themeOf(view);
-  const st = stats[view];
-  const list = view === 'all' ? users : users.filter(u => (LEAGUE_LEVELS.includes(u.level) ? u.level : 'A1') === view);
-  const meIdx = list.findIndex(u => u.isCurrentUser);
 
   return (
     <div className="space-y-2.5">
@@ -72,34 +67,6 @@ export const LevelLeagues: React.FC<Props> = ({ users, view, onView, myLevel }) 
             </button>
           );
         })}
-      </div>
-
-      {/* Tanlangan liga sahnasi */}
-      <div className="vb-lg-hero" style={{ ['--c1' as any]: th.c1, ['--c2' as any]: th.c2 }} key={view}>
-        <span className="vb-lg-mark" aria-hidden>{view === 'all' ? '★' : view}</span>
-        <div className="relative flex items-center gap-3">
-          <div className="vb-lg-emblem">{th.icon}</div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-extrabold uppercase tracking-widest text-white/70">
-              {view === 'all' ? 'Barcha darajalar' : `${view} · ${LEVEL_NAMES[view]}`}
-            </div>
-            <div className="text-lg font-black text-white leading-tight truncate">{th.title}</div>
-            {view !== 'all' && view === myLevel && <div className="text-[11px] font-bold text-white/85 flex items-center gap-1"><Swords className="w-3 h-3" /> Sizning ligangiz — tengdoshlar bilan bellashing</div>}
-            {view !== 'all' && view !== myLevel && <div className="text-[11px] font-semibold text-white/75">Boshqa liga — kuzatuv rejimi</div>}
-          </div>
-        </div>
-        <div className="relative grid grid-cols-3 gap-2 mt-3">
-          <div className="vb-lg-stat"><b>{st.count.toLocaleString()}</b><span>ishtirokchi</span></div>
-          <div className="vb-lg-stat"><b>{st.xp >= 10000 ? `${(st.xp / 1000).toFixed(1)}k` : st.xp.toLocaleString()}</b><span>jami XP</span></div>
-          <div className="vb-lg-stat"><b>{meIdx >= 0 ? `#${meIdx + 1}` : '—'}</b><span>{meIdx >= 0 ? 'sizning o‘rin' : 'siz bu yerda emassiz'}</span></div>
-        </div>
-        {st.top && (
-          <div className="relative mt-2.5 flex items-center gap-1.5 text-[11px] font-bold text-white/90 bg-black/20 rounded-xl px-2.5 py-1.5">
-            <Crown className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-            <span className="truncate">Yetakchi: {st.top.name.replace(' (Siz)', '')}{view !== 'all' ? '' : ` · ${st.top.level}`}</span>
-            <span className="ml-auto tabular-nums shrink-0">{st.top.xp.toLocaleString()} XP</span>
-          </div>
-        )}
       </div>
     </div>
   );
