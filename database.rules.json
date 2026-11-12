@@ -49,6 +49,40 @@
     },
     "bduels": {
       ".read": true,
+      ".write": false,
+      ".indexOn": ["meta/createdAt"]
+    },
+    "bq": {
+      ".read": true,
+      ".write": false
+    },
+    "bghost": {
+      ".read": false,
+      ".write": false,
+      "$lvl": {
+        ".indexOn": ["ts"]
+      }
+    },
+    "bglobal": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": ["ts"]
+    },
+    "bplay": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": ["issued"]
+    },
+    "bdaily": {
+      ".read": false,
+      ".write": false
+    },
+    "bweek": {
+      ".read": true,
+      ".write": false
+    },
+    "bstats": {
+      ".read": false,
       ".write": false
     },
     "challenges": {

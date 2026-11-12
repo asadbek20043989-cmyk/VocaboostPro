@@ -163,7 +163,7 @@ export function configureBackButton(visible: boolean, onClick?: () => void): voi
 
 // ---------- Referral helpers ----------
 // Set VITE_TELEGRAM_APP_LINK in your env, e.g. https://t.me/YourBot/app
-const APP_LINK: string = (import.meta as any).env?.VITE_TELEGRAM_APP_LINK || '';
+const APP_LINK: string = String((import.meta as any).env?.VITE_TELEGRAM_APP_LINK || '').trim().replace(/\/+$/, '');
 // Bot username (Mini App havolasi bo'lmasa, havolalar bot orqali yasaladi): env yoki admin paneldagi qiymat
 let BOT_NAME: string = String((import.meta as any).env?.VITE_BOT_USERNAME || '').replace(/^@/, '').trim() || (/t\.me\/([A-Za-z0-9_]{4,})/.exec(APP_LINK)?.[1] ?? '');
 export function setBotUsername(name?: string) {

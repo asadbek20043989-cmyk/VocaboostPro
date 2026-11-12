@@ -14,6 +14,7 @@ import { LofiMini } from './components/LofiPlayer';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
 import { FriendDuelHost } from './components/FriendDuel';
+import { GlobalBlitzHost } from './components/GlobalBlitz';
 import { WelcomePopup, welcomeSeen, markWelcomeSeen } from './components/WelcomePopup';
 import { RankChangePopup, loadLastRank, saveLastRank, RankDelta } from './components/RankChangePopup';
 import { LuckyWheel } from './components/LuckyWheel';
@@ -316,6 +317,7 @@ const MainScreen: React.FC = () => {
       <StreakPopup />
       {/* Do'st bilan Blitz Duel oynasi (havola orqali kirish ham shu yerda ochiladi) */}
       <FriendDuelHost />
+      <GlobalBlitzHost />
       {/* Reyting o'zgarishi (birinchi kirishdan tashqari) */}
       {rankDelta && !welcome && !popupOpen && (
         <RankChangePopup data={rankDelta} onClose={() => setRankDelta(null)} />

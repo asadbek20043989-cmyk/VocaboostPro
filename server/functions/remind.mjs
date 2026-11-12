@@ -4,6 +4,7 @@
 //  3) Win-back va faollashtirish xabarlari (admin → 🚀 Retention)
 import { makeDb, siteUrl, tashkentDay, tashkentNow, triggerBroadcastResume } from '../lib/tg.mjs';
 import { loadRt, drainWeekRest, runWinback } from '../lib/engage.mjs';
+import { cleanupBlitz } from '../lib/blitz.mjs';
 
 export const config = { schedule: '0 * * * *' };
 
@@ -53,5 +54,7 @@ export const handler = async () => {
   } catch (e) {
     out.engage = 'error: ' + String(e?.message || e);
   }
+  // Global Blitz: eskirgan xonalar, saqlangan natijalar va hisoblagichlarni tozalash (har soatda, cheklangan miqdorda)
+  try { out.blitz = await cleanupBlitz(db, { budgetMs: 12000 }); } catch (e) { out.blitz = 'error: ' + String(e?.message || e); }
   return { statusCode: 200, body: JSON.stringify(out) };
 };

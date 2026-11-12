@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Swords, X, Share2, Copy, Check, Crown, Timer, RotateCcw, ChevronRight, Zap, Users, Loader2, Handshake } from 'lucide-react';
+import { Swords, X, Share2, Copy, Check, Crown, Timer, RotateCcw, ChevronRight, Zap, Users, Loader2, Handshake, Gem } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Avatar } from './Avatar';
 import { triggerHaptic, shareUrl, getFriendDuelLink, readFriendDuelParam } from '../services/telegram';
 import { sfx } from '../services/sound';
 import {
-  FD_QUESTIONS, FD_SECONDS, FD_COMBO_MAX, FD_MAX_PLAYERS, FdMe, FdQuestion, FdPlayer, FdRoom, FdResult,
+  FD_QUESTIONS, FD_SECONDS, FD_COMBO_MAX, FD_MAX_PLAYERS, FdMe, FdQuestion, FdPlayer, FdRoom, FdResult, FdSettleUser,
   pointsFor, compareResults, seriesScore, roundOf, createRoom, joinRoom, startRound, submitResult, fetchRoom, useFriendRoom,
   getMyRooms, rememberRoom, forgetRoom, saveProgress, loadProgress, clearProgress, finalizeProgress,
   openFriendDuel, setFriendDuelCode, closeFriendDuel, useFriendDuelUi,
 } from '../services/friendDuel';
+import { openGlobalBlitz, rememberOpp, submitLive, cumulativeScores } from '../services/globalBlitz';
+import type { GbLogItem, GbSettle } from '../services/globalBlitz';
 
 /* =====================================================================
    Do'st bilan Blitz Duel — butun ilova bo'ylab bitta oyna (App'da bir marta ulanadi).
@@ -17,14 +19,14 @@ import {
    Shaffof oq qatlamlar `bg-white/[0.06]` ko'rinishida yoziladi (kun rejimi `bg-white/5|10` ni o'zgartirib yuboradi).
    ===================================================================== */
 
-const GLASS = 'bg-white/[0.06] border border-white/[0.12]';
-const fmtTime = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+export const GLASS = 'bg-white/[0.06] border border-white/[0.12]';
+export const fmtTime = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 const inviteText = (name: string) => `⚔️ ${name} seni VocaBoost'da ${FD_QUESTIONS} so'zlik Blitz Duelga chaqiryapti! Kim ko'proq so'z biladi? 🔥`;
 
 /* ---------------------------- kichik bo'laklar ---------------------------- */
 
-const Person: React.FC<{ p?: FdPlayer | null; you?: boolean; tone: 'amber' | 'sky'; big?: boolean; waiting?: boolean }> = ({ p, you, tone, big, waiting }) => {
+export const Person: React.FC<{ p?: FdPlayer | null; you?: boolean; tone: 'amber' | 'sky'; big?: boolean; waiting?: boolean }> = ({ p, you, tone, big, waiting }) => {
   const ring = tone === 'amber' ? 'ring-amber-400/80' : 'ring-sky-400/80';
   const size = big ? 'w-16 h-16' : 'w-12 h-12';
   return (
@@ -41,11 +43,11 @@ const Person: React.FC<{ p?: FdPlayer | null; you?: boolean; tone: 'amber' | 'sk
   );
 };
 
-const Vs: React.FC = () => (
+export const Vs: React.FC = () => (
   <div className="fd-vs shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 text-xs font-black flex items-center justify-center shadow-lg shadow-orange-500/30">VS</div>
 );
 
-const Rules: React.FC = () => (
+export const Rules: React.FC = () => (
   <div className="grid grid-cols-3 gap-2 text-center">
     {[
       [`${FD_QUESTIONS}`, 'ta so‘z'],
@@ -60,12 +62,12 @@ const Rules: React.FC = () => (
   </div>
 );
 
-const Primary: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...rest }) => (
+export const Primary: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...rest }) => (
   <button type="button" {...rest} className={`w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 ${className}`}>
     {children}
   </button>
 );
-const Ghost: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...rest }) => (
+export const Ghost: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...rest }) => (
   <button type="button" {...rest} className={`w-full h-11 rounded-2xl ${GLASS} text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all disabled:opacity-50 ${className}`}>
     {children}
   </button>
@@ -73,16 +75,18 @@ const Ghost: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ classN
 
 /* ------------------------------ o'yin (15 savol) ------------------------------ */
 
-interface PlayDone { s: number; c: number; t: number; wrong: FdQuestion[] }
+export interface PlayDone { s: number; c: number; t: number; wrong: FdQuestion[]; log: GbLogItem[] }
+export interface PlayProgress { s: number; c: number; t: number; i: number; log: GbLogItem[] }
 
-const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: { s: number; c: number; t: number; i: number }) => void; onDone: (r: PlayDone) => void }> = ({ qs, onProgress, onDone }) => {
+export const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: PlayProgress) => void; onDone: (r: PlayDone) => void; ghost?: { name: string; log: GbLogItem[] } }> = ({ qs, onProgress, onDone, ghost }) => {
   const [idx, setIdx] = useState(0);
   const [remaining, setRemaining] = useState(FD_SECONDS);
   const [selected, setSelected] = useState<string | null>(null);
   const [marks, setMarks] = useState<boolean[]>([]);
   const [view, setView] = useState({ s: 0, combo: 1 });
   const lock = useRef(false);
-  const acc = useRef({ s: 0, c: 0, t: 0, combo: 1, wrong: [] as FdQuestion[] });
+  const acc = useRef({ s: 0, c: 0, t: 0, combo: 1, wrong: [] as FdQuestion[], log: [] as GbLogItem[] });
+  const ghostScores = useMemo(() => (ghost ? cumulativeScores(ghost.log) : []), [ghost]);
   const t0 = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const next = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,10 +96,12 @@ const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: { s: number; c: numbe
     lock.current = true;
     if (timer.current) clearInterval(timer.current);
     const q = qs[idx];
-    const elapsed = Math.min(FD_SECONDS * 1000, performance.now() - t0.current);
+    // Vaqt butun millisekundga yaxlitlanadi va ball SHU qiymatdan hisoblanadi — server javoblardan aynan shu natijani qayta hisoblaydi
+    let m = choice === null ? FD_SECONDS * 1000 : Math.max(0, Math.min(FD_SECONDS * 1000, Math.round(performance.now() - t0.current)));
     const ok = choice !== null && choice === q.u;
+    if (ok && m < 400) m = 400; // 0,4 soniyadan tez to'g'ri javob inson uchun mumkin emas (serverda ham shunday)
     if (ok) {
-      acc.current.s += pointsFor(FD_SECONDS - elapsed / 1000, acc.current.combo);
+      acc.current.s += pointsFor(FD_SECONDS - m / 1000, acc.current.combo);
       acc.current.c += 1;
       acc.current.combo = Math.min(FD_COMBO_MAX, Math.round((acc.current.combo + 0.3) * 10) / 10);
       sfx.correct();
@@ -106,17 +112,18 @@ const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: { s: number; c: numbe
       sfx.wrong();
       triggerHaptic('warning');
     }
-    acc.current.t += choice === null ? FD_SECONDS * 1000 : elapsed;
+    acc.current.t += m;
+    acc.current.log.push({ c: ok ? 1 : 0, m, a: choice });
     setSelected(choice ?? '__timeout__');
     setMarks(m => [...m, ok]);
     setView({ s: acc.current.s, combo: acc.current.combo });
-    onProgress({ s: acc.current.s, c: acc.current.c, t: acc.current.t, i: idx + 1 });
+    onProgress({ s: acc.current.s, c: acc.current.c, t: acc.current.t, i: idx + 1, log: acc.current.log.slice() });
     next.current = setTimeout(() => {
       if (idx + 1 < qs.length) {
         lock.current = false;
         setIdx(idx + 1);
       } else {
-        onDone({ s: acc.current.s, c: acc.current.c, t: acc.current.t, wrong: acc.current.wrong });
+        onDone({ s: acc.current.s, c: acc.current.c, t: acc.current.t, wrong: acc.current.wrong, log: acc.current.log });
       }
     }, 700);
   };
@@ -147,6 +154,13 @@ const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: { s: number; c: numbe
         <span className={`${GLASS} px-2 py-0.5 rounded-full text-slate-200 font-bold tabular-nums`}>{idx + 1} / {qs.length}</span>
         <span className="font-extrabold text-orange-400 tabular-nums">{view.s} ball{view.combo > 1 && <span className="ml-1 text-[10px] text-amber-300">{view.combo}x</span>}</span>
       </div>
+
+      {ghost && (
+        <div className={`${GLASS} rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px]`}>
+          <span className="text-slate-300 truncate">Raqib: <b className="text-white">{ghost.name}</b></span>
+          <span className="font-extrabold text-sky-300 tabular-nums">{marks.length ? ghostScores[marks.length - 1] ?? 0 : 0} ball</span>
+        </div>
+      )}
 
       <div className="flex gap-[3px]" aria-hidden>
         {qs.map((_, i) => (
@@ -183,7 +197,7 @@ const FdPlay: React.FC<{ qs: FdQuestion[]; onProgress: (p: { s: number; c: numbe
   );
 };
 
-const Countdown: React.FC<{ onEnd: () => void }> = ({ onEnd }) => {
+export const Countdown: React.FC<{ onEnd: () => void }> = ({ onEnd }) => {
   const [n, setN] = useState(3);
   useEffect(() => {
     sfx.click(true);
@@ -202,7 +216,7 @@ const Countdown: React.FC<{ onEnd: () => void }> = ({ onEnd }) => {
 
 /* ------------------------------ natija ekrani ------------------------------ */
 
-const ScoreCard: React.FC<{ p?: FdPlayer | null; you?: boolean; r?: FdResult; win?: boolean; tone: 'amber' | 'sky' }> = ({ p, you, r, win, tone }) => (
+export const ScoreCard: React.FC<{ p?: FdPlayer | null; you?: boolean; r?: FdResult; win?: boolean; tone: 'amber' | 'sky' }> = ({ p, you, r, win, tone }) => (
   <div className={`relative rounded-2xl p-3 text-center border ${win ? 'bg-amber-400/15 border-amber-400/70 shadow-lg shadow-amber-500/10' : `${GLASS}`}`}>
     {win && <Crown className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 text-amber-300 fill-amber-300 drop-shadow" />}
     <div className="flex justify-center"><Avatar src={p?.avatar} name={p?.name} className={`w-11 h-11 ring-2 ${tone === 'amber' ? 'ring-amber-400/80' : 'ring-sky-400/80'}`} /></div>
@@ -223,10 +237,30 @@ const ScoreCard: React.FC<{ p?: FdPlayer | null; you?: boolean; r?: FdResult; wi
   </div>
 );
 
+/* ------------------------------ Global Blitz mukofot qatori ------------------------------ */
+
+/** O'yin tugagach serverdan kelgan mukofot/limit holatini ko'rsatadi (Global Blitz) */
+export const RewardLine: React.FC<{ s?: Pick<FdSettleUser, 'xp' | 'why' | 'used' | 'limit' | 'counted'> | GbSettle | null; late?: boolean; pending?: boolean; win?: boolean }> = ({ s, late, pending, win }) => {
+  const wrap = (cls: string, icon: React.ReactNode, text: React.ReactNode) => (
+    <div className={`rounded-xl border px-3 py-2 text-xs leading-snug flex items-start gap-2 ${cls}`}><span className="shrink-0 mt-px">{icon}</span><span>{text}</span></div>
+  );
+  if (late) return wrap('bg-white/[0.06] border-white/[0.12] text-slate-300', '⏱', 'Raqib juda kech tugatdi — bu o‘yin mukofotga hisoblanmadi.');
+  if (!s) return pending ? wrap('bg-white/[0.06] border-white/[0.12] text-slate-300', <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" />, 'Mukofot hisoblanmoqda…') : null;
+  if (s.xp > 0) return wrap('bg-emerald-500/10 border-emerald-400/40 text-emerald-200', <Gem className="w-4 h-4 text-emerald-300" />, <><b className="text-emerald-100">+{s.xp} XP</b> — g‘alaba mukofoti. Bugungi mukofotli o‘yinlar: {s.used}/{s.limit}</>);
+  if (s.counted) return wrap('bg-sky-500/10 border-sky-400/30 text-sky-100', '✅', <>O‘yin hisobga olindi ({s.used}/{s.limit}). {win ? 'Mukofot hozircha o‘chirilgan.' : 'XP faqat g‘alaba uchun beriladi — keyingisida omad!'}</>);
+  if (s.why === 'limit') return wrap('bg-amber-500/10 border-amber-400/30 text-amber-100', '🛑', <>Bugungi {s.limit} ta mukofotli o‘yin tugadi — bu o‘yin hisobga olinmadi. Mashq qilishingiz mumkin, mukofot ertaga yangilanadi.</>);
+  if (s.why === 'same') return wrap('bg-amber-500/10 border-amber-400/30 text-amber-100', '🔁', 'Bu raqib bilan bugun allaqachon o‘ynagansiz — mukofot faqat har xil raqiblar uchun. Yangi raqib toping!');
+  if (s.why === 'error') return wrap('bg-rose-500/10 border-rose-400/30 text-rose-200', '⚠️', 'Mukofotni hisoblab bo‘lmadi. Natija saqlandi.');
+  return null;
+};
+
 /* ------------------------------ asosiy oyna ------------------------------ */
 
-const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
-  const { accountId, profile, allWords, realtimeOn } = useApp();
+const WALKOVER_MS = 100000; // Global Blitz: raqib shuncha vaqt natija yubormasa — chiqib ketgan deb hisoblanadi
+const STUCK_MS = 20000; // Global Blitz: raqib shuncha vaqt savollarni tayyorlamasa — o'zimiz tayyorlaymiz
+
+const FriendDuelModal: React.FC<{ code: string | null; global?: boolean }> = ({ code, global = false }) => {
+  const { accountId, profile, allWords, realtimeOn, refreshGrants } = useApp();
   const me: FdMe = useMemo(
     () => ({ id: accountId, name: profile.name || 'Do‘st', avatar: profile.avatar && profile.avatar.length <= 400 ? profile.avatar : '' }),
     [accountId, profile.name, profile.avatar]
@@ -238,12 +272,17 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
   const [err, setErr] = useState('');
   const [copied, setCopied] = useState(false);
   const [joinErr, setJoinErr] = useState<'none' | 'full' | 'net' | ''>('');
-  const [mine, setMine] = useState<{ n: number; res: FdResult; wrong: FdQuestion[]; sent: boolean } | null>(null);
+  const [mine, setMine] = useState<{ n: number; res: FdResult; wrong: FdQuestion[]; sent: boolean; log?: GbLogItem[]; rejected?: string } | null>(null);
+  const [settleMine, setSettleMine] = useState<{ n: number; s: GbSettle } | null>(null);
+  const grantKey = useRef('');
   const { room, loaded, refresh } = useFriendRoom(code, phase !== 'play');
   const booting = useRef(false);
   const joining = useRef(false);
   const finalizing = useRef('');
   const progRef = useRef<{ s: number; c: number; t: number; i: number }>({ s: 0, c: 0, t: 0, i: 0 });
+  const [, force] = useState(0);
+  const seenOppAt = useRef(0);
+  const autoKey = useRef('');
 
   const iAmIn = !!room?.players.some(p => p.id === me.id);
   const meP = room?.players.find(p => p.id === me.id) || null;
@@ -284,7 +323,7 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
   useEffect(() => {
     if (!code || !loaded) return;
     if (!room) { setJoinErr('none'); return; }
-    if (iAmIn) { rememberRoom(code, room.createdBy === me.id); setJoinErr(''); return; }
+    if (iAmIn) { if (!global) rememberRoom(code, room.createdBy === me.id); setJoinErr(''); return; }
     if (room.players.length >= FD_MAX_PLAYERS) { setJoinErr('full'); return; }
     if (joining.current) return;
     joining.current = true;
@@ -296,7 +335,7 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
       } else setJoinErr(r.error);
       joining.current = false;
     });
-  }, [code, loaded, room, iAmIn, me, refresh]);
+  }, [code, loaded, room, iAmIn, me, refresh, global]);
 
   /* 3. O'yin yarmida yopilgan bo'lsa — qolgan savollar xato hisoblanib natija yuboriladi (savollarni qayta o'ynab bo'lmaydi) */
   useEffect(() => {
@@ -305,10 +344,16 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
     const key = `${room.code}:${round.n}:${round.k}`;
     if (!p || p.k !== round.k || finalizing.current === key) return;
     finalizing.current = key;
-    submitResult(room.code, round.n, me.id, finalizeProgress(p)).then(ok => {
-      if (ok) { clearProgress(room.code, round.n); refresh(); } else finalizing.current = '';
-    });
-  }, [room, round, iAmIn, phase, myRes, me.id, refresh]);
+    const done = (ok: boolean) => { if (ok) { clearProgress(room.code, round.n); refresh(); } else finalizing.current = ''; };
+    if (global) {
+      // Global Blitz: natijani server hisoblaydi — saqlangan javoblar yuboriladi (javob berilmaganlari «vaqt tugadi» hisoblanadi)
+      submitLive({ id: me.id, name: me.name, avatar: me.avatar, level: profile.level }, room.code, round.n, (p.log || []) as GbLogItem[]).then(r => {
+        if (r?.ok && r.settle && r.settle.xp > 0) setTimeout(refreshGrants, 700);
+        // server rad etgan natija (masalan, vaqt mos kelmadi) qayta-qayta yuborilmaydi
+        done(!!r && (r.ok || !!r.error));
+      });
+    } else submitResult(room.code, round.n, me.id, finalizeProgress(p)).then(done);
+  }, [room, round, iAmIn, phase, myRes, me.id, refresh, global]);
 
   /* 4. Do'st natijasi kelganda — ovoz va tebranish */
   const oppSeen = useRef(false);
@@ -344,12 +389,60 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
     refresh();
   };
 
+  /* Global Blitz: raqib eslab qolinadi; o'yin avtomatik boshlanadi (savollarni xona egasi tayyorlaydi — poyga yo'q) */
+  useEffect(() => {
+    if (global && opp) rememberOpp(opp.id);
+  }, [global, opp?.id]);
+
+  useEffect(() => {
+    if (!global) return;
+    const id = setInterval(() => force(x => x + 1), 1000);
+    return () => clearInterval(id);
+  }, [global]);
+
+  if (global && opp && !seenOppAt.current) seenOppAt.current = Date.now();
+  const stuck = global && !!opp && !round && seenOppAt.current > 0 && Date.now() - seenOppAt.current > STUCK_MS;
+
+  useEffect(() => {
+    if (!global || !room || !iAmIn || !opp || phase !== 'idle' || busy || myRes || mine) return;
+    const host = room.createdBy === me.id;
+    if (!host && !round) return;
+    const key = `${room.code}:${round?.k || 'new'}`;
+    if (autoKey.current === key) return;
+    autoKey.current = key;
+    begin(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [global, room, iAmIn, opp, phase, busy, myRes, mine, round]);
+
+  const gbMe = { id: me.id, name: me.name, avatar: me.avatar, level: profile.level };
+  /** Global Blitz: natijani serverga yuboradi (server ball, g'olib va mukofotni o'zi hisoblaydi) */
+  const sendLive = async (n: number, log: GbLogItem[]) => {
+    const sub = await submitLive(gbMe, room!.code, n, log);
+    if (sub?.ok) {
+      clearProgress(room!.code, n);
+      setMine(m => (m && m.n === n ? { ...m, res: { ...m.res, s: sub.s, c: sub.c, t: sub.t }, sent: true, rejected: undefined } : m));
+      if (sub.settle) {
+        setSettleMine({ n, s: sub.settle });
+        if (sub.settle.xp > 0) setTimeout(refreshGrants, 700);
+      }
+      refresh();
+      return true;
+    }
+    if (sub && !sub.ok) { // server natijani qabul qilmadi — qayta yuborish foyda bermaydi
+      clearProgress(room!.code, n);
+      setMine(m => (m && m.n === n ? { ...m, sent: true, rejected: sub.error || 'Natija qabul qilinmadi' } : m));
+      return true;
+    }
+    return false;
+  };
+
   const finish = async (r: PlayDone) => {
     if (!room || !active) return;
     const res: FdResult = { k: active.k, s: r.s, c: r.c, t: r.t, ts: Date.now() };
-    setMine({ n: active.n, res, wrong: r.wrong, sent: false });
+    setMine({ n: active.n, res, wrong: r.wrong, sent: false, log: r.log });
     setPhase('idle');
     sfx.win(r.c >= FD_QUESTIONS / 2);
+    if (global) { await sendLive(active.n, r.log); return; }
     const ok = await submitResult(room.code, active.n, me.id, res);
     if (ok) {
       clearProgress(room.code, active.n);
@@ -360,10 +453,24 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
   const resend = async () => {
     if (!room || !mine) return;
     setBusy(true);
-    const ok = await submitResult(room.code, mine.n, me.id, mine.res);
+    const ok = global ? await sendLive(mine.n, mine.log || []) : await submitResult(room.code, mine.n, me.id, mine.res).then(o => {
+      if (o) { clearProgress(room.code, mine.n); setMine({ ...mine, sent: true }); refresh(); }
+      return o;
+    });
     setBusy(false);
-    if (ok) { clearProgress(room.code, mine.n); setMine({ ...mine, sent: true }); refresh(); } else setErr('Natijani yuborib bo‘lmadi. Internetni tekshiring.');
+    if (!ok) setErr('Natijani yuborib bo‘lmadi. Internetni tekshiring.');
   };
+
+  /* Global Blitz: raqib keyin tugatsa, mukofot serverda hisoblanadi — XP sovg'a sifatida olinadi */
+  const mySettle: FdSettleUser | GbSettle | undefined = round && room ? room.settle[round.n]?.r?.[me.id] || (settleMine && settleMine.n === round.n ? settleMine.s : undefined) : undefined;
+  const lateSettle = !!(round && room && room.settle[round.n]?.late);
+  useEffect(() => {
+    if (!global || !room || !round || !mySettle || mySettle.xp <= 0) return;
+    const key = `${room.code}:${round.n}`;
+    if (grantKey.current === key) return;
+    grantKey.current = key;
+    setTimeout(refreshGrants, 700);
+  }, [global, room, round, mySettle, refreshGrants]);
 
   const close = () => {
     if (phase === 'play' || phase === 'count') {
@@ -416,7 +523,7 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
   } else if (phase === 'count' && active) {
     body = <Countdown onEnd={() => setPhase('play')} />;
   } else if (phase === 'play' && active) {
-    body = <FdPlay qs={active.q} onProgress={p => { progRef.current = p; saveProgress(room.code, active.n, { k: active.k, ...p }); }} onDone={finish} />;
+    body = <FdPlay qs={active.q} onProgress={p => { progRef.current = p; saveProgress(room.code, active.n, { k: active.k, s: p.s, c: p.c, t: p.t, i: p.i, ...(global ? { log: p.log.map(x => ({ a: x.a ?? null, c: x.c, m: x.m })) } : {}) }); }} onDone={finish} />;
   } else if (!opp) {
     /* ---- LOBBY: do'st kutilmoqda ---- */
     body = (
@@ -434,6 +541,22 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
         <Primary onClick={invite}><Share2 className="w-4 h-4" /> Do‘stga yuborish</Primary>
         <Ghost onClick={copy}>{copied ? <><Check className="w-4 h-4 text-emerald-300" /> Nusxalandi</> : <><Copy className="w-4 h-4" /> Havolani nusxalash</>}</Ghost>
         <div className="flex items-center justify-center gap-2 text-[11px] text-slate-300"><span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" /> Do‘st kirishi kutilmoqda… (o‘zi yangilanadi)</div>
+      </div>
+    );
+  } else if (global && (!round || !myRes) && !err && !stuck) {
+    /* ---- GLOBAL: raqib topildi, o'yin o'zi boshlanadi ---- */
+    body = (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center gap-3 py-2">
+          <Person p={meP} you tone="amber" big />
+          <Vs />
+          <Person p={opp} tone="sky" big />
+        </div>
+        <div className="text-center">
+          <h3 className="text-xl font-black text-white">Raqib topildi!</h3>
+          <p className="mt-1 text-xs text-slate-300">{opp.name} bilan bir xil {FD_QUESTIONS} ta savol. Hozir boshlanadi…</p>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-300"><Loader2 className="w-4 h-4 animate-spin text-amber-300" /> Savollar tayyorlanmoqda</div>
       </div>
     );
   } else if (!round || !myRes) {
@@ -459,12 +582,13 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
   } else {
     /* ---- NATIJA ---- */
     const bothDone = !!oppRes;
-    const title = !bothDone ? 'Natijangiz tayyor!' : verdict! > 0 ? 'Siz yutdingiz! 🏆' : verdict! < 0 ? `${opp.name} yutdi 😤` : 'Durang! 🤝';
-    const sub = !bothDone ? `${opp.name} hali o‘ynamadi. U tugatishi bilan natijalar shu yerda chiqadi.` : verdict! > 0 ? 'Zo‘r o‘ynadingiz! Endi qayta o‘ynab, g‘alabani mustahkamlang.' : verdict! < 0 ? 'Hisobni teng qilish uchun qayta o‘ynang — so‘zlar yangi bo‘ladi.' : 'Ball, to‘g‘ri javob va vaqt aynan teng chiqdi!';
+    const gone = global && !bothDone && Date.now() - myRes.ts > WALKOVER_MS;
+    const title = gone ? 'Raqib chiqib ketdi 🚪' : !bothDone ? 'Natijangiz tayyor!' : verdict! > 0 ? 'Siz yutdingiz! 🏆' : verdict! < 0 ? `${opp.name} yutdi 😤` : 'Durang! 🤝';
+    const sub = gone ? 'Raqibingiz o‘yinni tugatmadi, shuning uchun bu o‘yin mukofotga hisoblanmaydi. U keyinroq tugatsa, natija botga yuborilishi mumkin. Yangi raqib bilan davom eting.' : !bothDone ? `${opp.name} hali o‘ynamadi. U tugatishi bilan natijalar shu yerda chiqadi.` : verdict! > 0 ? 'Zo‘r o‘ynadingiz! Endi qayta o‘ynab, g‘alabani mustahkamlang.' : verdict! < 0 ? 'Hisobni teng qilish uchun qayta o‘ynang — so‘zlar yangi bo‘ladi.' : 'Ball, to‘g‘ri javob va vaqt aynan teng chiqdi!';
     body = (
       <div className="space-y-3.5">
         <div className="text-center">
-          {bothDone && verdict === 0 ? <Handshake className="w-10 h-10 mx-auto text-amber-300" /> : bothDone ? <div className="fd-rise text-5xl">{verdict! > 0 ? '🏆' : '⚔️'}</div> : <div className="fd-rise text-5xl">⏳</div>}
+          {gone ? <div className="fd-rise text-5xl">🚪</div> : bothDone && verdict === 0 ? <Handshake className="w-10 h-10 mx-auto text-amber-300" /> : bothDone ? <div className="fd-rise text-5xl">{verdict! > 0 ? '🏆' : '⚔️'}</div> : <div className="fd-rise text-5xl">⏳</div>}
           <h3 className="mt-1 text-xl font-black text-white">{title}</h3>
           <p className="mt-1 text-xs text-slate-300 leading-relaxed">{sub}</p>
         </div>
@@ -474,7 +598,11 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
           <ScoreCard p={opp} r={oppRes} win={bothDone && verdict! < 0} tone="sky" />
         </div>
 
-        {series && series.played > 0 && (
+        {global && bothDone && (
+          <RewardLine s={mySettle} late={lateSettle} win={verdict !== null && verdict > 0} pending={!!myRes && !!oppRes && Date.now() - Math.max(myRes.ts, oppRes.ts) < 20000} />
+        )}
+
+        {!global && series && series.played > 0 && (
           <div className={`${GLASS} rounded-xl px-3 py-2 flex items-center justify-between text-xs`}>
             <span className="text-slate-300">Umumiy hisob ({series.played} raund)</span>
             <span className="font-black tabular-nums"><span className="text-amber-300">{series.a}</span> <span className="text-slate-400">:</span> <span className="text-sky-300">{series.b}</span></span>
@@ -490,15 +618,24 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
           </div>
         )}
 
+        {global && mine?.rejected && !serverRes && (
+          <div className="rounded-xl bg-rose-500/10 border border-rose-400/40 p-3 text-xs text-rose-200">Natijangiz tasdiqlanmadi: {mine.rejected}. Bunday o‘yin hisobga olinmaydi.</div>
+        )}
         {mine && !mine.sent && !serverRes && (
           <div className="rounded-xl bg-amber-500/10 border border-amber-400/40 p-3 text-xs text-amber-200 space-y-2">
-            <div>Natijangiz hali do‘stingizga yuborilmadi.</div>
+            <div>{global ? 'Natijangiz hali serverga yuborilmadi.' : 'Natijangiz hali do‘stingizga yuborilmadi.'}</div>
             <Ghost disabled={busy} onClick={resend}><RotateCcw className="w-4 h-4" /> Qayta yuborish</Ghost>
           </div>
         )}
         {err && <div className="rounded-xl bg-rose-500/10 border border-rose-400/40 p-2.5 text-xs text-rose-300 text-center">{err}</div>}
 
-        {bothDone ? (
+        {global ? (
+          bothDone || gone ? (
+            <Primary onClick={() => { closeFriendDuel(); openGlobalBlitz(); }}><RotateCcw className="w-5 h-5" /> Yangi raqib</Primary>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-300 py-1"><Loader2 className="w-4 h-4 animate-spin text-amber-300" /> {opp.name} o‘ynayapti…</div>
+          )
+        ) : bothDone ? (
           <Primary disabled={busy} onClick={() => begin(true)}>{busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <><RotateCcw className="w-5 h-5" /> Qayta o‘ynash — yangi so‘zlar</>}</Primary>
         ) : (
           <Primary onClick={remind}><Share2 className="w-4 h-4" /> Do‘stga eslatish</Primary>
@@ -513,7 +650,7 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
       <div className="min-h-full flex items-center justify-center p-4">
         <div className="keep-dark fd-pop relative w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#182232] to-[#0E1524] border border-amber-500/40 p-5 shadow-2xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5"><Swords className="w-4 h-4" /> Do‘st bilan Blitz Duel</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5"><Swords className="w-4 h-4" /> {global ? '🌍 Global Blitz' : 'Do‘st bilan Blitz Duel'}</span>
             <button type="button" onClick={close} aria-label="Yopish" className="w-8 h-8 rounded-full bg-white/[0.08] text-slate-300 hover:text-white flex items-center justify-center"><X className="w-4 h-4" /></button>
           </div>
           {body}
@@ -526,7 +663,7 @@ const FriendDuelModal: React.FC<{ code: string | null }> = ({ code }) => {
 /* ------------------------------ App'ga ulanadigan qism ------------------------------ */
 
 export const FriendDuelHost: React.FC = () => {
-  const { open, code } = useFriendDuelUi();
+  const { open, code, global } = useFriendDuelUi();
   // Ilova do'st havolasi orqali ochilgan bo'lsa — bir marta duel oynasi ochiladi
   useEffect(() => {
     const c = readFriendDuelParam();
@@ -534,7 +671,7 @@ export const FriendDuelHost: React.FC = () => {
     if (!getMyRooms().some(r => r.code === c)) openFriendDuel(c);
     try { if (new URLSearchParams(window.location.search).get('bd')) window.history.replaceState(null, '', window.location.pathname); } catch { /* ignore */ }
   }, []);
-  return open ? <FriendDuelModal code={code} /> : null;
+  return open ? <FriendDuelModal code={code} global={global} /> : null;
 };
 
 /* ------------------------------ taklif kartasi ------------------------------ */

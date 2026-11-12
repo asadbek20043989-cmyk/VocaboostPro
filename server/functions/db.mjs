@@ -4,7 +4,7 @@
 // Begona shaxslar boshqa foydalanuvchilarning hisoblarini o'chira yoki soxtalashtira olmaydi.
 import { verifyInitData } from '../lib/tg.mjs';
 
-const ALLOWED = /^(leaderboard|state|duels|bduels|challenges|config|certs|words|packs|hall)(\/[A-Za-z0-9_\-:.@+]{1,200}){0,6}$/;
+const ALLOWED = /^(leaderboard|state|duels|bduels|bq|bweek|challenges|config|certs|words|packs|hall)(\/[A-Za-z0-9_\-:.@+]{1,200}){0,6}$/;
 const MAX_BODY = 300 * 1024;
 // Umumiy ma'lumotlar uchun CDN kesh muddati (soniya)
 const SHARED_TTL = { leaderboard: 30, config: 30, challenges: 30, words: 600, packs: 600, hall: 3600 };
@@ -89,6 +89,20 @@ export const handler = async event => {
           return reply(401, { error: 'Dueldagi Telegram imzosi tasdiqlanmadi' });
         }
       }
+    }
+
+    // Global Blitz xonalari (server ochgan, `bglobal/<kod>` bor): o'yinchilar, meta va NATIJA ni mijoz yozolmaydi —
+    // natija faqat /api/fn/bq (submit) orqali, serverda javoblardan hisoblanadi. Faqat savollar (rounds) mijozdan yoziladi.
+    if (root === 'bduels' && ['res', 'players', 'meta'].includes(parts[2])) {
+      let isGlobal = false;
+      try {
+        const gr = await fetch(`${base}/bglobal/${encodeURIComponent(parts[1])}/ts.json${secret ? `?auth=${encodeURIComponent(secret)}` : ''}`);
+        if (!gr.ok) return reply(502, { error: 'Xona holatini tekshirib bo‘lmadi' }); // noaniq bo'lsa yozishga ruxsat bermaymiz
+        isGlobal = (await gr.json()) != null;
+      } catch {
+        return reply(502, { error: 'Xona holatini tekshirib bo‘lmadi' });
+      }
+      if (isGlobal) return reply(403, { error: 'Global Blitz natijasi faqat server orqali yoziladi' });
     }
 
     // Duellar va chellenjlarda o'yinchilar yozuvi tekshiruvi

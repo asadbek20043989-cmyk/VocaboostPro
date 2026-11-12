@@ -8,6 +8,7 @@ import { nowMs } from '../services/time';
 import { sfx } from '../services/sound';
 import { shuffle } from '../services/srs';
 import { FriendDuelCard, FriendDuelRecent } from './FriendDuel';
+import { GlobalBlitzCard } from './GlobalBlitz';
 import { openFriendDuel } from '../services/friendDuel';
 
 const METRICS: { id: DuelMetric; label: string; unit: string; hint: string }[] = [
@@ -431,6 +432,7 @@ export const DuelTab: React.FC = () => {
       )}
 
       {/* Do'stni duelga chaqirish — bu bo'limning asosiy tugmasi */}
+      <GlobalBlitzCard />
       <FriendDuelCard variant="hero" />
       <FriendDuelRecent />
 

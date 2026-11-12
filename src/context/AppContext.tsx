@@ -204,6 +204,7 @@ interface AppContextType {
   today: string;
   syncReady: boolean;
   claimGrants: () => void;
+  refreshGrants: () => void;
   receivedGrants: any[] | null;
   setReceivedGrants: (v: any[] | null) => void;
   accountId: string;
@@ -1243,7 +1244,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           pushNotice(`👑 Admin sizga ${amount} soatlik VIP sovg'a qildi`);
         } else if (g.type === 'xp' && amount > 0) {
           setProfile(p => addXpTo(p, amount));
-          pushNotice(g.note && /^Do'st taklif/.test(g.note) ? `🎉 ${g.note.replace('Do\'st taklif qilindi: ', '')} do'stingiz qo'shildi: +${amount} XP` : `💎 Admin sizga +${amount} XP sovg'a qildi`);
+          pushNotice(g.note && /^Global Blitz/.test(g.note) ? `🌍 Global Blitz g'alabasi: +${amount} XP` : g.note && /^Do'st taklif/.test(g.note) ? `🎉 ${g.note.replace('Do\'st taklif qilindi: ', '')} do'stingiz qo'shildi: +${amount} XP` : `💎 Admin sizga +${amount} XP sovg'a qildi`);
         } else if (g.type === 'coins' && amount > 0) {
           setProfile(p => ({ ...p, coinsEarned: (p.coinsEarned || 0) + amount }));
           pushNotice(`🪙 Admin sizga +${amount.toLocaleString()} tanga sovg'a qildi`);
@@ -1258,7 +1259,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (list.length) {
         setGrantsDone(prev => Array.from(new Set([...prev, ...list.map(g => g.id)])));
-        setReceivedGrants(list);
+        // Global Blitz XP o'yin oynasida ko'rsatiladi — alohida «sovg'a» oynasi chiqmaydi
+        const showList = list.filter(g => !/^Global Blitz/.test(g.note || ''));
+        if (showList.length) setReceivedGrants(showList);
       }
       setGrantsReady(true);
       if (j.more) setTimeout(() => claimGrants(), 1500); // yana sovg'a qolgan (ko'p bo'lsa bo'laklab olinadi)
@@ -2285,7 +2288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, adminPopup, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,
         notice, streakPopup, dismissStreakPopup, addXp, aiLeft, consumeAi, blitzLeft, consumeBlitz, markWritingDone, today, syncReady, accountId: myId.current, isTelegram, linkAccount,
-        claimGrants, receivedGrants, setReceivedGrants,
+        claimGrants, refreshGrants: claimGrants, receivedGrants, setReceivedGrants,
       }}
     >
       {children}

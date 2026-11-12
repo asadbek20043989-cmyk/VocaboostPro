@@ -7,6 +7,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow, cleanSegment, inSegment } from '../lib/tg.mjs';
 
 import { finishWeek } from '../lib/week.mjs';
+import { cleanCfg, dropCfgCache, weekKeyOf, DEFAULT_MSG_WIN, DEFAULT_MSG_LOSE, DEFAULT_MSG_DRAW, DEFAULT_BUTTON } from '../lib/blitz.mjs';
 import { loadRt, mergeRt, drainWeekRest, sampleMessage, sendAuto, DEFAULT_MILESTONES } from '../lib/engage.mjs';
 import { triggerBroadcastResume, cleanMilestones, DEFAULT_REF_MILESTONES, DEFAULT_REF_FRIEND_TEXT, DEFAULT_REF_MILESTONE_TEXT } from '../lib/tg.mjs';
 
@@ -1007,6 +1008,42 @@ export const handler = async event => {
         const prevNb = await call('GET', 'config/shop/navBadges').catch(() => null);
         if (prevNb && typeof prevNb === 'object' && !v.navBadges) v.navBadges = prevNb; // nishonlar do'kon saqlanganda o'chib ketmasin
         await call('PUT', 'config/shop', v);
+        return json(200, { ok: true });
+      }
+
+      // ---------- Global Blitz: sozlamalar va statistika ----------
+      case 'getBlitz': {
+        const raw = await call('GET', 'config/blitz');
+        const c = cleanCfg(raw);
+        const stats = (await call('GET', 'bstats').catch(() => null)) || {};
+        const days = Object.keys(stats).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort().reverse().slice(0, 14).map(k => ({ day: k, ...stats[k] }));
+        const wk = weekKeyOf(tashkentDay());
+        const weekRaw = (await call('GET', `bweek/${wk}`).catch(() => null)) || {};
+        const top = Object.entries(weekRaw)
+          .map(([uid, r]) => ({ uid, name: r.n || '', w: Number(r.w) || 0, p: Number(r.p) || 0, s: Number(r.s) || 0 }))
+          .sort((a, b) => b.w - a.w || b.s - a.s)
+          .slice(0, 20);
+        return json(200, {
+          cfg: { rewards: c.rewards, xp: c.xp, limit: c.limit, notify: c.notify, msgWin: c.msgWin, msgLose: c.msgLose, msgDraw: c.msgDraw, button: c.button, badWords: c.badWords },
+          defaults: { msgWin: DEFAULT_MSG_WIN, msgLose: DEFAULT_MSG_LOSE, msgDraw: DEFAULT_MSG_DRAW, button: DEFAULT_BUTTON },
+          stats: days,
+          week: { key: wk, top, players: Object.keys(weekRaw).length },
+        });
+      }
+
+      case 'setBlitz': {
+        const v = body.value && typeof body.value === 'object' ? body.value : {};
+        const c = cleanCfg(v); // bir xil tekshiruv: server ham shu qoidalar bilan o'qiydi
+        const out = {
+          rewards: c.rewards, xp: c.xp, limit: c.limit, notify: c.notify,
+          msgWin: c.msgWin === DEFAULT_MSG_WIN ? '' : c.msgWin,
+          msgLose: c.msgLose === DEFAULT_MSG_LOSE ? '' : c.msgLose,
+          msgDraw: c.msgDraw === DEFAULT_MSG_DRAW ? '' : c.msgDraw,
+          button: c.button === DEFAULT_BUTTON ? '' : c.button,
+          badWords: c.badWords,
+        };
+        await call('PUT', 'config/blitz', out);
+        dropCfgCache();
         return json(200, { ok: true });
       }
 

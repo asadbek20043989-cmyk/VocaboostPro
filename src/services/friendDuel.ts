@@ -23,6 +23,9 @@ export interface FdQuestion { e: string; p: string; u: string; o: string[] }
 export interface FdPlayer { id: string; name: string; avatar: string; joinedAt: number }
 export interface FdResult { k: string; s: number; c: number; t: number; ts: number }
 export interface FdRound { n: number; k: string; ts: number; q: FdQuestion[]; ids: string[] }
+/** Global Blitz: server yozgan natija va mukofot (bduels/<kod>/settle/r<N>) */
+export interface FdSettleUser { xp: number; why: string; used: number; limit: number; counted: boolean }
+export interface FdSettle { w: string; late: boolean; r: Record<string, FdSettleUser> }
 export interface FdRoom {
   code: string;
   createdBy: string;
@@ -30,6 +33,7 @@ export interface FdRoom {
   players: FdPlayer[];
   rounds: FdRound[]; // har bir raund uchun g'olib nomzod, n bo'yicha o'sish tartibida
   results: Record<number, Record<string, FdResult>>; // faqat g'olib raundga tegishli natijalar
+  settle: Record<number, FdSettle>; // faqat Global Blitz: g'olib va mukofot (server yozadi)
 }
 export interface FdMe { id: string; name: string; avatar: string }
 
@@ -84,7 +88,18 @@ export function parseRoom(code: string, raw: any): FdRoom | null {
     results[r.n] = perUser;
   }
 
-  return { code, createdBy: String(raw.meta.createdBy || ''), createdAt: num(raw.meta.createdAt), players, rounds, results };
+  const settle: Record<number, FdSettle> = {};
+  for (const [rk, x] of entries(raw.settle)) {
+    const n = Number(rk.replace(/^r/, ''));
+    if (!Number.isFinite(n) || !x || typeof x !== 'object') continue;
+    const r: Record<string, FdSettleUser> = {};
+    for (const [uid, u] of entries((x as any).r)) {
+      r[uid] = { xp: num(u.xp), why: String(u.why || ''), used: num(u.used), limit: num(u.limit), counted: !!u.counted };
+    }
+    settle[n] = { w: String((x as any).w || ''), late: !!(x as any).late, r };
+  }
+
+  return { code, createdBy: String(raw.meta.createdBy || ''), createdAt: num(raw.meta.createdAt), players, rounds, results, settle };
 }
 
 /** Umumiy hisob: kim nechta raundda yutgan (ikkala natijasi bor raundlar bo'yicha) */
@@ -286,7 +301,7 @@ export const forgetRoom = (code: string) => {
 
 /* O'yin davomida saqlanadigan oraliq natija: ilova yopilib qolsa, qayta ochilganda savollarni qayta o'ynab bo'lmaydi */
 const progKey = (code: string, n: number) => `vb_bd_prog_${code}_${n}`;
-export interface FdProgress { k: string; s: number; c: number; t: number; i: number }
+export interface FdProgress { k: string; s: number; c: number; t: number; i: number; log?: { a: string | null; c: 0 | 1; m: number }[] }
 export const saveProgress = (code: string, n: number, p: FdProgress) => {
   try { localStorage.setItem(progKey(code, n), JSON.stringify(p)); } catch { /* ignore */ }
 };
@@ -306,15 +321,17 @@ export const finalizeProgress = (p: FdProgress): Omit<FdResult, 'ts'> => ({ k: p
 
 /* ---------------- modal oynasining umumiy holati ---------------- */
 
-interface FdUi { open: boolean; code: string | null }
-let ui: FdUi = { open: false, code: null };
+interface FdUi { open: boolean; code: string | null; global: boolean }
+let ui: FdUi = { open: false, code: null, global: false };
 const listeners = new Set<() => void>();
 const setUi = (u: FdUi) => {
   ui = u;
   listeners.forEach(l => l());
 };
 /** code berilmasa — yangi xona ochiladi (yoki kutib turgan oxirgi xona qayta ishlatiladi) */
-export const openFriendDuel = (code: string | null = null) => setUi({ open: true, code });
+export const openFriendDuel = (code: string | null = null) => setUi({ open: true, code, global: false });
+/** Global Blitz: server ikki o'yinchi uchun ochgan xona (do'st chaqirish yo'q, o'yin avtomatik boshlanadi) */
+export const openGlobalRoom = (code: string) => setUi({ open: true, code, global: true });
 export const setFriendDuelCode = (code: string | null) => setUi({ ...ui, code });
-export const closeFriendDuel = () => setUi({ open: false, code: null });
+export const closeFriendDuel = () => setUi({ open: false, code: null, global: false });
 export const useFriendDuelUi = (): FdUi => useSyncExternalStore(cb => { listeners.add(cb); return () => listeners.delete(cb); }, () => ui, () => ui);

@@ -373,3 +373,27 @@ Cron: yangi jadval kerak emas — mavjud `remind` (har soat) va `streak-warn` (k
 
 ### Ommaviy yuborishning ishlashi
 Hammaga yuborish 25 tadan guruhlab (≈25 xabar/s) yuboriladi; Vercel 60 soniya chegarasiga yetmasa, o'zini yangidan chaqirib davom ettiradi. Yarmida to'xtab qolsa — «📣 Hammaga» bo'limidagi **▶️ Davom ettirish** tugmasi yoki soatlik `remind` qolganini yuboradi.
+
+## v15 — 🌍 Global Blitz (tasodifiy raqib bilan Blitz Duel)
+
+**Qanday ishlaydi.** O'yinchi «Raqib topish» ni bosadi → ~12 soniya jonli raqib qidiriladi (o'z darajasi ±1). Topilsa — ikkalasi uchun server xona ochadi va o'yin avtomatik boshlanadi. Topilmasa — shu darajada oldin o'ynagan o'yinchining saqlangan natijasi («ruh») bilan o'ynaladi va bu ochiq yoziladi. Hech kim o'ynamagan bo'lsa — mashq (mukofotsiz); natija keyingi o'yinchilar uchun saqlanadi.
+
+**Mukofot qoidalari (hammasi serverda).**
+- G'alabaga `config/blitz.xp` (standart 10 XP). XP sovg'a (`grants`) sifatida beriladi — ilova uni o'zi oladi, «Global Blitz g'alabasi» deb xabar chiqadi.
+- Kuniga ko'pi bilan `limit` ta (standart 5) mukofotli o'yin; g'alaba, mag'lubiyat va durang ham bitta o'rin oladi. Limitdan keyin ham o'ynash mumkin, lekin hisoblanmaydi.
+- Bir raqib bilan kuniga faqat 1 marta (ruh bilan ham, jonli ham). Kun — Toshkent vaqti bo'yicha.
+- Ikkinchi o'yinchi natijasi 30 daqiqadan keyin kelsa — o'yin hisoblanmaydi. Raqib umuman tugatmasa ham mukofot berilmaydi.
+- Ball, to'g'ri javoblar soni va g'olib **javoblardan serverda qayta hisoblanadi**; mijoz yuborgan ball e'tiborga olinmaydi. Haftalik reyting ham shu hisobdan (dushanba–yakshanba).
+- Raqib natijani keyin yuborsa va birinchi tugatgan o'yinchi 30 soniyadan ortiq kutgan bo'lsa — unga bot orqali natija xabari boradi (kuniga ko'pi bilan 5 ta).
+
+**Admin → 🌍 Global Blitz:** mukofotni yoqish/o'chirish, XP, kunlik limit, bot xabari matnlari (g'alaba / mag'lubiyat / durang; `{opp}`, `{me}`, `{them}`, `{xp}`, `{reward}`), tugma yozuvi, qo'shimcha taqiqlangan so'zlar, oxirgi 14 kun statistikasi (jonli/ruh/raqibsiz, mukofotli, g'alaba, berilgan XP, limitga urilganlar, bot xabarlari) va joriy haftalik reyting. O'zgarish ~1 daqiqada kuchga kiradi.
+
+**Ismlar filtri.** Haqoratli so'z, reklama havolasi yoki bo'sh ism raqibga «O'yinchi» bo'lib ko'rinadi (lotin/kirill/leet aldovlariga chidamli; «Sikandar», «Nigar» kabi oddiy ismlar bloklanmaydi).
+
+**Firebase qoidalari — YANGILANG!** `database.rules.json` ni Firebase Console → Realtime Database → Rules ga qayta joylang (yangi tugunlar: `bglobal`, `bplay`, `bdaily`, `bweek` va `.indexOn` lar — tozalash so'rovlari uchun kerak). `bweek` hamma o'qiy oladi, qolganlari faqat server.
+
+**Tozalash.** `remind` funksiyasi (har soat) eski xonalar (24 soat / do'st duellari 21 kun), 14 kundan eski saqlangan natijalar, kunlik hisoblar (3 kun), statistika (60 kun) va haftalik reytinglar (8 hafta) ni o'chiradi.
+
+**Halol cheklovlar.** Savollar mijozga to'g'ri javob bilan keladi (do'st duelidagi kabi), shuning uchun texnik foydalanuvchi javobni oldindan bilib, tez yuborishi mumkin. Himoya: 0,4 s dan tez to'g'ri javob qabul qilinmaydi, javoblar yig'indisi o'yin vaqtidan oshmasligi tekshiriladi, mukofot esa kunlik limit va «bir raqib — kuniga bir marta» bilan cheklangan. Ya'ni zarar eng ko'pi bilan kuniga 5 × XP.
+
+**Sinov.** `node test/blitz/run.mjs` — soxta Firebase bilan bq/db/tozalash testlari (jonli xona, ruh, mukofot, limit, bir xil raqib, config, tozalash).

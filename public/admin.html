@@ -127,6 +127,7 @@
       <button data-t="league">🏆 Liga</button>
       <button data-t="chal">🏁 Chellenjlar</button>
       <button data-t="wheel">🎡 Baraban</button>
+      <button data-t="blitz">🌍 Global Blitz</button>
       <span class="tg">Foydalanuvchilar</span>
       <button data-t="users">👥 Foydalanuvchilar</button>
       <button data-t="inbox">✉️ Xabarlar <span id="inboxBadge" class="tag d" style="display:none"></span></button>
@@ -822,6 +823,39 @@
       <div class="card"><div class="row"><button id="rtSave">💾 Hammasini saqlash</button><span class="small">O'zgarishlar keyingi avtomatik ishga tushishda kuchga kiradi (qayta deploy kerak emas).</span></div></div>
     </section>
 
+    <section id="t-blitz" class="hide">
+      <div class="card">
+        <h2>🌍 Global Blitz sozlamalari</h2>
+        <p class="small">Tasodifiy raqib bilan Blitz Duel. Natija va mukofot <b>serverda</b> hisoblanadi; foydalanuvchi XP ni o'zi yoza olmaydi.</p>
+        <div class="grid">
+          <div><label>G'alabaga mukofot</label><select id="bl_on"><option value="1">Yoqilgan</option><option value="0">O'chirilgan (faqat o'yin)</option></select></div>
+          <div><label>Bitta g'alaba uchun XP</label><input id="bl_xp" type="number" min="0" max="1000" /></div>
+          <div><label>Kuniga mukofotli o'yinlar soni</label><input id="bl_limit" type="number" min="0" max="100" /></div>
+          <div><label>Raqib natijasi keyin kelsa — bot xabari</label><select id="bl_notify"><option value="1">Yuborilsin</option><option value="0">Yuborilmasin</option></select></div>
+        </div>
+        <p class="small">Bir raqib bilan kuniga faqat <b>1 marta</b> mukofot beriladi. Limitdan keyin ham o'ynash mumkin, lekin XP va reytingga hisoblanmaydi. Mag'lubiyat va durang ham limitdan bitta o'rin oladi.</p>
+        <label>Bot xabari tugmasi yozuvi</label>
+        <input id="bl_btn" maxlength="60" />
+        <label>G'alaba xabari (raqibingiz sizga yutqazdi). Ishlatish: {opp} — raqib ismi, {me} — sizning ball, {them} — raqib balli, {xp}, {reward}</label>
+        <textarea id="bl_win" style="min-height:80px"></textarea>
+        <label>Mag'lubiyat xabari</label>
+        <textarea id="bl_lose" style="min-height:80px"></textarea>
+        <label>Durang xabari</label>
+        <textarea id="bl_draw" style="min-height:70px"></textarea>
+        <label>Taqiqlangan so'zlar (vergul yoki yangi qator bilan). Ro'yxat ismlar filtriga qo'shiladi — bunday ism raqibga «O'yinchi» bo'lib ko'rinadi</label>
+        <textarea id="bl_bad" style="min-height:70px" placeholder="so'z1, so'z2"></textarea>
+        <div class="row" style="margin-top:10px"><button id="blSave">Saqlash</button><button class="sec" id="blDefaults">Matnlarni standartga qaytarish</button></div>
+      </div>
+      <div class="card">
+        <h2>📊 Kunlik statistika <span class="small">(oxirgi 14 kun)</span></h2>
+        <div class="scroll"><table><thead><tr><th>Kun</th><th>Jonli</th><th>Ruh</th><th>Raqibsiz</th><th>Saqlandi</th><th>Hisoblandi</th><th>Mukofotli</th><th>G'alaba</th><th>XP</th><th>Limit</th><th>Bir xil raqib</th><th>Bot xabari</th></tr></thead><tbody id="blStats"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>🏆 Haftalik reyting <span class="small" id="blWeekInfo"></span></h2>
+        <div class="scroll"><table><thead><tr><th>#</th><th>O'yinchi</th><th>G'alaba</th><th>O'yin</th><th>Ball</th></tr></thead><tbody id="blWeek"></tbody></table></div>
+      </div>
+    </section>
+
     <section id="t-refs" class="hide">
       <div class="card">
         <h2>👥 Do'st taklif qilish sozlamalari</h2>
@@ -1077,6 +1111,7 @@ $('refresh').onclick = () => load();
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('section[id^="t-"]').forEach(s => s.classList.toggle('hide', s.id !== 't-' + b.dataset.t));
+  if (b.dataset.t === 'blitz' && typeof loadBlitz === 'function') loadBlitz();
 });
 
 async function load() {
@@ -2088,6 +2123,36 @@ function renderOrders() {
   $('ordBody').querySelectorAll('[data-x]').forEach(b => b.onclick = guard(async () => { if (!confirm("O'chirilsinmi?")) return; await api('setOrder', { id: b.dataset.x, remove: true }); await loadOrders(); }));
 }
 
+
+/* ---------- 🌍 Global Blitz ---------- */
+let blitzDefs = {};
+async function loadBlitz() {
+  try {
+    const r = await api('getBlitz');
+    blitzDefs = r.defaults || {};
+    const c = r.cfg || {};
+    $('bl_on').value = c.rewards === false ? '0' : '1';
+    $('bl_xp').value = c.xp ?? 10;
+    $('bl_limit').value = c.limit ?? 5;
+    $('bl_notify').value = c.notify === false ? '0' : '1';
+    $('bl_btn').value = c.button || '';
+    $('bl_win').value = c.msgWin || '';
+    $('bl_lose').value = c.msgLose || '';
+    $('bl_draw').value = c.msgDraw || '';
+    $('bl_bad').value = c.badWords || '';
+    const k = (d, n) => +d[n] || 0;
+    $('blStats').innerHTML = (r.stats || []).map(d => `<tr><td>${esc(d.day)}</td><td>${k(d,'live')}</td><td>${k(d,'ghost')}</td><td>${k(d,'none')}</td><td>${k(d,'saved')}</td><td>${k(d,'settled')}</td><td>${k(d,'rewarded')}</td><td>${k(d,'wins')}</td><td>${k(d,'xp')}</td><td>${k(d,'limit')}</td><td>${k(d,'same')}</td><td>${k(d,'notified')}</td></tr>`).join('') || '<tr><td colspan="12" class="small">Hali o\'yin bo\'lmagan</td></tr>';
+    const w = r.week || {};
+    $('blWeekInfo').textContent = `(hafta ${esc(w.key || '')}, ${w.players || 0} o'yinchi)`;
+    $('blWeek').innerHTML = (w.top || []).map((u, i) => `<tr><td>${i + 1}</td><td><b>${esc(u.name || '—')}</b><br><span class="small">${esc(u.uid)}</span></td><td><b>${+u.w}</b></td><td>${+u.p}</td><td>${+u.s}</td></tr>`).join('') || '<tr><td colspan="5" class="small">Bu hafta hali natija yo\'q</td></tr>';
+  } catch (e) { flash(String(e.message || e), false); }
+}
+$('blSave').onclick = guard(async () => {
+  await api('setBlitz', { value: { rewards: $('bl_on').value === '1', xp: +$('bl_xp').value || 0, limit: $('bl_limit').value === '' ? 5 : +$('bl_limit').value, notify: $('bl_notify').value === '1', button: $('bl_btn').value, msgWin: $('bl_win').value, msgLose: $('bl_lose').value, msgDraw: $('bl_draw').value, badWords: $('bl_bad').value } });
+  flash('Saqlandi ✅ (o\'zgarish ~1 daqiqada kuchga kiradi)');
+  await loadBlitz();
+});
+$('blDefaults').onclick = () => { $('bl_win').value = blitzDefs.msgWin || ''; $('bl_lose').value = blitzDefs.msgLose || ''; $('bl_draw').value = blitzDefs.msgDraw || ''; $('bl_btn').value = blitzDefs.button || ''; };
 /* ---------- 📣 Taklif ---------- */
 function renderRefs() {
   const c = data.config.referral || {};
