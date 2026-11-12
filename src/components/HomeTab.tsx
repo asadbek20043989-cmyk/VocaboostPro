@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked, Target, ChevronRight, Star } from 'lucide-react';
+import { Flame, Diamond, Play, CheckCircle2, Sparkles, Crown, Zap, Snowflake, Swords, BookMarked, Target, ChevronRight, Star, Globe2 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { CosAvatar, CosName } from './Cosmetics';
 import { BANNERS } from '../data/shopDefaults';
@@ -7,7 +7,8 @@ import { LofiPlayer } from './LofiPlayer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { LuckyWheel } from './LuckyWheel';
-import { FriendDuelCard } from './FriendDuel';
+import { openFriendDuel } from '../services/friendDuel';
+import { openGlobalBlitz } from '../services/globalBlitz';
 import { LevelPicker } from './LevelPicker';
 import { WordMap } from './WordMap';
 import { VocabStory } from './Learning';
@@ -162,7 +163,7 @@ const LEVEL_THEMES: Record<string, LevelTheme> = {
 export const HomeTab: React.FC = () => {
   const {
     profile, leagueUsers, leagueWeek, setActiveTab, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
-    openLearn, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges,
+    openLearn, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges, realtimeOn,
   } = useApp();
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
@@ -291,7 +292,6 @@ export const HomeTab: React.FC = () => {
       })()}
 
       {/* Do'stni duelga chaqirish: asosiy mashqdan keyin, boshqa bloklarga xalaqit bermaydigan ixcham qator */}
-      <FriendDuelCard variant="banner" />
 
       {/* Haftalik liga: tugashiga qancha qoldi va keyingi o'ringacha necha XP */}
       {leagueWeek && leagueWeek.startedAt > 0 && (() => {
@@ -332,6 +332,21 @@ export const HomeTab: React.FC = () => {
           <div className="text-[11px] text-amber-200/90 font-semibold">{profile.placement ? 'O‘zgartirish · Test' : '🎯 Testdan o‘ting'}</div>
         </button>
       </div>
+      {/* Do'st bilan duel va Global Blitz: yuqoridagi kabi ikkita ixcham kartochka */}
+      {realtimeOn && (
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" onClick={() => { triggerHaptic('medium'); openFriendDuel(); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-orange-500/30 via-amber-500/10 to-[#151C28] border border-orange-400/50 active:scale-[0.97] transition-all">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-slate-950 shadow-lg shadow-orange-500/30"><Swords className="w-6 h-6" /></div>
+            <div className="mt-1.5 text-sm font-black text-white">Do‘st bilan duel</div>
+            <div className="text-[11px] text-orange-200/90 font-semibold">Havola yuboring · Chaqirish</div>
+          </button>
+          <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-sky-500/30 via-indigo-500/10 to-[#151C28] border border-sky-400/50 active:scale-[0.97] transition-all">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-300 to-indigo-500 flex items-center justify-center text-slate-950 shadow-lg shadow-sky-500/30"><Globe2 className="w-6 h-6" /></div>
+            <div className="mt-1.5 text-sm font-black text-white">Global Blitz</div>
+            <div className="text-[11px] text-sky-200/90 font-semibold">Tasodifiy raqib · XP</div>
+          </button>
+        </div>
+      )}
       {showLevel && <LevelPicker onClose={() => setShowLevel(false)} />}
 
       <LofiPlayer />

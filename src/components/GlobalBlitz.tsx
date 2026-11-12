@@ -246,7 +246,7 @@ export const GlobalBlitzHost: React.FC = () => {
 
 /* ------------------------------ DuelTab uchun karta ------------------------------ */
 
-export const GlobalBlitzCard: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const GlobalBlitzCard: React.FC<{ className?: string; variant?: 'full' | 'banner' }> = ({ className = '', variant = 'full' }) => {
   const { realtimeOn } = useApp();
   const { accountId } = useApp();
   const [share, setShare] = useState(getShareGhost());
@@ -259,6 +259,20 @@ export const GlobalBlitzCard: React.FC<{ className?: string }> = ({ className = 
     return () => { alive = false; };
   }, [weekOpen, week]);
   if (!realtimeOn) return null;
+  if (variant === 'banner') {
+    // Bosh sahifa uchun ixcham qator: bir bosishda raqib qidiriladi
+    return (
+      <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(); }} className={`keep-dark relative w-full overflow-hidden rounded-2xl border border-sky-400/40 bg-gradient-to-br from-[#0B2238] via-[#13183A] to-[#0E1524] p-3.5 flex items-center gap-3 text-left shadow-lg shadow-sky-500/10 active:scale-[0.98] transition-all ${className}`}>
+        <span className="pointer-events-none absolute -right-8 -top-10 w-28 h-28 rounded-full bg-sky-400/20 blur-2xl" aria-hidden />
+        <div className="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-slate-950 shrink-0"><Globe2 className="w-5 h-5" /></div>
+        <div className="relative min-w-0 flex-1">
+          <div className="text-sm font-extrabold text-white leading-tight">🌍 Global Blitz</div>
+          <div className="text-[11px] text-slate-300 mt-0.5 truncate">Tasodifiy raqib · g‘alabaga XP</div>
+        </div>
+        <span className="relative shrink-0 h-9 px-3 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-slate-950 font-extrabold text-xs flex items-center gap-1">O‘ynash <ChevronRight className="w-3.5 h-3.5" /></span>
+      </button>
+    );
+  }
   return (
     <div className={`keep-dark relative overflow-hidden rounded-2xl border border-sky-400/40 bg-gradient-to-br from-[#0B2238] via-[#13183A] to-[#0E1524] p-4 shadow-lg shadow-sky-500/10 ${className}`}>
       <span className="pointer-events-none absolute -right-10 -top-12 w-36 h-36 rounded-full bg-sky-400/20 blur-2xl" aria-hidden />
