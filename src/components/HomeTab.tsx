@@ -7,6 +7,7 @@ import { LofiPlayer } from './LofiPlayer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { LuckyWheel } from './LuckyWheel';
+import { FriendDuelCard } from './FriendDuel';
 import { LevelPicker } from './LevelPicker';
 import { WordMap } from './WordMap';
 import { VocabStory } from './Learning';
@@ -288,6 +289,9 @@ export const HomeTab: React.FC = () => {
           </section>
         );
       })()}
+
+      {/* Do'stni duelga chaqirish: asosiy mashqdan keyin, boshqa bloklarga xalaqit bermaydigan ixcham qator */}
+      <FriendDuelCard variant="banner" />
 
       {/* Haftalik liga: tugashiga qancha qoldi va keyingi o'ringacha necha XP */}
       {leagueWeek && leagueWeek.startedAt > 0 && (() => {

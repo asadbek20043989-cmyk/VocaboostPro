@@ -75,7 +75,7 @@ export const DEFAULT_ITEMS: ShopItem[] = [
   I('spotlight', 'Reyting spotlighti (24 soat)', "24 soat davomida reytingda ismingiz alohida nur bilan ajralib turadi.", 'social', '🔦', '#FDE047', '#F59E0B', 120, 'spotlight', '24', true),
   I('titles', 'Maxsus unvon', "Profilda ismingiz ostida unvon: «So'z ustasi», «Kitobxon» va boshqalar.", 'social', '🏷️', '#FBBF24', '#B45309', 250, 'titles'),
   I('rankbadge', 'Reytingda maxsus belgi', "Haftalik jadvalda ismingizga yulduzcha, avatar ustiga toj.", 'social', '👑', '#FDE047', '#F59E0B', 350, 'rankbadge'),
-  I('verified', 'VIP maqomi (galochka)', "Ismingiz yonida ko'k galochka — VIP foydalanuvchi belgisi.", 'vip', '✅', '#38BDF8', '#0EA5E9', 1500, 'verified'),
+  I('verified', 'VIP maqomi (premium galochka)', "Ismingiz yonida yaltirab turuvchi premium galochka — VIP foydalanuvchi belgisi.", 'vip', '✅', '#38BDF8', '#0EA5E9', 1500, 'verified'),
   I('premium_words', "Premium so'zlar to'plami", "Yuqori darajadagi tanlangan so'zlar — o'rganish uchun alohida to'plam.", 'learning', '🧠', '#A78BFA', '#4F46E5', 600, 'pack', 'premium_words'),
   I('top_books', 'Inglizcha TOP kitoblar', "Ingliz tilini o'rganuvchilar uchun eng yaxshi kitoblar ro'yxati.", 'learning', '📚', '#FBBF24', '#92400E', 700, 'books'),
   I('phrasal_pack', 'Phrasal Verbs to\'plami', "200 ta eng kerakli phrasal verb: ma'nosi va misol bilan. O'rganish bo'limida alohida to'plam bo'ladi.", 'learning', '🧩', '#34D399', '#0F766E', 550, 'pack', 'phrasal_pack'),

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Volume2, VolumeX, Sun, Moon, Star, Ticket, Gift, BadgeCheck } from 'lucide-react';
+import { PremiumTick } from './PremiumTick';
+import { Volume2, VolumeX, Sun, Moon, Star, Ticket, Gift } from 'lucide-react';
 import { useSfx } from '../services/sound';
 import { useTheme } from '../services/theme';
 import { t as tt } from '../services/i18n';
@@ -25,7 +26,7 @@ export const BrandMark: React.FC<{ className?: string }> = ({ className = '' }) 
     <span className="text-[17px] font-extrabold tracking-tight text-white truncate">
       Voca<span className="text-amber-400">Boost</span>
     </span>
-    <BadgeCheck className="vb-verified w-5 h-5" strokeWidth={2.2} aria-label={tt("Rasmiy tasdiqlangan")} role="img" />
+    <PremiumTick size={20} variant="official" className="shrink-0" title={tt("Rasmiy tasdiqlangan")} />
   </div>
 );
 

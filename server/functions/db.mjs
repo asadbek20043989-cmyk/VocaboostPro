@@ -4,7 +4,7 @@
 // Begona shaxslar boshqa foydalanuvchilarning hisoblarini o'chira yoki soxtalashtira olmaydi.
 import { verifyInitData } from '../lib/tg.mjs';
 
-const ALLOWED = /^(leaderboard|state|duels|challenges|config|certs|words|packs|hall)(\/[A-Za-z0-9_\-:.@+]{1,200}){0,6}$/;
+const ALLOWED = /^(leaderboard|state|duels|bduels|challenges|config|certs|words|packs|hall)(\/[A-Za-z0-9_\-:.@+]{1,200}){0,6}$/;
 const MAX_BODY = 300 * 1024;
 // Umumiy ma'lumotlar uchun CDN kesh muddati (soniya)
 const SHARED_TTL = { leaderboard: 30, config: 30, challenges: 30, words: 600, packs: 600, hall: 3600 };
@@ -42,7 +42,7 @@ export const handler = async event => {
   // Yo'l ildizning o'zi bo'la olmaydi (butun reytingni yoki boshqalar yozuvini almashtirib bo'lmasin),
   // leaderboard/<id> dan chuqurroq yozish ham yopiq (adj, refs, hasGrant kabi maydonlarni chetlab o'tmasligi uchun).
   if (method !== 'GET') {
-    const WRITABLE = new Set(['leaderboard', 'state', 'duels', 'challenges']);
+    const WRITABLE = new Set(['leaderboard', 'state', 'duels', 'bduels', 'challenges']);
     if (!WRITABLE.has(root)) return reply(403, { error: 'Bu tugunga yozish taqiqlangan' });
     if (parts.length < 2) return reply(403, { error: "Ildizga yozib bo'lmaydi" });
     if (root === 'leaderboard' && parts.length !== 2) return reply(403, { error: "Reyting yozuvi faqat butun holda yangilanadi" });
@@ -76,6 +76,18 @@ export const handler = async event => {
       const expectedTgId = targetId.replace(/^tg_/, '');
       if (token && (!authenticatedTgId || authenticatedTgId !== expectedTgId)) {
         return reply(401, { error: 'Telegram imzosi tasdiqlanmadi yoki hisob boshqaga tegishli' });
+      }
+    }
+
+    // Do'st duellari: o'yinchi (players/<uid>), raund (rounds/rN/<uid>) va natija (res/rN/<uid>) faqat o'z egasi tomonidan yoziladi
+    if (root === 'bduels') {
+      const seg = parts[2];
+      const uidSeg = seg === 'players' ? parts[3] : seg === 'rounds' || seg === 'res' ? parts[4] : '';
+      if (seg !== 'meta' && !uidSeg) return reply(403, { error: 'Duel yo\'li noto\'g\'ri' });
+      if (uidSeg && uidSeg.startsWith('tg_') && token) {
+        if (!authenticatedTgId || authenticatedTgId !== uidSeg.replace(/^tg_/, '')) {
+          return reply(401, { error: 'Dueldagi Telegram imzosi tasdiqlanmadi' });
+        }
       }
     }
 
@@ -133,6 +145,18 @@ export const handler = async event => {
         parsed.name = parsed.name.replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 60);
         body = JSON.stringify(parsed);
       }
+    }
+
+    if (root === 'bduels') {
+      if (body.length > 40 * 1024) return reply(413, { error: 'Ma’lumot hajmi xato' });
+      if (parts[2] === 'res' && parsed && typeof parsed === 'object') {
+        // Natija chegaralari: 15 savol, har biri ko'pi bilan ~250 ball (combo bilan), 5 soniyadan
+        const s = Number(parsed.s), c = Number(parsed.c), t = Number(parsed.t);
+        if (![s, c, t].every(Number.isFinite) || s < 0 || s > 4500 || c < 0 || c > 15 || t < 0 || t > 15 * 5000 + 500) {
+          return reply(400, { error: "Natija noto'g'ri" });
+        }
+      }
+      if (parts[2] === 'rounds' && parsed && Array.isArray(parsed.q) && parsed.q.length > 15) return reply(400, { error: 'Savollar soni xato' });
     }
 
     if (root === 'duels' && parts.length === 2 && parts[1] && method === 'PUT') {

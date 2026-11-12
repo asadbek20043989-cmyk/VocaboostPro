@@ -8,6 +8,8 @@ import { Question, makeQuestion, chooseKind, checkTyped } from '../services/srs'
 import { sfx } from '../services/sound';
 import { HeaderActions } from './Brand';
 import { SpeakBtn } from './SpeakBtn';
+import { useHints, HintButton, HintCfg } from './Hints';
+import { track } from '../services/stats';
 
 export const Shell: React.FC<{ title: string; sub?: string; progress?: number; onBack: () => void; children: React.ReactNode }> = ({ title, sub, progress, onBack, children }) => (
   <div className="min-h-screen bg-[#0B0F17] text-slate-100">
@@ -185,7 +187,8 @@ export const WordCard: React.FC<{ w: BankWord }> = ({ w }) => {
 };
 
 /** Bitta savol (tanlash yoki yozish). onDone — javob berilib, "Davom" bosilganda chaqiriladi */
-export const QuestionView: React.FC<{ q: Question; onDone: (correct: boolean) => void; onAnswer?: (correct: boolean) => void }> = ({ q, onDone, onAnswer }) => {
+export const QuestionView: React.FC<{ q: Question; onDone: (correct: boolean) => void; onAnswer?: (correct: boolean) => void; hints?: HintCfg }> = ({ q, onDone, onAnswer, hints }) => {
+  const h = useHints(hints || { base: 0, step: 0, free: true });
   const [picked, setPicked] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState<null | { ok: boolean; close?: boolean }>(null);
@@ -259,6 +262,7 @@ export const QuestionView: React.FC<{ q: Question; onDone: (correct: boolean) =>
 
       {q.kind === 'type' && (
         <div className="space-y-2">
+          {hints && h.used > 0 && <div className="text-center text-2xl font-black tracking-[0.2em] text-sky-300 font-mono">{q.answer.split('').map((c, k) => (c === ' ' ? ' ' : k < h.used ? c : '_')).join(' ')}</div>}
           <input
             value={typed}
             disabled={!!result}
@@ -275,6 +279,7 @@ export const QuestionView: React.FC<{ q: Question; onDone: (correct: boolean) =>
             placeholder="Yozing..."
             className="w-full bg-[#0E1524] border border-slate-700 rounded-2xl px-4 py-3.5 text-base text-white focus:outline-none focus:border-amber-500"
           />
+          {hints && !result && <div className="text-center"><HintButton h={h} onUse={() => { if (h.used < q.answer.length) h.ask(); }} disabled={h.used >= q.answer.length} /></div>}
           {!result && (
             <button type="button" disabled={!typed.trim()} onClick={() => { const r = checkTyped(typed, q.answer); answer(r.ok, r.close); }} className="w-full h-12 rounded-2xl bg-amber-500 disabled:opacity-40 text-slate-950 font-bold text-sm">
               Tekshirish
@@ -362,6 +367,8 @@ export const LearnSession: React.FC = () => {
   const doneSteps = bi * 10 + (phase === 'learn' ? ci : phase === 'quiz' ? batch.length + qi : 0) + (phase === 'review' ? plan.news.length * 2 + (plan.dues.length - queue.length) : phase === 'done' ? totalSteps : 0);
 
   const finish = () => {
+    // Admin statistikasi: bugungi mashq yoki maxsus mavzudagi mashq bajarildi (kuniga bir foydalanuvchi uchun bir yozuv)
+    if (stats.total > 0) track('tdone', pack ? 'p_' + pack.id.replace(/[^A-Za-z0-9_\-]/g, '_').slice(0, 60) : 'daily');
     setBonus(stats.total > 0 ? claimDailyBonus() : 0);
     if (stats.total > 0) setTimeout(() => sfx.win(stats.ok === stats.total), 150);
     setPhase('done');

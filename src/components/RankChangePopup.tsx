@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Minus, Sparkles, Flame, Rocket, ShieldAlert, 
 import { triggerHaptic } from '../services/telegram';
 import { sfx } from '../services/sound';
 import { t as tt } from '../services/i18n';
+import { FriendDuelCard } from './FriendDuel';
 
 export type RankDelta = {
   prev: number;
@@ -245,6 +246,8 @@ export const RankChangePopup: React.FC<{
           <div className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[11.5px] leading-relaxed text-slate-300">
             {tip}
           </div>
+
+          {up && <FriendDuelCard context="rank" onOpen={onClose} className="mt-3" />}
 
           {/* Action button */}
           <button

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lock, Crown } from 'lucide-react';
+import { useHints, HintButton, hintCfgOf } from './Hints';
 import { useApp } from '../context/AppContext';
 import { BankWord } from '../types';
 import { GameDef } from '../data/games';
@@ -13,15 +14,33 @@ import { sfx } from '../services/sound';
 import { LuckyWheel } from './LuckyWheel';
 import { nowMs } from '../services/time';
 import { Mic, MicOff, Volume2, RotateCcw, Sparkles } from 'lucide-react';
+import { freshOrder, markSeen } from '../services/gameSeen';
+import { SYN_GROUPS, SYN_INDEX, LEVEL_ORDER, ANTONYM_PAIRS } from '../data/synonyms';
+import { DICTIONARY } from '../data/dictionary';
+import type { EnglishLevel } from '../types';
 
 interface GP {
   def: GameDef;
   pool: BankWord[];
   bank: BankWord[];
+  demo?: boolean; // namuna rejimi: yordam bepul, XP yo'q
   onFinish: (correct: number, total: number) => void;
 }
 const S = (def: GameDef, k: string, d: number) => Number(def.settings[k]) || d;
-const take = (pool: BankWord[], n: number) => shuffle(pool).slice(0, Math.min(n, pool.length));
+// GameScreen havzani «yangi so'zlar birinchi» tartibda beradi, shuning uchun bu yerda aralashtirish shart emas
+const take = (pool: BankWord[], n: number) => pool.slice(0, Math.min(n, pool.length));
+/** Yordam: so'zning dastlabki n ta harfiga mos keladigan katak (tile) indekslari (har bir katak bir marta ishlatiladi) */
+const prefixTiles = (tiles: string[], word: string, n: number): number[] => {
+  const taken = new Set<number>();
+  const out: number[] = [];
+  for (let k = 0; k < n; k++) {
+    const idx = tiles.findIndex((t, i) => !taken.has(i) && t.toLowerCase() === (word[k] || '').toLowerCase());
+    if (idx < 0) break;
+    taken.add(idx);
+    out.push(idx);
+  }
+  return out;
+};
 
 /* ---------- 1. Juftlik topish ---------- */
 const MatchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
@@ -75,7 +94,7 @@ const SpeedGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
   const [wrong, setWrong] = useState(0);
   const [n, setN] = useState(0);
   const fin = useRef(false);
-  const q = useMemo(() => makeQuestion(pool[Math.floor(Math.random() * pool.length)], bank, 'mcq', S(def, 'choices', 4)), [n]);
+  const q = useMemo(() => makeQuestion(pool[n % pool.length], bank, 'mcq', S(def, 'choices', 4)), [n]);
   useEffect(() => {
     const id = setInterval(() => setLeft(l => l - 1), 1000);
     return () => clearInterval(id);
@@ -110,32 +129,43 @@ const SpeedGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
 };
 
 /* ---------- 3. Harflarni tartiblash ---------- */
-const ScrambleGame: React.FC<GP> = ({ def, pool, onFinish }) => {
+const ScrambleGame: React.FC<GP> = ({ def, pool, demo, onFinish }) => {
   const words = useMemo(() => { const b = take(pool, S(def, 'rounds', 6)); const f = b.filter(w => w.en.length >= 3); return f.length ? f : b; }, []);
   const [i, setI] = useState(0);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [chosen, setChosen] = useState<number[]>([]);
+  const h = useHints(hintCfgOf(def.settings, demo));
   const w = words[i];
   const letters = useMemo(() => {
     let l = w.en.split('');
     for (let k = 0; k < 5 && l.join('') === w.en && l.length > 1; k++) l = shuffle(l);
     return l;
   }, [i]);
+  const locked = Math.min(h.used, letters.length); // yordam bilan ochilgan (qotirilgan) harflar soni
   const next = (ok: boolean) => {
     const sc = score + (ok ? 1 : 0);
     if (i + 1 >= words.length) return onFinish(sc, words.length);
-    setScore(sc); setI(i + 1); setChosen([]); setMistakes(0);
+    setScore(sc); setI(i + 1); setChosen([]); setMistakes(0); h.reset();
   };
+  const win = () => { triggerHaptic('success'); sfx.correct(); setTimeout(() => speakEnglish(w.en), 450); setTimeout(() => next(mistakes === 0), 500); };
   const tap = (idx: number) => {
     if (chosen.includes(idx)) return;
     const nc = [...chosen, idx];
     setChosen(nc);
     if (nc.length === letters.length) {
       const built = nc.map(k => letters[k]).join('');
-      if (built.toLowerCase() === w.en.toLowerCase()) { triggerHaptic('success'); sfx.correct(); setTimeout(() => speakEnglish(w.en), 450); setTimeout(() => next(mistakes === 0), 500); }
-      else { triggerHaptic('warning'); sfx.wrong(); const m = mistakes + 1; setMistakes(m); setTimeout(() => { if (m >= 2) next(false); else setChosen([]); }, 500); }
+      if (built.toLowerCase() === w.en.toLowerCase()) win();
+      else { triggerHaptic('warning'); sfx.wrong(); const m = mistakes + 1; setMistakes(m); setTimeout(() => { if (m >= 2) next(false); else setChosen(prefixTiles(letters, w.en, locked)); }, 500); }
     }
+  };
+  // Yordam: keyingi harfni (1-chi, 2-chi, ...) to'g'ri joyiga qo'yib qotiradi
+  const hint = () => {
+    if (locked >= letters.length || chosen.length === letters.length) return;
+    if (!h.ask()) return;
+    const nl = locked + 1;
+    setChosen(prefixTiles(letters, w.en, nl));
+    if (nl === letters.length) win();
   };
   return (
     <div className="space-y-5 text-center">
@@ -143,7 +173,7 @@ const ScrambleGame: React.FC<GP> = ({ def, pool, onFinish }) => {
       <div className="text-xl font-bold text-white">{w.uz}</div>
       <div className="flex justify-center gap-1.5 flex-wrap min-h-[52px]">
         {letters.map((_, k) => (
-          <div key={k} className="w-9 h-11 rounded-xl border border-slate-700 bg-[#0E1524] flex items-center justify-center text-lg font-bold text-amber-300">{chosen[k] !== undefined ? letters[chosen[k]] : ''}</div>
+          <div key={k} className={`w-9 h-11 rounded-xl border flex items-center justify-center text-lg font-bold ${k < locked ? 'border-sky-400 bg-sky-500/15 text-sky-200' : 'border-slate-700 bg-[#0E1524] text-amber-300'}`}>{chosen[k] !== undefined ? letters[chosen[k]] : ''}</div>
         ))}
       </div>
       <div className="flex justify-center gap-2 flex-wrap">
@@ -151,13 +181,16 @@ const ScrambleGame: React.FC<GP> = ({ def, pool, onFinish }) => {
           <button key={k} onClick={() => tap(k)} disabled={chosen.includes(k)} className="w-11 h-12 rounded-xl bg-[#151C28] border border-slate-700 text-lg font-extrabold text-white disabled:opacity-20 active:scale-90 transition-all">{l}</button>
         ))}
       </div>
-      <button onClick={() => setChosen([])} className="text-xs text-slate-400 underline">Tozalash</button>
+      <div className="flex items-center justify-center gap-4">
+        <button onClick={() => setChosen(prefixTiles(letters, w.en, locked))} className="text-xs text-slate-400 underline">Tozalash</button>
+      </div>
+      <HintButton h={h} onUse={hint} disabled={locked >= letters.length || chosen.length === letters.length} />
     </div>
   );
 };
 
 /* ---------- 4,5,6. Savol raundlari (eshitib top / gapni to'ldir / yozib ko'r) ---------- */
-const RoundsGame: React.FC<GP & { kind: QKind }> = ({ def, pool, bank, kind, onFinish }) => {
+const RoundsGame: React.FC<GP & { kind: QKind }> = ({ def, pool, bank, kind, demo, onFinish }) => {
   const words = useMemo(() => take(pool, S(def, 'rounds', 8)), []);
   const [i, setI] = useState(0);
   const [score, setScore] = useState(0);
@@ -165,7 +198,7 @@ const RoundsGame: React.FC<GP & { kind: QKind }> = ({ def, pool, bank, kind, onF
   return (
     <div className="space-y-3">
       <div className="text-xs text-slate-400 text-center">{i + 1} / {words.length} · to&apos;g&apos;ri: {score}</div>
-      <QuestionView key={i} q={q} onDone={ok => {
+      <QuestionView key={i} q={q} hints={kind === 'type' ? hintCfgOf(def.settings, demo) : undefined} onDone={ok => {
         const sc = score + (ok ? 1 : 0);
         if (i + 1 >= words.length) onFinish(sc, words.length);
         else { setScore(sc); setI(i + 1); }
@@ -177,8 +210,8 @@ const RoundsGame: React.FC<GP & { kind: QKind }> = ({ def, pool, bank, kind, onF
 /* ---------- 7. To'g'ri / Noto'g'ri ---------- */
 const TFGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
   const rounds = S(def, 'rounds', 12);
-  const items = useMemo(() => Array.from({ length: rounds }, () => {
-    const w = pool[Math.floor(Math.random() * pool.length)];
+  const items = useMemo(() => Array.from({ length: rounds }, (_, k) => {
+    const w = pool[k % pool.length];
     const truth = Math.random() < 0.5;
     const other = shuffle(bank.filter(b => b.id !== w.id))[0];
     return { w, shown: truth ? w.uz : other.uz, truth };
@@ -316,7 +349,7 @@ const CardsGame: React.FC<GP> = ({ def, pool, onFinish }) => {
 };
 
 /* ---------- 10. Harf yetishmayapti ---------- */
-const MissingGame: React.FC<GP> = ({ def, pool, onFinish }) => {
+const MissingGame: React.FC<GP> = ({ def, pool, demo, onFinish }) => {
   const rounds = S(def, 'rounds', 8);
   const hidden = S(def, 'hidden', 2);
   const words = useMemo(() => { const b = take(pool, rounds); const f = b.filter(w => w.en.length >= 4); return f.length ? f : b; }, []);
@@ -324,6 +357,7 @@ const MissingGame: React.FC<GP> = ({ def, pool, onFinish }) => {
   const [score, setScore] = useState(0);
   const [filled, setFilled] = useState(0);
   const [mistake, setMistake] = useState(false);
+  const h = useHints(hintCfgOf(def.settings, demo));
   const w = words[i];
   const plan = useMemo(() => {
     const idxs = shuffle(w.en.split('').map((_, k) => k)).slice(0, Math.min(hidden, w.en.length - 2)).sort((a, b) => a - b);
@@ -334,16 +368,26 @@ const MissingGame: React.FC<GP> = ({ def, pool, onFinish }) => {
   const next = (ok: boolean) => {
     const sc = score + (ok ? 1 : 0);
     if (i + 1 >= words.length) return onFinish(sc, words.length);
-    setScore(sc); setI(i + 1); setFilled(0); setMistake(false);
+    setScore(sc); setI(i + 1); setFilled(0); setMistake(false); h.reset();
+  };
+  const advance = (nf: number) => {
+    setFilled(nf);
+    if (nf === plan.miss.length) { setTimeout(() => speakEnglish(w.en), 450); setTimeout(() => next(!mistake), 600); }
   };
   const tap = (c: string) => {
+    if (filled >= plan.miss.length) return;
     if (c === plan.miss[filled]) {
       triggerHaptic('light');
       sfx.correct();
-      const nf = filled + 1;
-      setFilled(nf);
-      if (nf === plan.miss.length) { setTimeout(() => speakEnglish(w.en), 450); setTimeout(() => next(!mistake), 600); }
+      advance(filled + 1);
     } else { triggerHaptic('warning'); sfx.wrong(); setMistake(true); }
+  };
+  // Yordam: keyingi tushib qolgan harfni ochib beradi
+  const hint = () => {
+    if (filled >= plan.miss.length) return;
+    if (!h.ask()) return;
+    sfx.correct();
+    advance(filled + 1);
   };
   return (
     <div className="space-y-5 text-center">
@@ -353,7 +397,8 @@ const MissingGame: React.FC<GP> = ({ def, pool, onFinish }) => {
         {w.en.split('').map((ch, k) => {
           const pos = plan.idxs.indexOf(k);
           const shown = pos === -1 || pos < filled;
-          return <div key={k} className={`w-9 h-12 rounded-xl border flex items-center justify-center text-xl font-extrabold ${shown ? 'border-slate-700 bg-[#0E1524] text-white' : 'border-amber-500 bg-amber-500/10 text-amber-300'}`}>{shown ? ch : '_'}</div>;
+          const byHint = pos !== -1 && pos < h.used;
+          return <div key={k} className={`w-9 h-12 rounded-xl border flex items-center justify-center text-xl font-extrabold ${byHint ? 'border-sky-400 bg-sky-500/15 text-sky-200' : shown ? 'border-slate-700 bg-[#0E1524] text-white' : 'border-amber-500 bg-amber-500/10 text-amber-300'}`}>{shown ? ch : '_'}</div>;
         })}
       </div>
       <div className="flex justify-center gap-2 flex-wrap">
@@ -361,13 +406,14 @@ const MissingGame: React.FC<GP> = ({ def, pool, onFinish }) => {
           <button key={k} onClick={() => tap(c)} className="w-12 h-12 rounded-xl bg-[#151C28] border border-slate-700 text-lg font-extrabold text-white active:scale-90 transition-all">{c}</button>
         ))}
       </div>
+      <HintButton h={h} onUse={hint} disabled={filled >= plan.miss.length} />
     </div>
   );
 };
 
 /* ---------- 11. Hangman: so'zni top (VIP) ---------- */
 const KEY_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-const HangmanGame: React.FC<GP> = ({ def, pool, onFinish }) => {
+const HangmanGame: React.FC<GP> = ({ def, pool, demo, onFinish }) => {
   const rounds = S(def, 'rounds', 5);
   const maxLives = Math.max(3, S(def, 'lives', 6));
   const words = useMemo(() => {
@@ -379,9 +425,11 @@ const HangmanGame: React.FC<GP> = ({ def, pool, onFinish }) => {
   const [guessed, setGuessed] = useState<string[]>([]);
   const [lives, setLives] = useState(maxLives);
   const [end, setEnd] = useState<null | 'win' | 'lose'>(null);
+  const h = useHints(hintCfgOf(def.settings, demo));
   const w = words[i];
   const letters = w.en.toLowerCase().split('');
   const isLetter = (ch: string) => /[a-z]/.test(ch);
+  const nextHidden = letters.find(ch => isLetter(ch) && !guessed.includes(ch));
   const tap = (c: string) => {
     if (end || guessed.includes(c)) return;
     const g = [...guessed, c];
@@ -402,11 +450,25 @@ const HangmanGame: React.FC<GP> = ({ def, pool, onFinish }) => {
       if (l <= 0) setEnd('lose');
     }
   };
+  // Yordam: so'zdagi hali ochilmagan keyingi harfni (jon yo'qotmasdan) ochib beradi
+  const hint = () => {
+    if (end || !nextHidden) return;
+    if (!h.ask()) return;
+    const g = [...guessed, nextHidden];
+    setGuessed(g);
+    sfx.correct();
+    if (letters.every(ch => !isLetter(ch) || g.includes(ch))) {
+      setEnd('win');
+      triggerHaptic('success');
+      setTimeout(() => speakEnglish(w.en), 350);
+    }
+  };
   const next = () => {
     const sc = score + (end === 'win' ? 1 : 0);
     if (i + 1 >= words.length) return onFinish(sc, words.length);
     setScore(sc);
     setI(i + 1);
+    h.reset();
     setGuessed([]);
     setLives(maxLives);
     setEnd(null);
@@ -437,6 +499,7 @@ const HangmanGame: React.FC<GP> = ({ def, pool, onFinish }) => {
         </div>
       ) : (
         <div className="space-y-2">
+          <HintButton h={h} onUse={hint} disabled={!nextHidden} className="pb-1" />
           {KEY_ROWS.map(row => (
             <div key={row} className="flex justify-center gap-1.5">
               {row.split('').map(c => {
@@ -546,7 +609,7 @@ const SentenceGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
 };
 
 /* ---------- 13. Diktant (VIP) ---------- */
-const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
+const DictationGame: React.FC<GP> = ({ def, pool, demo, onFinish }) => {
   const rounds = S(def, 'rounds', 6);
   const words = useMemo(() => { const ok = pool.filter(w => w.en.trim().length >= 3); return take(ok.length ? ok : pool, rounds); }, []);
   const [i, setI] = useState(0);
@@ -556,6 +619,7 @@ const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
   const [state, setState] = useState<'play' | 'ok' | 'reveal'>('play');
   const [msg, setMsg] = useState('');
   const [hint, setHint] = useState(false);
+  const h = useHints(hintCfgOf(def.settings, demo));
   const w = words[i];
   useEffect(() => {
     const t = setTimeout(() => speakEnglish(w.en), 350);
@@ -571,7 +635,10 @@ const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
     setState('play');
     setMsg('');
     setHint(false);
+    h.reset();
   };
+  const useHint = () => { if (state === 'play' && h.used < w.en.length) h.ask(); };
+  const pattern = w.en.split('').map((c, k) => (c === ' ' ? ' ' : k < h.used ? c : '_')).join(' ');
   const check = () => {
     if (!text.trim()) return;
     const r = checkTyped(text, w.en);
@@ -585,7 +652,7 @@ const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
       triggerHaptic('warning');
       sfx.wrong();
       setAttempts(1);
-      setMsg(`Xato. Qayta urinib ko‘ring (${w.en.length} ta harf, ${w.en[0]}...)`);
+      setMsg(`Xato. Qayta urinib ko‘ring (${w.en.length} ta harf)`);
     } else {
       sfx.wrong();
       setState('reveal');
@@ -599,6 +666,7 @@ const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
         <button onClick={() => speakEnglish(w.en)} className="w-20 h-20 rounded-full bg-amber-500/15 border-2 border-amber-500 text-4xl active:scale-90 transition-all">🔊</button>
         <div className="text-xs text-slate-400">So‘zni eshiting va yozing</div>
         {hint && <div className="text-sm font-bold text-sky-300">{w.uz}</div>}
+        {h.used > 0 && <div className="text-2xl font-black tracking-[0.2em] text-sky-300 font-mono">{pattern}</div>}
       </div>
       <input
         value={text}
@@ -612,6 +680,7 @@ const DictationGame: React.FC<GP> = ({ def, pool, onFinish }) => {
         className={`w-full h-14 rounded-2xl bg-[#0E1524] border-2 px-4 text-center text-lg font-bold text-white outline-none ${state === 'ok' ? 'border-emerald-500' : state === 'reveal' ? 'border-rose-500' : 'border-slate-700 focus:border-amber-500'}`}
       />
       {msg && <div className={`text-sm font-bold ${state === 'ok' ? 'text-emerald-400' : 'text-amber-300'}`}>{msg}</div>}
+      {state === 'play' && <HintButton h={h} onUse={useHint} disabled={h.used >= w.en.length} />}
       {state === 'reveal' ? (
         <button onClick={() => advance(0)} className="h-12 px-8 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm">{i + 1 >= words.length ? 'Natijani ko‘rish' : 'Keyingi so‘z'}</button>
       ) : (
@@ -792,82 +861,70 @@ const OddGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
   );
 };
 
-/* ---------- 16. Sinonimini top (Har doim inglizcha sinonimlar) ---------- */
-const ENGLISH_SYNONYMS: [string, string, string][] = [
-  ['start', 'begin', 'boshlamoq'],
-  ['huge', 'enormous', 'juda katta, ulkan'],
-  ['smart', 'intelligent', 'aqlli, ziyrak'],
-  ['fast', 'quick', 'tez, chaqqon'],
-  ['happy', 'joyful', 'baxtli, quvnoq'],
-  ['help', 'assist', 'yordam bermoq'],
-  ['rich', 'wealthy', 'boy, badavlat'],
-  ['hard', 'difficult', 'qiyin, murakkab'],
-  ['calm', 'peaceful', 'xotirjam, tinch'],
-  ['brave', 'courageous', 'jasur, qo\'rqmas'],
-  ['buy', 'purchase', 'sotib olmoq'],
-  ['gift', 'present', 'sovg\'a'],
-  ['idea', 'thought', 'fikr, g\'oya'],
-  ['answer', 'reply', 'javob bermoq'],
-  ['speak', 'talk', 'gapirmoq'],
-  ['show', 'display', 'ko\'rsatmoq, namoyish'],
-  ['build', 'construct', 'qurmoq'],
-  ['occur', 'happen', 'sodir bo\'lmoq'],
-  ['journey', 'trip', 'sayohat'],
-  ['tired', 'exhausted', 'charchagan, toliqqan'],
-  ['shut', 'close', 'yopmoq'],
-  ['correct', 'right', 'to\'g\'ri, xatosiz'],
-  ['safe', 'secure', 'xavfsiz'],
-  ['simple', 'easy', 'oddiy, oson'],
-  ['tidy', 'neat', 'ozoda, saranjom'],
-  ['shout', 'yell', 'baqirmoq'],
-  ['hazard', 'danger', 'xavf-xatar'],
-  ['end', 'finish', 'tugatmoq, yakun'],
-  ['friend', 'companion', 'do\'st, hamroh'],
-  ['funny', 'humorous', 'kulgili, qiziq'],
-  ['urgent', 'pressing', 'shoshilinch'],
-  ['accurate', 'precise', 'aniq, to\'g\'ri'],
-  ['annual', 'yearly', 'yillik'],
-  ['broad', 'wide', 'keng'],
-  ['chief', 'main', 'asosiy, bosh'],
-  ['damage', 'harm', 'zarar, ziyon'],
-  ['loyal', 'faithful', 'sodiq, vafodor'],
-  ['odd', 'strange', 'g\'alati'],
-  ['polite', 'courteous', 'xushmuomala, odobli'],
-  ['rare', 'scarce', 'kamyob, nodir'],
-  ['slim', 'thin', 'nozik, ozg\'in'],
-  ['total', 'complete', 'to\'liq, jami'],
-  ['vivid', 'bright', 'yorqin'],
-  ['choose', 'select', 'tanlamoq'],
-  ['error', 'mistake', 'xato'],
-  ['gather', 'collect', 'yig\'moq, to\'plamoq'],
-  ['chance', 'opportunity', 'imkoniyat'],
-];
+/* ---------- 16. Sinonimini top (foydalanuvchi so'zlari + o'z darajasi, takrorlanmaydi) ---------- */
+interface SynQ { target: string; answer: string; uz: string; options: string[]; own: boolean; key: string }
+
+function buildSynonymQuestions(pool: BankWord[], bank: BankWord[], level: EnglishLevel, rounds: number): SynQ[] {
+  const uzOf = (en: string, w?: BankWord) => w?.uz || bank.find(b => b.en.toLowerCase() === en)?.uz || DICTIONARY[en]?.uzbek || '';
+  const lvIdx = Math.max(0, LEVEL_ORDER.indexOf(level));
+  const near = LEVEL_ORDER.filter((_, i) => Math.abs(i - lvIdx) <= 1);
+  const near2 = LEVEL_ORDER.filter((_, i) => Math.abs(i - lvIdx) <= 2);
+
+  // 1) «Bugungi mashq» so'zlari orasida sinonimi ma'lum bo'lganlar
+  const own = pool.filter(w => SYN_INDEX.has(w.en.trim().toLowerCase()));
+  const ownOrdered = freshOrder('syn:own', own, w => w.en.toLowerCase(), rounds);
+  const picked: { target: string; answer: string; uz: string; own: boolean; key: string }[] = [];
+  const usedKeys = new Set<string>();
+  for (const w of ownOrdered) {
+    if (picked.length >= rounds) break;
+    const t = w.en.trim().toLowerCase();
+    const syns = Array.from(SYN_INDEX.get(t) || []);
+    if (!syns.length) continue;
+    // Ma'lumki, bank so'zlari ichida bo'lgan sinonim ham javob bo'la oladi — xilma-xillik uchun tasodifiy tanlanadi
+    const ans = syns[Math.floor(Math.random() * syns.length)];
+    picked.push({ target: t, answer: ans, uz: uzOf(t, w), own: true, key: 'w:' + t });
+    usedKeys.add('w:' + t);
+  }
+
+  // 2) Yetmasa — o'z darajasi (va yaqin darajalar) guruhlaridan, yangilari birinchi
+  if (picked.length < rounds) {
+    const groups = SYN_GROUPS.map((g, i) => ({ ...g, id: 'g' + i })).filter(g => near.includes(g.level));
+    const ordered = freshOrder('syn:grp:' + level, groups, g => g.id, rounds - picked.length, g => g.level === level);
+    for (const g of ordered) {
+      if (picked.length >= rounds) break;
+      const members = g.words.slice().sort(() => Math.random() - 0.5);
+      const t = members[0];
+      if (usedKeys.has('w:' + t) || g.words.some(x => usedKeys.has('w:' + x))) continue;
+      const ans = members[1];
+      picked.push({ target: t, answer: ans, uz: uzOf(t), own: false, key: g.id });
+      g.words.forEach(x => usedKeys.add('w:' + x));
+    }
+  }
+
+  // Tarixga yozamiz — keyingi o'yinda boshqa savollar chiqadi
+  markSeen('syn:own', picked.filter(p => p.own).map(p => p.target));
+  markSeen('syn:grp:' + level, picked.filter(p => !p.own).map(p => p.key));
+
+  // 3) Chalg'ituvchilar: o'sha darajadagi boshqa so'zlar (sinonim bo'lib qolmasligi tekshiriladi)
+  const distPool = Array.from(new Set(SYN_GROUPS.filter(g => near2.includes(g.level)).flatMap(g => g.words)));
+  return shuffle(picked).map(p => {
+    const bad = new Set<string>([p.target, p.answer, ...Array.from(SYN_INDEX.get(p.target) || [])]);
+    const dist = shuffle(distPool.filter(w => !bad.has(w) && !Array.from(SYN_INDEX.get(w) || []).some(x => bad.has(x)))).slice(0, 3);
+    return { ...p, options: shuffle([p.answer, ...dist]) };
+  });
+}
 
 const SynonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
-  const totalRounds = S(def, 'rounds', 6);
+  const { profile } = useApp();
+  const questions = useMemo(() => buildSynonymQuestions(pool, bank, profile.level, S(def, 'rounds', 6)), []);
+  const totalRounds = questions.length;
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
-
-  const current = useMemo(() => {
-    // 1. Birinchi sinxron lug'atdan juftlik olamiz
-    const pair = ENGLISH_SYNONYMS[round % ENGLISH_SYNONYMS.length];
-    const flip = round % 2 === 1;
-    const target = flip ? pair[1] : pair[0];
-    const answer = flip ? pair[0] : pair[1];
-    const uz = pair[2];
-
-    // 2. Chalg'ituvchi boshqa INGLIZCHA so'zlarni tanlaymiz
-    const otherWords = shuffle(
-      ENGLISH_SYNONYMS.flatMap(p => [p[0], p[1]]).filter(w => w !== target && w !== answer)
-    ).slice(0, 3);
-
-    const options = shuffle([answer, ...otherWords]);
-    return { target, answer, uz, options };
-  }, [round]);
+  const current = questions[Math.min(round, totalRounds - 1)];
 
   const pick = (opt: string) => {
-    if (picked) return;
+    if (picked || !current) return;
     setPicked(opt);
     const isRight = opt === current.answer;
     if (isRight) {
@@ -888,6 +945,8 @@ const SynonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
     }, 900);
   };
 
+  if (!current) return <p className="text-sm text-slate-400 text-center pt-10">Savollar topilmadi.</p>;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center text-xs font-bold text-slate-400">
@@ -897,7 +956,8 @@ const SynonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
       <div className="rounded-3xl bg-[#151C28] border border-slate-800 p-6 text-center space-y-2">
         <span className="text-[11px] uppercase tracking-wider text-amber-400 font-extrabold">Inglizcha sinonimini toping:</span>
         <h3 className="text-3xl font-black text-white tracking-wide">{current.target}</h3>
-        <p className="text-xs text-slate-400 italic">Ma'nosi: {current.uz}</p>
+        {current.uz && <p className="text-xs text-slate-400 italic">Ma'nosi: {current.uz}</p>}
+        {current.own && <span className="inline-block text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/30 rounded-full px-2 py-0.5">📚 Bugungi so'zingiz</span>}
       </div>
       <div className="grid grid-cols-2 gap-3">
         {current.options.map((opt, i) => {
@@ -927,25 +987,25 @@ const SynonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
 
 /* ---------- 17. Qarama-qarshi so'z (Antonim) ---------- */
 const AntonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
-  const totalRounds = S(def, 'rounds', 6);
+  const totalRounds = Math.min(S(def, 'rounds', 6), ANTONYM_PAIRS.length);
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
 
-  const ANTONYMS: [string, string][] = [
-    ['rich', 'poor'], ['hot', 'cold'], ['fast', 'slow'], ['big', 'small'],
-    ['easy', 'difficult'], ['early', 'late'], ['happy', 'sad'], ['strong', 'weak'],
-    ['ancient', 'modern'], ['bright', 'dark'], ['cheap', 'expensive'], ['clean', 'dirty']
-  ];
-
-  const current = useMemo(() => {
-    const pair = ANTONYMS[round % ANTONYMS.length];
-    const target = pair[0];
-    const answer = pair[1];
-    const others = shuffle(ANTONYMS.map(p => p[1]).filter(x => x !== answer)).slice(0, 3);
-    const options = shuffle([answer, ...others]);
-    return { target, answer, options };
-  }, [round]);
+  const questions = useMemo(() => {
+    const inPool = new Set(pool.map(w => w.en.trim().toLowerCase()));
+    const ordered = freshOrder('ant', ANTONYM_PAIRS, p => p[0] + '|' + p[1], totalRounds, p => inPool.has(p[0]) || inPool.has(p[1]));
+    const chosen = ordered.slice(0, totalRounds);
+    markSeen('ant', chosen.map(p => p[0] + '|' + p[1]));
+    return shuffle(chosen).map(p => {
+      const flip = inPool.has(p[1]) && !inPool.has(p[0]) ? true : Math.random() < 0.5 && !inPool.has(p[0]);
+      const target = flip ? p[1] : p[0];
+      const answer = flip ? p[0] : p[1];
+      const others = shuffle(ANTONYM_PAIRS.flatMap(x => [x[0], x[1]]).filter(x => x !== answer && x !== target && x !== p[0] && x !== p[1])).slice(0, 3);
+      return { target, answer, options: shuffle([answer, ...others]) };
+    });
+  }, []);
+  const current = questions[Math.min(round, questions.length - 1)];
 
   const pick = (opt: string) => {
     if (picked) return;
@@ -994,11 +1054,12 @@ const AntonymGame: React.FC<GP> = ({ def, pool, bank, onFinish }) => {
 };
 
 /* ---------- 18. So'z qidiruvi (Word Search) ---------- */
-const WordSearchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
+const WordSearchGame: React.FC<GP> = ({ def, pool, demo, onFinish }) => {
   const totalRounds = S(def, 'rounds', 5);
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [typed, setTyped] = useState<number[]>([]);
+  const h = useHints(hintCfgOf(def.settings, demo));
 
   const targetWord = useMemo(() => {
     const w = pool[round % pool.length];
@@ -1009,7 +1070,27 @@ const WordSearchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
     return { word: w, clean: en, grid };
   }, [round, pool]);
 
+  const locked = Math.min(h.used, targetWord.clean.length); // yordam bilan ochilgan (qotirilgan) harflar soni
+  const solved = typed.length === targetWord.clean.length && typed.map(i => targetWord.grid[i]).join('') === targetWord.clean;
+
+  const win = () => {
+    triggerHaptic('success');
+    sfx.correct();
+    setCorrect(c => c + 1);
+    setTimeout(() => {
+      setTyped([]);
+      h.reset();
+      if (round + 1 >= totalRounds) {
+        onFinish(correct + 1, totalRounds);
+      } else {
+        setRound(r => r + 1);
+      }
+    }, 700);
+  };
+
   const clickLetter = (idx: number) => {
+    if (solved) return;
+    if (typed.slice(0, locked).includes(idx)) return; // yordam ochgan harflarni olib tashlab bo'lmaydi
     if (typed.includes(idx)) {
       setTyped(t => t.filter(x => x !== idx));
       return;
@@ -1017,19 +1098,17 @@ const WordSearchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
     const next = [...typed, idx];
     setTyped(next);
     const currentStr = next.map(i => targetWord.grid[i]).join('');
-    if (currentStr === targetWord.clean) {
-      triggerHaptic('success');
-      sfx.correct();
-      setCorrect(c => c + 1);
-      setTimeout(() => {
-        setTyped([]);
-        if (round + 1 >= totalRounds) {
-          onFinish(correct + 1, totalRounds);
-        } else {
-          setRound(r => r + 1);
-        }
-      }, 700);
-    }
+    if (currentStr === targetWord.clean) win();
+  };
+
+  // Yordam: 1-bosishda birinchi harf, keyingisida ikkinchi harf va hokazo ochiladi (narx har safar oshadi)
+  const hint = () => {
+    if (solved || locked >= targetWord.clean.length) return;
+    if (!h.ask()) return;
+    const nl = locked + 1;
+    const pre = prefixTiles(targetWord.grid, targetWord.clean, nl);
+    setTyped(pre);
+    if (nl >= targetWord.clean.length) win();
   };
 
   return (
@@ -1043,7 +1122,7 @@ const WordSearchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
         <div className="text-xl font-black text-amber-400 mt-1">{targetWord.word.uz}</div>
         <div className="mt-3 flex justify-center gap-1 min-h-[36px]">
           {typed.map((idx, i) => (
-            <span key={i} className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center font-black text-white text-sm">
+            <span key={i} className={`w-8 h-8 rounded-lg border flex items-center justify-center font-black text-sm ${i < locked ? 'bg-sky-500/20 border-sky-400 text-sky-200' : 'bg-amber-500/20 border-amber-500/50 text-white'}`}>
               {targetWord.grid[idx]}
             </span>
           ))}
@@ -1054,13 +1133,18 @@ const WordSearchGame: React.FC<GP> = ({ def, pool, onFinish }) => {
       </div>
       <div className="grid grid-cols-4 gap-2">
         {targetWord.grid.map((char, i) => {
-          const isSelected = typed.includes(i);
+          const pos = typed.indexOf(i);
+          const isSelected = pos !== -1;
+          const isLocked = isSelected && pos < locked;
           return (
-            <button key={i} onClick={() => clickLetter(i)} className={`h-12 rounded-xl border text-lg font-black transition-all active:scale-90 ${isSelected ? 'bg-amber-500 text-slate-950 border-amber-400 scale-95 shadow-md shadow-amber-500/20' : 'bg-[#18202F] border-slate-800 text-white hover:border-slate-700'}`}>
+            <button key={i} onClick={() => clickLetter(i)} className={`h-12 rounded-xl border text-lg font-black transition-all active:scale-90 ${isLocked ? 'bg-sky-500/80 text-slate-950 border-sky-300 scale-95' : isSelected ? 'bg-amber-500 text-slate-950 border-amber-400 scale-95 shadow-md shadow-amber-500/20' : 'bg-[#18202F] border-slate-800 text-white hover:border-slate-700'}`}>
               {char}
             </button>
           );
         })}
+      </div>
+      <div className="text-center">
+        <HintButton h={h} onUse={hint} disabled={solved || locked >= targetWord.clean.length} />
       </div>
     </div>
   );
@@ -1334,14 +1418,28 @@ const RENDER: Record<string, React.FC<GP>> = {
 };
 
 export const GameScreen: React.FC<{ id: string }> = ({ id }) => {
-  const { games, bank, srs, completeGame, closeOverlay } = useApp();
+  const { games, bank, srs, gameWords, gameTodayIds, completeGame, closeOverlay } = useApp();
   const def = games.find(g => g.id === id)!;
   const [result, setResult] = useState<null | { correct: number; total: number; xp: number; passed: boolean; already: boolean }>(null);
   const [run, setRun] = useState(0);
 
-  const learned = useMemo(() => bank.filter(b => srs[b.id]), [bank, srs]);
-  const demo = learned.length < 4;
-  const pool = demo ? bank.slice(0, Math.min(bank.length, 12)) : learned;
+  // Havza: foydalanuvchi darajasi bo'yicha «Bugungi mashq» so'zlari (kerak bo'lsa o'z darajasidagi o'rganilgan so'zlar bilan to'ldirilgan)
+  const learnedCount = useMemo(() => gameWords.filter(w => srs[w.id]).length, [gameWords, srs]);
+  const demo = learnedCount < 4;
+  const basePool = useMemo(() => (demo ? (gameWords.length >= 4 ? gameWords : bank.slice(0, Math.min(bank.length, 12))) : gameWords), [demo, gameWords, bank]);
+  const need = Math.max(4, Number(def?.settings?.rounds || def?.settings?.pairs || def?.settings?.words || (def?.settings?.goal ? def.settings.goal * 2 : 0) || 8));
+  // Har bir urinishda «hali ishlatilmagan» so'zlar birinchi keladi — o'yinlar takrorlanmaydi
+  // Havza: shu kungacha o'rganilgan so'zlar + bugungi mashq so'zlari aralash (navbat bilan), «yangilari birinchi» tartibda
+  const pool = useMemo(() => {
+    if (demo) return shuffle(basePool);
+    const ordered = freshOrder('words:' + id, basePool, w => w.id, need);
+    const todaySet = new Set(gameTodayIds);
+    const t = ordered.filter(w => todaySet.has(w.id));
+    const o = ordered.filter(w => !todaySet.has(w.id));
+    const mix: BankWord[] = [];
+    for (let k = 0; k < Math.max(t.length, o.length); k++) { if (t[k]) mix.push(t[k]); if (o[k]) mix.push(o[k]); }
+    return mix;
+  }, [basePool, demo, id, run]);
   const Game = RENDER[id];
   // Ovozli o'yinlarda so'zlar oldindan yuklanadi (kechikmasligi uchun)
   useEffect(() => {
@@ -1352,9 +1450,10 @@ export const GameScreen: React.FC<{ id: string }> = ({ id }) => {
   }
 
   return (
-    <Shell title={`${def.icon} ${def.title}`} sub={demo ? "Namuna so'zlar (XP yo'q)" : def.kind === 'memory' ? 'Xotira mashqi' : "So'z mashqi"} onBack={closeOverlay}>
+    <Shell title={`${def.icon} ${def.title}`} sub={demo ? "Namuna so'zlar (XP yo'q)" : def.kind === 'memory' ? 'Xotira mashqi · o\'rgangan va bugungi so\'zlar' : "O'rgangan va bugungi mashq so'zlari"} onBack={closeOverlay}>
       {!result ? (
-        <Game key={run} def={def} pool={pool} bank={bank} onFinish={(correct, total) => {
+        <Game key={run} def={def} pool={pool} bank={bank} demo={demo} onFinish={(correct, total) => {
+          if (!demo) markSeen('words:' + id, pool.slice(0, need).map(w => w.id));
           const r = completeGame(id, correct, total, demo);
           setResult({ correct, total, ...r });
           if (r.passed) setTimeout(() => sfx.win(correct >= total), 200);
@@ -1386,7 +1485,7 @@ export const GamesTab: React.FC = () => {
     <div className="space-y-4 pb-6">
       <div>
         <h2 className="text-xl font-extrabold text-white">O&apos;yinlar</h2>
-        <p className="text-xs text-slate-400 mt-0.5">O&apos;rgangan so&apos;zlaringiz bilan o&apos;ynang. Har bir o&apos;yindan kuniga bir marta XP olinadi.</p>
+        <p className="text-xs text-slate-400 mt-0.5">O&apos;yinlar shu kungacha o&apos;rgangan so&apos;zlaringiz va bugungi mashq so&apos;zlaridan (darajangizga qarab) tuziladi va har safar yangicha chiqadi. Har bir o&apos;yindan kuniga bir marta XP olinadi.</p>
       </div>
       {isPro && (
         <div className="rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-400/25 to-amber-500/20 border-2 border-amber-400/70 py-4 px-3 flex flex-col items-center justify-center gap-1 text-center shadow-lg shadow-amber-500/10">
@@ -1400,20 +1499,28 @@ export const GamesTab: React.FC = () => {
       <div className="grid grid-cols-2 gap-3">
         {games.filter(g => g.enabled).map(g => {
           const locked = g.vip && !isPro;
+          const border = g.vip ? (locked ? 'border-amber-500/60 shadow-[0_0_20px_-6px_rgba(245,158,11,0.55)]' : 'border-amber-400/70 shadow-[0_0_22px_-6px_rgba(251,191,36,0.6)]') : 'border-slate-800 hover:border-amber-500/40';
           return (
-            <button key={g.id} type="button" onClick={() => { triggerHaptic('selection'); if (!openGame(g.id)) setShowWheel(true); }} className={`relative text-left rounded-2xl border transition-all active:scale-[0.97] overflow-hidden ${g.img ? '' : 'p-4'} ${locked ? 'bg-[#121822] border-slate-800' : 'bg-[#151C28] border-slate-800 hover:border-amber-500/40'}`}>
+            <button key={g.id} type="button" onClick={() => { triggerHaptic('selection'); if (!openGame(g.id)) setShowWheel(true); }} className={`relative text-left rounded-2xl border-2 transition-all active:scale-[0.97] overflow-hidden ${g.img ? '' : 'p-4'} ${g.vip ? 'bg-gradient-to-b from-amber-500/[0.08] to-[#121822]' : 'bg-[#151C28]'} ${border}`}>
               {g.img && (
-                <img src={g.img} alt="" loading="lazy" referrerPolicy="no-referrer" className={`w-full h-24 object-cover ${locked ? 'opacity-60' : ''}`} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                <img src={g.img} alt="" loading="lazy" referrerPolicy="no-referrer" className={`w-full h-24 object-cover ${locked ? 'opacity-75' : ''}`} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
               )}
               <TagBadge data={g} className="absolute top-2 left-2 z-[1]" />
               {g.vip && (
-                <span className="absolute top-2 right-2 z-[1] inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded backdrop-blur-sm">{locked ? <Lock className="w-2.5 h-2.5" /> : <Crown className="w-2.5 h-2.5" />} VIP</span>
+                <span className={`vip-chip absolute top-2 right-2 z-[2] inline-flex items-center gap-1 text-[12px] font-black tracking-wide text-slate-950 bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 pl-1.5 pr-2.5 py-1 rounded-full border border-amber-100/70 shadow-lg shadow-amber-500/50 ${locked ? 'vip-chip-locked' : ''}`}>
+                  {locked ? <Lock className="w-3.5 h-3.5" strokeWidth={3} /> : <Crown className="w-3.5 h-3.5" strokeWidth={2.5} />} VIP
+                </span>
               )}
               <div className={g.img ? 'p-3' : ''}>
                 {g.img ? null : <div className={`text-3xl ${g.badge ? 'mt-3' : ''}`}>{g.icon}</div>}
                 <div className={`text-sm font-bold text-white leading-tight ${g.img ? '' : 'mt-2'}`}>{g.img ? <span className="mr-1">{g.icon}</span> : null}{g.title}</div>
                 <div className="text-[11px] text-slate-400 mt-1 leading-snug">{g.desc}</div>
                 <div className="text-[11px] text-amber-400 font-semibold mt-2">+{g.xp} XP{g.kind === 'memory' ? ' · 🧠 xotira' : ''}</div>
+                {locked && (
+                  <div className="mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/50 py-1.5 text-[11px] font-extrabold text-amber-300">
+                    <Lock className="w-3.5 h-3.5" /> VIP uchun · ochish
+                  </div>
+                )}
               </div>
             </button>
           );

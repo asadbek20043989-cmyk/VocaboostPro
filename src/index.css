@@ -681,3 +681,125 @@ html.light .vb-admin-pop h2 { color: #FFFFFF; }
 /* Podium ism lavhasi: do'kondagi rang/effektlar lavha ustida o'qilmay qolmasin — matn lavha rangida bo'ladi */
 .pd-plate .pd-plate-name, .pd-plate .pd-plate-name * { color: inherit !important; -webkit-text-fill-color: currentColor !important; background: none !important; -webkit-background-clip: border-box !important; background-clip: border-box !important; animation: none !important; filter: none !important; text-shadow: none !important; }
 .pd-r1 .pd-plate-name, .pd-r1 .pd-plate-name * { font-weight: 900; }
+
+/* =====================================================================
+   PREMIUM GALOCHKA (PremiumTick): yumshoq nur + vaqti-vaqti bilan o'tuvchi yaltirash
+   ===================================================================== */
+.vb-ptick { display:inline-flex; flex:none; align-items:center; justify-content:center; filter:drop-shadow(0 0 3px var(--g, rgba(251,191,36,.7))); animation:vb-ptick-glow 3.2s ease-in-out infinite; }
+.vb-ptick svg { display:block; overflow:visible; }
+.vb-ptick-shine { animation:vb-ptick-shine 3.6s ease-in-out infinite; }
+@keyframes vb-ptick-shine { 0%,55% { transform:translateX(0) skewX(-18deg); } 100% { transform:translateX(36px) skewX(-18deg); } }
+@keyframes vb-ptick-glow { 0%,100% { filter:drop-shadow(0 0 2px var(--g)); } 50% { filter:drop-shadow(0 0 6px var(--g)); } }
+@media (prefers-reduced-motion: reduce) { .vb-ptick, .vb-ptick-shine { animation:none; } }
+
+/* =====================================================================
+   BOTNI BAHOLASH (RatingModal): sahna, kartalar, teglar, yulduzlar
+   ===================================================================== */
+.vb-rate { background:radial-gradient(120% 70% at 50% 0%, rgb(251 191 36 / .16), transparent 60%), linear-gradient(180deg,#171F2F,#0F1521 70%); border:1px solid rgb(251 191 36 / .35); }
+.vb-rate-hero { background:radial-gradient(circle at 50% -10%, rgb(251 191 36 / .22), transparent 65%); }
+.vb-rate-face { font-size:3.1rem; line-height:1; margin:.7rem 0 .45rem; filter:drop-shadow(0 6px 14px var(--c)); animation:vb-rate-pop .45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes vb-rate-pop { 0% { transform:scale(.4) rotate(-14deg); opacity:0; } 100% { transform:scale(1) rotate(0); opacity:1; } }
+.vb-rate-star svg { fill:rgb(51 65 85 / .5); stroke:#475569; transition:fill .2s, stroke .2s, transform .2s, filter .2s; }
+.vb-rate-star[data-on="1"] svg { fill:#FBBF24; stroke:#F59E0B; filter:drop-shadow(0 0 7px rgb(251 191 36 / .65)); animation:vb-rate-star .4s var(--d) both; }
+@keyframes vb-rate-star { 0% { transform:scale(.6); } 60% { transform:scale(1.22) rotate(-6deg); } 100% { transform:scale(1); } }
+.vb-rate-card { position:relative; border-radius:20px; padding:14px; background:linear-gradient(160deg, rgb(255 255 255 / .06), rgb(255 255 255 / .02)); border:1px solid rgb(255 255 255 / .09); box-shadow:inset 3px 0 0 var(--ac, #38BDF8); transition:border-color .2s, box-shadow .2s; }
+.vb-rate-card:focus-within { border-color:var(--ac); box-shadow:inset 3px 0 0 var(--ac), 0 0 0 3px color-mix(in srgb, var(--ac) 22%, transparent); }
+.vb-rate-ico { width:34px; height:34px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex:none; box-shadow:0 6px 14px rgb(0 0 0 / .3); }
+.vb-rate-chip { padding:5px 10px; border-radius:999px; font-size:11px; font-weight:700; color:#CBD5E1; background:rgb(255 255 255 / .05); border:1px solid rgb(255 255 255 / .1); transition:all .15s; }
+.vb-rate-chip:active { transform:scale(.94); }
+.vb-rate-chip.is-on { color:#fff; background:linear-gradient(135deg,#F472B6,#E11D48); border-color:transparent; box-shadow:0 4px 12px rgb(225 29 72 / .35); }
+.vb-rate-kind { display:flex; align-items:center; justify-content:center; gap:5px; padding:8px 4px; border-radius:12px; font-size:11.5px; font-weight:800; color:#94A3B8; background:rgb(255 255 255 / .04); border:1px solid rgb(255 255 255 / .09); transition:all .15s; }
+.vb-rate-kind.is-on { color:#fff; background:color-mix(in srgb, var(--kc) 28%, transparent); border-color:var(--kc); box-shadow:0 0 14px color-mix(in srgb, var(--kc) 35%, transparent); }
+.vb-rate-input { width:100%; padding:11px 13px; border-radius:14px; font-size:13px; color:#fff; background:rgb(5 8 14 / .55); border:1px solid rgb(255 255 255 / .1); outline:none; transition:border-color .2s; }
+.vb-rate-input::placeholder { color:#64748B; }
+.vb-rate-input:focus { border-color:var(--ac); }
+.vb-rate-burst { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.vb-rate-burst span { position:absolute; left:50%; top:46%; font-size:1.4rem; opacity:0; animation:vb-rate-burst 1.3s ease-out calc(var(--i) * 70ms) forwards; }
+@keyframes vb-rate-burst { 0% { transform:translate(-50%,-50%) scale(.3); opacity:0; } 20% { opacity:1; } 100% { transform:translate(calc(-50% + (var(--i) - 2.5) * 52px), calc(-50% - 120px - var(--i) * 6px)) scale(1.2) rotate(calc(var(--i) * 30deg)); opacity:0; } }
+html.light .vb-rate { background:radial-gradient(120% 70% at 50% 0%, rgb(251 191 36 / .22), transparent 60%), linear-gradient(180deg,#FFFFFF,#F8FAFC 70%); border-color:#FCD34D; }
+html.light .vb-rate .text-white { color:#0F172A; }
+html.light .vb-rate .text-slate-300, html.light .vb-rate .text-slate-400 { color:#475569; }
+html.light .vb-rate-card { background:#fff; border-color:#E2E8F0; }
+html.light .vb-rate-chip, html.light .vb-rate-kind { color:#475569; background:#F1F5F9; border-color:#E2E8F0; }
+html.light .vb-rate-chip.is-on, html.light .vb-rate-kind.is-on { color:#fff; }
+html.light .vb-rate-kind.is-on { color:#0F172A; }
+html.light .vb-rate-input { color:#0F172A; background:#F8FAFC; border-color:#CBD5E1; }
+html.light .vb-rate-star svg { fill:#E2E8F0; stroke:#94A3B8; }
+@media (prefers-reduced-motion: reduce) { .vb-rate-face, .vb-rate-star[data-on="1"] svg, .vb-rate-burst span { animation:none; } .vb-rate-burst span { opacity:0; } }
+
+/* =====================================================================
+   SO'ROVNOMA (SurveyModal): bosqichli kartalar
+   ===================================================================== */
+.vb-sv { background:radial-gradient(110% 60% at 0% 0%, color-mix(in srgb, var(--ac) 22%, transparent), transparent 60%), linear-gradient(180deg,#141B2B,#0C111C); border:1px solid color-mix(in srgb, var(--ac) 45%, transparent); transition:border-color .4s; }
+.vb-sv-badge { font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--ac); background:color-mix(in srgb, var(--ac) 16%, transparent); border:1px solid color-mix(in srgb, var(--ac) 40%, transparent); padding:4px 10px; border-radius:999px; }
+.vb-sv-ticket { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; color:#FDE68A; padding:4px 10px; border-radius:8px; background:linear-gradient(90deg,rgb(251 191 36 / .22),rgb(251 146 60 / .18)); border:1px dashed rgb(251 191 36 / .6); }
+.vb-sv-seg { flex:1; height:6px; border-radius:99px; background:rgb(255 255 255 / .1); transition:background .3s, transform .3s; }
+.vb-sv-seg[data-state="done"][data-ans="1"] { background:var(--ac); }
+.vb-sv-seg[data-state="done"][data-ans="0"] { background:rgb(255 255 255 / .28); }
+.vb-sv-seg[data-state="now"] { background:linear-gradient(90deg,var(--ac),rgb(255 255 255 / .7)); transform:scaleY(1.5); box-shadow:0 0 10px var(--ac); }
+.vb-sv-q { display:flex; gap:11px; align-items:flex-start; padding:14px; border-radius:20px; background:linear-gradient(160deg, rgb(255 255 255 / .07), rgb(255 255 255 / .02)); border:1px solid rgb(255 255 255 / .09); }
+.vb-sv-num { flex:none; width:30px; height:30px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#0B0F17; background:var(--ac); box-shadow:0 4px 12px color-mix(in srgb, var(--ac) 50%, transparent); }
+.vb-sv-opt { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:16px; color:#E2E8F0; background:rgb(255 255 255 / .04); border:1px solid rgb(255 255 255 / .09); transition:all .18s; }
+.vb-sv-opt:active { transform:scale(.98); }
+.vb-sv-letter { flex:none; width:28px; height:28px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; color:#94A3B8; background:rgb(255 255 255 / .07); transition:all .18s; }
+.vb-sv-opt.is-on { color:#fff; background:color-mix(in srgb, var(--ac) 20%, transparent); border-color:var(--ac); box-shadow:0 0 16px color-mix(in srgb, var(--ac) 30%, transparent); }
+.vb-sv-opt.is-on .vb-sv-letter { color:#0B0F17; background:var(--ac); transform:rotate(-8deg) scale(1.08); }
+.vb-sv-text { display:flex; gap:9px; padding:12px 13px; border-radius:18px; background:rgb(5 8 14 / .55); border:1px solid rgb(255 255 255 / .1); transition:border-color .2s, box-shadow .2s; }
+.vb-sv-text:focus-within { border-color:var(--ac); box-shadow:0 0 0 3px color-mix(in srgb, var(--ac) 22%, transparent); }
+.vb-sv-in-r { animation:vb-sv-r .32s cubic-bezier(.2,.9,.3,1); }
+.vb-sv-in-l { animation:vb-sv-l .32s cubic-bezier(.2,.9,.3,1); }
+@keyframes vb-sv-r { from { opacity:0; transform:translateX(34px); } to { opacity:1; transform:none; } }
+@keyframes vb-sv-l { from { opacity:0; transform:translateX(-34px); } to { opacity:1; transform:none; } }
+html.light .vb-sv { background:radial-gradient(110% 60% at 0% 0%, color-mix(in srgb, var(--ac) 18%, transparent), transparent 60%), linear-gradient(180deg,#FFFFFF,#F8FAFC); }
+html.light .vb-sv .text-white { color:#0F172A; }
+html.light .vb-sv .text-slate-300, html.light .vb-sv .text-slate-400 { color:#475569; }
+html.light .vb-sv-q, html.light .vb-sv-opt { background:#fff; border-color:#E2E8F0; color:#1E293B; }
+html.light .vb-sv-opt.is-on { color:#0F172A; background:color-mix(in srgb, var(--ac) 16%, #fff); }
+html.light .vb-sv-text { background:#F8FAFC; border-color:#CBD5E1; }
+html.light .vb-sv-text textarea { color:#0F172A; }
+html.light .vb-sv-ticket { color:#92400E; }
+@media (prefers-reduced-motion: reduce) { .vb-sv-in-r, .vb-sv-in-l { animation:none; } }
+
+/* =====================================================================
+   DARAJA LIGALARI (LevelLeagues)
+   ===================================================================== */
+.vb-lg-row { display:flex; gap:8px; overflow-x:auto; padding-top:10px; padding-bottom:4px; scrollbar-width:none; scroll-snap-type:x proximity; }
+.vb-lg-row::-webkit-scrollbar { display:none; }
+.vb-lg-card { position:relative; flex:none; scroll-snap-align:start; width:62px; padding:9px 4px 7px; border-radius:18px; display:flex; flex-direction:column; align-items:center; gap:2px; color:#94A3B8; background:linear-gradient(180deg,#161E2D,#0F1521); border:1px solid rgb(255 255 255 / .08); transition:transform .2s, box-shadow .2s, border-color .2s; }
+.vb-lg-card:active { transform:scale(.94); }
+.vb-lg-ico { font-size:19px; line-height:1; height:22px; display:flex; align-items:center; filter:grayscale(.55); transition:filter .2s; }
+.vb-lg-code { font-size:13px; font-weight:900; letter-spacing:.02em; color:#CBD5E1; }
+.vb-lg-cnt { display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700; color:#64748B; }
+.vb-lg-card.is-on { color:#fff; background:linear-gradient(160deg,var(--c1),var(--c2)); border-color:var(--c1); transform:translateY(-3px); box-shadow:0 8px 20px color-mix(in srgb, var(--c1) 45%, transparent); }
+.vb-lg-card.is-on .vb-lg-ico { filter:none; }
+.vb-lg-card.is-on .vb-lg-code, .vb-lg-card.is-on .vb-lg-cnt { color:#fff; }
+.vb-lg-me { position:absolute; top:-8px; left:50%; transform:translateX(-50%); font-size:8.5px; font-weight:900; letter-spacing:.08em; color:#0B0F17; background:#FBBF24; padding:1px 6px; border-radius:99px; box-shadow:0 2px 8px rgb(251 191 36 / .5); }
+.vb-lg-hero { position:relative; overflow:hidden; padding:14px; border-radius:24px; background:linear-gradient(135deg,var(--c1),var(--c2)); box-shadow:0 12px 28px color-mix(in srgb, var(--c2) 45%, transparent); animation:vb-lg-in .35s ease-out; }
+.vb-lg-hero::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 85% 0%, rgb(255 255 255 / .28), transparent 55%); pointer-events:none; }
+.vb-lg-mark { position:absolute; right:-6px; top:-14px; font-size:96px; font-weight:900; line-height:1; color:rgb(255 255 255 / .13); letter-spacing:-.04em; pointer-events:none; }
+.vb-lg-emblem { flex:none; width:52px; height:52px; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:28px; background:rgb(255 255 255 / .2); border:1px solid rgb(255 255 255 / .35); box-shadow:inset 0 1px 0 rgb(255 255 255 / .4), 0 6px 14px rgb(0 0 0 / .25); }
+.vb-lg-stat { display:flex; flex-direction:column; align-items:center; padding:7px 4px; border-radius:14px; background:rgb(0 0 0 / .22); }
+.vb-lg-stat b { font-size:16px; font-weight:900; color:#fff; line-height:1.1; font-variant-numeric:tabular-nums; }
+.vb-lg-stat span { font-size:9.5px; font-weight:700; color:rgb(255 255 255 / .75); text-align:center; line-height:1.15; }
+@keyframes vb-lg-in { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+html.light .vb-lg-card:not(.is-on) { background:#fff; border-color:#E2E8F0; }
+html.light .vb-lg-card:not(.is-on) .vb-lg-code { color:#334155; }
+@media (prefers-reduced-motion: reduce) { .vb-lg-hero { animation:none; } }
+
+
+/* Do'st bilan Blitz Duel */
+@keyframes fd-pop { 0% { opacity: 0; transform: translateY(18px) scale(0.95); } 100% { opacity: 1; transform: none; } }
+@keyframes fd-rise { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: none; } }
+@keyframes fd-count { 0% { opacity: 0; transform: scale(1.7); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: 0.85; transform: scale(0.92); } }
+@keyframes fd-vs { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.fd-pop { animation: fd-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fd-rise { animation: fd-rise 0.25s ease-out both; }
+.fd-count { animation: fd-count 0.8s ease-out both; }
+.fd-vs { animation: fd-vs 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .fd-pop, .fd-rise, .fd-count, .fd-vs { animation: none; } }
+
+/* VIP o'yinlar nishoni: yorqin va jonli, qulflanganda esa «nur» o'tib turadi */
+.vip-chip { position: absolute; overflow: hidden; }
+.vip-chip-locked::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%); transform: translateX(-120%); animation: vipShine 2.6s ease-in-out infinite; }
+@keyframes vipShine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) { .vip-chip-locked::after { animation: none; } }

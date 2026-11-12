@@ -1,5 +1,6 @@
 import React from 'react';
-import { BadgeCheck, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { PremiumTick } from './PremiumTick';
 import { Avatar } from './Avatar';
 import { FRAMES, AURAS } from '../data/shopDefaults';
 import { nowMs } from '../services/time';
@@ -56,7 +57,7 @@ export const CosName: React.FC<{ name: string; cos?: CosLike; className?: string
         {cos?.ns ? <span className="shrink-0">{cos.ns}</span> : null}
         <span className={`truncate ${cls}`} style={style}>{name}</span>
         {cos?.rb === 'star' && <Star className="w-3.5 h-3.5 shrink-0 fill-amber-400 text-amber-400" />}
-        {cos?.vf && <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400 fill-sky-500/20" aria-label="VIP" />}
+        {cos?.vf && <PremiumTick size={16} variant="vip" className="shrink-0" title="VIP" />}
       </span>
       {showTitle && cos?.ti ? <span className="text-[10px] font-bold text-amber-300/90 truncate">{cos.ti}</span> : null}
     </span>

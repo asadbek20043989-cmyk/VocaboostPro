@@ -942,6 +942,10 @@ export const handler = async event => {
             put(`stats/games/${key}`, { [ev === 'gstart' ? 'plays' : 'done']: inc(e.n) });
             put(`stats/gu/${key}`, { [uid]: 1 });
             put(`stats/gd/${day}/${key}`, { [ev === 'gstart' ? 'plays' : 'done']: inc(e.n) });
+          } else if (ev === 'tdone' && KEY.test(key)) {
+            // Bugungi mashq ('daily') yoki maxsus mavzudagi/to'plam mashqi ('p_<id>') bajarildi: kun -> foydalanuvchi -> vaqt
+            if (key === 'daily') put(`stats/dp/${day}/${uid}`, { d: Date.now() });
+            else put(`stats/dp/${day}/${uid}/p`, { [key.slice(0, 64)]: Date.now() });
           } else if (ev === 'buy' && KEY.test(key)) {
             const price = Math.max(0, Math.min(100000000, Math.round(Number(e.price) || 0)));
             put(`stats/shop/${key}`, { n: inc(1), coins: { '.sv': { increment: price } } });
@@ -960,6 +964,13 @@ export const handler = async event => {
         // Eski kunlarni tozalash (60+ kun oldingi faollik yozuvlari)
         const oldKeys = Array.from({ length: 12 }, (_, i) => new Date(t0 - (61 + i) * 86400000).toISOString().slice(0, 10));
         Promise.all(oldKeys.map(d => call('DELETE', `stats/au/${d}`).catch(() => null))).catch(() => {});
+        // Mashq bajarilishi (kunlik / maxsus mavzu): 60+ kun oldingilarni tozalash
+        Promise.all(oldKeys.map(d => call('DELETE', `stats/dp/${d}`).catch(() => null))).catch(() => {});
+        const dpDays = await Promise.all(dayKeys.map(d => call('GET', `stats/dp/${d}`).catch(() => null)));
+        const practice = dayKeys.map((d, i) => {
+          const m = dpDays[i] || {};
+          return { day: d, users: Object.entries(m).map(([uid, v]) => ({ uid, d: Number(v?.d) || 0, p: Object.fromEntries(Object.entries(v?.p || {}).map(([k, t]) => [k, Number(t) || 0])) })) };
+        });
         const [auDays, games, gu, shop, su, gd] = await Promise.all([
           Promise.all(dayKeys.map(d => call('GET', `stats/au/${d}`).catch(() => null))),
           call('GET', 'stats/games').catch(() => null),
@@ -987,7 +998,7 @@ export const handler = async event => {
         const gameRows = Object.entries(games || {}).map(([id, g]) => ({ id, plays: Number(g?.plays) || 0, done: Number(g?.done) || 0, players: Object.keys((gu || {})[id] || {}).length }));
         const shopRows = Object.entries(shop || {}).map(([id, g]) => ({ id, n: Number(g?.n) || 0, coins: Number(g?.coins) || 0, buyers: Object.keys((su || {})[id] || {}).length }));
         const gameDays = dayKeys.slice(0, 14).map((d, i) => ({ day: d, games: gd[i] || {} }));
-        return json(200, { days, hours, hourUsers: hoursUsers.map(x => x.size), uniqueUsers: uniq.size, userDays, perDay, games: gameRows, shop: shopRows, gameDays });
+        return json(200, { days, hours, hourUsers: hoursUsers.map(x => x.size), uniqueUsers: uniq.size, userDays, perDay, games: gameRows, shop: shopRows, gameDays, practice });
       }
 
       case 'setShop': {

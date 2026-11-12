@@ -4,6 +4,7 @@ import { Certificate } from '../types';
 import { triggerHaptic, shareUrl, shareToTelegramStory, canShareToStory, getTelegramWebApp } from '../services/telegram';
 import { drawCertificate, certFileName, certificateBase64, certUrl, TEMPLATES } from '../services/certificate';
 import { botSendCertificate, canUseBot } from '../services/bot';
+import { FriendDuelCard } from './FriendDuel';
 
 export { TEMPLATES };
 
@@ -171,6 +172,7 @@ export const CertificateModal: React.FC<{ cert: Certificate; onClose: () => void
             <Send className="w-4 h-4" /> Rasm sifatida botdan qayta yuborish
           </button>
         )}
+        <FriendDuelCard context="cert" />
         {msg && <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-xs text-slate-100 text-center">{msg}</div>}
         {inTg && !getTelegramWebApp()?.initDataUnsafe?.user?.allows_write_to_pm && (
           <p className="text-[10px] text-slate-500 text-center">Sertifikat kelmasa, botni ochib «Start» tugmasini bosing.</p>

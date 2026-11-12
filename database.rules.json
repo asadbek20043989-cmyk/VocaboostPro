@@ -47,6 +47,10 @@
       ".read": true,
       ".write": false
     },
+    "bduels": {
+      ".read": true,
+      ".write": false
+    },
     "challenges": {
       ".read": true,
       ".write": false

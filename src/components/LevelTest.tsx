@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import type { EnglishLevel } from '../types';
 import { LEVEL_NAMES, LEVEL_IELTS } from '../data/levels';
+import { FriendDuelCard } from './FriendDuel';
 import { buildTest, scoreTest, P_LEVELS, TEST_SIZE, LEVEL_POINTS, PQuestion, TestOrder } from '../data/placement';
 
 const LEVEL_TONE: Record<EnglishLevel, { bar: string; chip: string; glow: string }> = {
@@ -22,9 +23,11 @@ interface Props {
   onApply: (o: PlacementOutcome) => void;
   onClose: () => void;
   currentLevel?: EnglishLevel;
+  /** Natija ekranida «Do'stni duelga chaqirish» kartasini ko'rsatmaslik (ro'yxatdan o'tish paytida profil hali yo'q) */
+  noInvite?: boolean;
 }
 
-export const LevelTest: React.FC<Props> = ({ onApply, onClose, currentLevel }) => {
+export const LevelTest: React.FC<Props> = ({ onApply, onClose, currentLevel, noInvite }) => {
   const { allWords } = useApp();
   const [phase, setPhase] = useState<'intro' | 'quiz' | 'result'>('intro');
   const [order, setOrder] = useState<TestOrder>('easy');
@@ -192,6 +195,8 @@ export const LevelTest: React.FC<Props> = ({ onApply, onClose, currentLevel }) =
                 );
               })}
             </div>
+
+            {!noInvite && <FriendDuelCard context="level" detail={`${Math.round(result.score)} ball`} />}
 
             {!pickOwn ? (
               <div className="mt-auto space-y-2.5">

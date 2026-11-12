@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardList, X, Check, Send, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Check, Send, Gift, ChevronLeft, ChevronRight, PartyPopper, PenLine } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic, getTelegramWebApp } from '../services/telegram';
 
@@ -25,32 +25,46 @@ interface SurveyModalProps {
   onCompleted?: () => void;
 }
 
+const ACCENTS = ['#38BDF8', '#A78BFA', '#F472B6', '#FBBF24', '#34D399', '#FB923C'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
 export const SurveyModal: React.FC<SurveyModalProps> = ({ survey, onClose, onCompleted }) => {
   const { profile, accountId, claimGrants } = useApp();
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
+
+  const qs = survey.questions || [];
+  const total = qs.length;
+  const q = qs[step];
+  const last = step >= total - 1;
+  const accent = ACCENTS[step % ACCENTS.length];
+  const hasReward = (survey.rewardXp || 0) > 0 || (survey.rewardCoins || 0) > 0;
+  const answered = qs.filter(x => (answers[x.id] || '').trim()).length;
 
   const handleClose = () => {
     if (done && onCompleted) onCompleted();
     onClose();
   };
 
-  const handlePickChoice = (qId: string, val: string) => {
+  const go = (d: 1 | -1) => {
+    triggerHaptic('selection');
+    setDir(d);
+    setStep(s => Math.min(total - 1, Math.max(0, s + d)));
+  };
+
+  const pick = (qId: string, val: string, autoNext: boolean) => {
     triggerHaptic('selection');
     setAnswers(prev => ({ ...prev, [qId]: val }));
+    if (autoNext && !last) setTimeout(() => go(1), 280);
   };
 
-  const handleTextAnswer = (qId: string, val: string) => {
-    setAnswers(prev => ({ ...prev, [qId]: val }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async () => {
     setBusy(true);
     setErr('');
-
     try {
       const res = await fetch('/api/fn/admin', {
         method: 'POST',
@@ -67,24 +81,13 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({ survey, onClose, onCom
       });
       const data = await res.json();
       if (res.status === 409 && data.already) {
-        try {
-          localStorage.setItem(`vb_survey_done_${survey.id}`, '1');
-        } catch {
-          /* ignore */
-        }
+        try { localStorage.setItem(`vb_survey_done_${survey.id}`, '1'); } catch { /* ignore */ }
       }
       if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
-
       triggerHaptic('success');
       setDone(true);
-      try {
-        localStorage.setItem(`vb_survey_done_${survey.id}`, '1');
-      } catch {
-        /* ignore */
-      }
-      setTimeout(() => {
-        claimGrants();
-      }, 500);
+      try { localStorage.setItem(`vb_survey_done_${survey.id}`, '1'); } catch { /* ignore */ }
+      setTimeout(() => { claimGrants(); }, 500);
     } catch (e: any) {
       setErr(e.message || 'Xatolik yuz berdi');
     } finally {
@@ -93,118 +96,145 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({ survey, onClose, onCom
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-[#111726] border border-cyan-500/30 rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/75 backdrop-blur-sm animate-fade-in">
+      <div className="vb-sv relative w-full max-w-md rounded-[28px] shadow-2xl max-h-[92vh] overflow-hidden flex flex-col" style={{ ['--ac' as any]: done ? '#34D399' : accent }}>
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+          aria-label="Yopish"
+          className="absolute top-3.5 right-3.5 z-10 w-9 h-9 rounded-full bg-black/30 border border-white/15 text-slate-200 hover:text-white flex items-center justify-center"
         >
           <X className="w-4 h-4" />
         </button>
 
         {done ? (
-          <div className="text-center py-8 space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-3xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-9 h-9" />
+          <div className="relative text-center px-6 py-12 space-y-4">
+            <div className="vb-rate-burst" aria-hidden>
+              {['🎉', '✨', '🎊', '⭐', '💙', '🎉'].map((e, i) => <span key={i} style={{ ['--i' as any]: i }}>{e}</span>)}
             </div>
-            <h3 className="text-xl font-black text-white">So&apos;rovnoma qabul qilindi!</h3>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
-              Qimmatli fikringiz va ajratgan vaqtingiz uchun minnatdormiz!
-              {((survey.rewardXp || 0) > 0 || (survey.rewardCoins || 0) > 0) && (
-                <span className="block mt-2 font-bold text-amber-300">
-                  🎁 Bonusingiz hisobingizga qo&apos;shildi!
-                </span>
-              )}
-            </p>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-6 py-2.5 rounded-2xl bg-cyan-500 text-slate-950 font-extrabold text-sm active:scale-95 transition-transform"
-            >
+            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-emerald-300 to-teal-500 text-slate-950 flex items-center justify-center shadow-xl shadow-emerald-500/30 -rotate-3">
+              <PartyPopper className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-white">So&apos;rovnoma qabul qilindi!</h3>
+            <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">Qimmatli fikringiz va ajratgan vaqtingiz uchun minnatdormiz!</p>
+            {hasReward && (
+              <div className="vb-sv-ticket mx-auto">
+                <Gift className="w-4 h-4" /> Bonusingiz hisobingizga qo&apos;shildi!
+              </div>
+            )}
+            <button type="button" onClick={handleClose} className="px-7 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-extrabold text-sm active:scale-95 transition-transform">
               Yopish
             </button>
           </div>
+        ) : total === 0 ? (
+          <div className="p-8 text-center text-sm text-slate-400">Savollar topilmadi.</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div>
-              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold uppercase tracking-wider mb-1.5">
-                <ClipboardList className="w-3.5 h-3.5" /> So&apos;rovnoma
+          <>
+            {/* Sarlavha */}
+            <div className="vb-sv-head px-5 pt-5 pb-4">
+              <div className="flex items-center gap-2 pr-10">
+                <span className="vb-sv-badge">📋 So&apos;rovnoma</span>
+                {hasReward && (
+                  <span className="vb-sv-ticket">
+                    <Gift className="w-3.5 h-3.5" />
+                    {survey.rewardXp ? `+${survey.rewardXp} XP` : ''}{survey.rewardXp && survey.rewardCoins ? ' · ' : ''}{survey.rewardCoins ? `+${survey.rewardCoins} 🪙` : ''}
+                  </span>
+                )}
               </div>
-              <h3 className="text-lg font-black text-white leading-tight">{survey.title}</h3>
-              {survey.desc && <p className="text-xs text-slate-400 mt-1">{survey.desc}</p>}
-              {((survey.rewardXp || 0) > 0 || (survey.rewardCoins || 0) > 0) && (
-                <div className="mt-2 text-[11px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Ishtirok bonusi: {survey.rewardXp ? `+${survey.rewardXp} XP ` : ''}
-                  {survey.rewardCoins ? `+${survey.rewardCoins} tanga` : ''}
-                </div>
-              )}
+              <h3 className="mt-2.5 text-xl font-black text-white leading-tight">{survey.title}</h3>
+              {survey.desc && step === 0 && <p className="text-xs text-slate-400 mt-1 leading-relaxed">{survey.desc}</p>}
+
+              {/* Progress segmentlari */}
+              <div className="mt-3.5 flex gap-1.5" aria-label={`${step + 1} / ${total}`}>
+                {qs.map((x, i) => (
+                  <button
+                    key={x.id}
+                    type="button"
+                    onClick={() => { setDir(i > step ? 1 : -1); setStep(i); }}
+                    className="vb-sv-seg"
+                    data-state={i < step ? 'done' : i === step ? 'now' : 'todo'}
+                    data-ans={(answers[x.id] || '').trim() ? '1' : '0'}
+                    aria-label={`Savol ${i + 1}`}
+                  />
+                ))}
+              </div>
+              <div className="mt-1.5 text-[11px] font-bold text-slate-400 tabular-nums">Savol {step + 1} / {total} · javob berildi: {answered}</div>
             </div>
 
-            {/* Savollar ro'yxati */}
-            <div className="space-y-4 divide-y divide-slate-800/80 pt-2">
-              {survey.questions.map((q, idx) => (
-                <div key={q.id} className="pt-3 first:pt-0 space-y-2">
-                  <div className="text-xs font-bold text-white flex items-start gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <span>{q.text}</span>
-                  </div>
+            {/* Savol kartasi */}
+            <div className="flex-1 overflow-y-auto px-4 pb-2">
+              <div key={step} className={dir === 1 ? 'vb-sv-in-r' : 'vb-sv-in-l'}>
+                <div className="vb-sv-q">
+                  <span className="vb-sv-num">{step + 1}</span>
+                  <span className="text-[15px] font-extrabold text-white leading-snug">{q.text}</span>
+                </div>
 
-                  {q.type === 'choice' && Array.isArray(q.options) && q.options.length > 0 ? (
-                    <div className="grid gap-1.5 pl-5">
-                      {q.options.map(opt => {
-                        const picked = answers[q.id] === opt;
-                        return (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => handlePickChoice(q.id, opt)}
-                            className={`w-full text-left px-3 py-2 rounded-xl border text-xs font-medium flex items-center justify-between transition-all ${
-                              picked
-                                ? 'bg-cyan-500/20 border-cyan-400 text-white'
-                                : 'bg-[#0B0F17] border-slate-800 text-slate-300 hover:border-slate-700'
-                            }`}
-                          >
-                            <span>{opt}</span>
-                            {picked && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="pl-5">
+                {q.type === 'choice' && Array.isArray(q.options) && q.options.length > 0 ? (
+                  <div className="grid gap-2 mt-3">
+                    {q.options.map((opt, i) => {
+                      const on = answers[q.id] === opt;
+                      return (
+                        <button key={opt + i} type="button" onClick={() => pick(q.id, opt, true)} className={`vb-sv-opt ${on ? 'is-on' : ''}`}>
+                          <span className="vb-sv-letter">{on ? <Check className="w-4 h-4" strokeWidth={3} /> : LETTERS[i] || i + 1}</span>
+                          <span className="flex-1 text-left text-[13px] font-bold">{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <div className="vb-sv-text">
+                      <PenLine className="w-4 h-4 text-slate-500 shrink-0 mt-1" />
                       <textarea
-                        rows={2}
+                        rows={5}
                         value={answers[q.id] || ''}
-                        onChange={e => handleTextAnswer(q.id, e.target.value)}
+                        maxLength={1000}
+                        onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
                         placeholder="Fikringiz, taklif yoki shikoyatingizni yozing..."
-                        className="w-full px-3 py-2 rounded-xl bg-[#0B0F17] border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors resize-none"
+                        className="flex-1 bg-transparent text-[13px] text-white placeholder-slate-500 outline-none resize-none"
                       />
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {err && <div className="text-xs text-rose-400 font-medium text-center">{err}</div>}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full h-12 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {busy ? (
-                'Yuborilmoqda...'
-              ) : (
-                <>
-                  <Send className="w-4 h-4" /> Javoblarni yuborish
-                </>
-              )}
-            </button>
-          </form>
+            {/* Pastki boshqaruv */}
+            <div className="px-4 pt-3 pb-4 space-y-2">
+              {err && <div className="text-xs text-rose-400 font-medium text-center">{err}</div>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => go(-1)}
+                  disabled={step === 0}
+                  aria-label="Orqaga"
+                  className="h-12 w-12 shrink-0 rounded-2xl bg-white/5 border border-white/10 text-slate-300 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                {last ? (
+                  <button
+                    type="button"
+                    onClick={submit}
+                    disabled={busy}
+                    className="flex-1 h-12 rounded-2xl text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50"
+                    style={{ background: 'linear-gradient(90deg,#34D399,#38BDF8)' }}
+                  >
+                    {busy ? 'Yuborilmoqda...' : <><Send className="w-4 h-4" /> Javoblarni yuborish</>}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => go(1)}
+                    className="flex-1 h-12 rounded-2xl text-slate-950 font-extrabold text-sm flex items-center justify-center gap-1.5 shadow-lg active:scale-[0.98] transition-all"
+                    style={{ background: `linear-gradient(90deg,${accent},#fff8)` }}
+                  >
+                    {(answers[q.id] || '').trim() ? 'Keyingisi' : "O'tkazib yuborish"} <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -220,6 +220,25 @@ export function getDuelLink(code: string): string {
   return `${base}/?duel=${code}`;
 }
 
+/** Do'stni «Blitz Duel»ga chaqirish havolasi (Telegram: startapp=bd_KOD, brauzerda: ?bd=KOD) */
+export function getFriendDuelLink(code: string): string {
+  if (APP_LINK) return `${APP_LINK}${APP_LINK.includes('?') ? '&' : '?'}startapp=bd_${code}`;
+  const base = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${base}/?bd=${code}`;
+}
+
+/** Ilova do'st duel havolasi orqali ochilgan bo'lsa — xona kodini qaytaradi */
+export function readFriendDuelParam(): string | null {
+  try {
+    const sp = getStartParam();
+    const q = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('bd') : null;
+    const code = sp && sp.startsWith('bd_') ? sp.slice(3) : q || '';
+    return /^[A-Za-z0-9]{4,12}$/.test(code) ? code.toUpperCase() : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Telegram Story funksiyasi mavjudligini tekshiradi (Bot API 7.8+ va mobil ilovalar) */
 export function canShareToStory(): boolean {
   const tg = getTelegramWebApp();

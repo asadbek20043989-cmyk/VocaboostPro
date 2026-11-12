@@ -1,8 +1,8 @@
-// Yengil statistika: ilova ochilishi (soat bo'yicha), o'yin boshlandi/tugadi, do'kon xaridi.
+// Yengil statistika: ilova ochilishi (soat bo'yicha), o'yin boshlandi/tugadi, do'kon xaridi, kunlik/maxsus mashq bajarildi (tdone).
 // Hodisalar xotirada yig'iladi va bitta so'rov bilan yuboriladi (server: admin → track). Xato bo'lsa — jim o'tkazib yuboriladi.
 import { getTelegramWebApp } from './telegram';
 
-type Ev = { ev: 'open' | 'gstart' | 'gdone' | 'buy'; key?: string; price?: number; n?: number };
+type Ev = { ev: 'open' | 'gstart' | 'gdone' | 'buy' | 'tdone'; key?: string; price?: number; n?: number };
 let queue: Ev[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 let uid = '';

@@ -7,6 +7,8 @@ import { triggerHaptic, shareUrl, getDuelLink } from '../services/telegram';
 import { nowMs } from '../services/time';
 import { sfx } from '../services/sound';
 import { shuffle } from '../services/srs';
+import { FriendDuelCard, FriendDuelRecent } from './FriendDuel';
+import { openFriendDuel } from '../services/friendDuel';
 
 const METRICS: { id: DuelMetric; label: string; unit: string; hint: string }[] = [
   { id: 'xp', label: 'XP yig‘ish', unit: 'XP', hint: 'Kim ko‘proq XP to‘plasa, o‘sha yutadi' },
@@ -290,10 +292,8 @@ const BlitzDuelModal: React.FC<{ bank: BankWord[]; blitzLeft: number; consumeBli
                 type="button"
                 onClick={() => {
                   triggerHaptic('light');
-                  shareUrl(
-                    getDuelLink('BLITZ'),
-                    `⚡ VocaBoost Blitz Duelda ${score} ball to‘pladim! Meni yenga olasanmi? 🚀`
-                  );
+                  onClose();
+                  openFriendDuel(); // haqiqiy xona ochiladi: do'st havola orqali kirib, bir xil so'zlarda bellashadi
                 }}
                 className="h-12 rounded-xl bg-[#1F2B3E] border border-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
@@ -429,6 +429,10 @@ export const DuelTab: React.FC = () => {
           }}
         />
       )}
+
+      {/* Do'stni duelga chaqirish — bu bo'limning asosiy tugmasi */}
+      <FriendDuelCard variant="hero" />
+      <FriendDuelRecent />
 
       {/* 30-soniyalik Jonli Blitz Duel */}
       <section className="rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/20 to-rose-500/15 border-2 border-amber-500/50 p-4 space-y-3 shadow-lg shadow-amber-500/10">

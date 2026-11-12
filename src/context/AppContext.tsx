@@ -110,6 +110,12 @@ interface AppContextType {
   // lug'at to'plamlari ("Bugungi mashqlar")
   packs: WordPack[];
   todayPacks: WordPack[];
+  /** O'yinlar uchun so'zlar: foydalanuvchi darajasi bo'yicha «Bugungi mashq» so'zlari (+ kerak bo'lsa o'z darajasidagi o'rganilgan so'zlar) */
+  gameWords: BankWord[];
+  /** gameWords ichidagi «bugungi» so'zlar id si (bugungi mashq + bugungi takrorlash) — o'yinlarda ular birinchi aralashtiriladi */
+  gameTodayIds: string[];
+  /** Tanga sarflaydi (yordam uchun). Balans yetmasa false qaytaradi */
+  spendCoins: (n: number) => boolean;
   levelProgress: { total: number; learned: number; mastered: number };
   packProgress: (p: WordPack) => { learned: number; total: number };
   // shaxsiy lug'at to'plamlari
@@ -595,6 +601,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [allPacks]);
   // Qidiruv uchun barcha so'zlar; foydalanuvchiga esa asosiy bank + o'rganilgan to'plam so'zlari ko'rsatiladi
   const bankMap = useMemo(() => new Map([...mainBank, ...packWords].map(w => [w.id, w])), [mainBank, packWords]);
+  const packIdsAll = useMemo(() => new Set(packWords.map(w => w.id)), [packWords]);
 
   // Foydalanuvchi tanlagan daraja: kunlik so'zlar FAQAT shu darajadagi so'zlardan (admin tartibida) olinadi
   const levelPref = LEVEL_PREF[profile.level] || LEVEL_PREF.B1;
@@ -1520,6 +1527,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return due.slice(0, settings.reviewCap);
   }, [srs, today, bankMap, settings.reviewCap]);
 
+  // O'yinlar so'zlari: foydalanuvchining DARAJASI bo'yicha — shu kungacha o'rgangan barcha so'zlari + bugungi mashq so'zlari
+  // (bugun o'rganilganlar, bugungi navbatdagi yangi so'zlar va bugungi takrorlash). Daraja so'zlari yetmasa, boshqa darajada o'rganilganlar bilan to'ldiriladi.
+  const { gameWords, gameTodayIds } = useMemo(() => {
+    const out: BankWord[] = [];
+    const seen = new Set<string>();
+    const todayIds: string[] = [];
+    const add = (w?: BankWord, isToday = false) => {
+      if (!w) return;
+      const en = w.en.toLowerCase();
+      if (seen.has(w.id) || seen.has('en:' + en)) return;
+      seen.add(w.id);
+      seen.add('en:' + en);
+      out.push(w);
+      if (isToday) todayIds.push(w.id);
+    };
+    // 1) bugungi mashq: bugun o'rganilganlar, bugungi takrorlash va hali o'rganilmagan bugungi yangi so'zlar
+    Object.entries(srs).filter(([, e]) => e.intro === today).forEach(([id]) => add(bankMap.get(id), true));
+    dueWords.forEach(w => add(w, true));
+    newQueue.forEach(w => add(w, true));
+    // 2) shu kungacha o'rganilgan so'zlar: avval o'z darajasidagilari (hali yodlanmaganlari birinchi)
+    const learned = Object.entries(srs).map(([id, e]) => ({ w: bankMap.get(id), e })).filter(x => x.w) as { w: BankWord; e: SrsEntry }[];
+    const rank = (x: { w: BankWord; e: SrsEntry }) => (x.e.mastered ? 1 : 0);
+    const mine = learned.filter(x => x.w.level === profile.level || packIdsAll.has(x.w.id)).sort((a, b) => rank(a) - rank(b) || (a.e.due < b.e.due ? -1 : 1));
+    mine.forEach(x => add(x.w));
+    // 3) o'z darajasida yetarli so'z bo'lmasa — boshqa darajalarda o'rganilganlar bilan to'ldiriladi
+    if (out.length < 12) learned.filter(x => !seen.has(x.w.id)).sort((a, b) => rank(a) - rank(b)).forEach(x => out.length < 24 && add(x.w));
+    return { gameWords: out, gameTodayIds: todayIds };
+  }, [srs, today, dueWords, newQueue, bankMap, profile.level, packIdsAll]);
+
+  const spendLock = useRef(0);
+  /** Yordam uchun tanga sarflash (balans yetmasa — false) */
+  const spendCoins = (n: number): boolean => {
+    n = Math.max(0, Math.floor(n));
+    if (n === 0) return true;
+    if (Date.now() - spendLock.current < 250) return false; // tasodifiy ikki marta bosishdan himoya
+    const p = latest.current.profile as UserProfile;
+    if (balanceOf(p) < n) return false;
+    spendLock.current = Date.now();
+    setProfile(prev => (balanceOf(prev) < n ? prev : { ...prev, coinsSpent: (prev.coinsSpent || 0) + n, updatedAt: nowMs() }));
+    return true;
+  };
+
   const introduceWord = (b: BankWord, correct: boolean): number => {
     setSrs(prev => (prev[b.id] ? prev : { ...prev, [b.id]: { ...newEntry(todayKey(), correct), xpDay: todayKey() } }));
     bumpQuest('learn_words');
@@ -2230,7 +2279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         profile: effProfile, adminOff: myOff, bank, bankFromCloud, srs, savedWords, masteredCount, dueWords, newQueue, introducedToday,
         dailyQuests, badges, games, settings, activeTab, setActiveTab, overlay, openLearn, openGame, closeOverlay,
-        goBack, canGoBack, packs, todayPacks, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
+        goBack, canGoBack, packs, todayPacks, gameWords, gameTodayIds, spendCoins, levelProgress, packProgress, customPacks, saveCustomPack, deleteCustomPack, duels, createDuel, joinDuel, leaveDuel, pendingDuelCode, clearPendingDuel: () => setPendingDuelCode(''), duelMetricValue, challenges, joinChallenge, openSurvival, saveSurvival, allWords: mainBank, introduceWord, reviewWord, addWord, isWordSaved, markWordReviewed, claimDailyBonus, completeGame, updateProfile, finishOnboarding,
         resetProgress, claimQuest, wheel: w, wheelPrizes: wheelCfg.prizes, wheelFreeSpins: wheelCfg.freeSpins,
         freeSpinsLeft, totalSpinsLeft, isPro, spinWheel, applyPrize, grantReferralSpin, coins, levelIcons, catalog, shopConf, buyItem, equip, owns, previewSkin, setPreviewSkin, activeSkin, boostActive, inviteLink, refCount, refLeague, refInfo, leagueUsers, leagueLive, challengesLive,
         realtimeOn: realtimeEnabled, announcement, adminPopup, leagueWeek, certificates, certificateView, showCertificate: setCertificateView,

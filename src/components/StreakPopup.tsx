@@ -1,11 +1,37 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic, shareToTelegramStory } from '../services/telegram';
+import { FriendDuelCard } from './FriendDuel';
+
+const BEST_KEY = 'vb_best_streak_v1';
+/** Shaxsiy rekord (va muhim kun: 3, 5, 7, 14, 21…) bo'lganda true. Rekord shu qurilmada eslab qolinadi. */
+function useStreakRecord(n: number, enabled: boolean): boolean {
+  // O'qish render paytida, yozish effektda: React qayta chizsa ham natija buzilmaydi
+  const record = useMemo(() => {
+    if (!enabled) return false;
+    try {
+      const raw = localStorage.getItem(BEST_KEY);
+      if (raw == null) return false; // birinchi marta — faqat o'lchab olamiz
+      return n > (Number(raw) || 0) && n >= 3 && (n === 3 || n === 5 || n % 7 === 0 || n % 10 === 0);
+    } catch {
+      return false;
+    }
+  }, [n, enabled]);
+  useEffect(() => {
+    if (!enabled) return;
+    try {
+      const best = Number(localStorage.getItem(BEST_KEY)) || 0;
+      if (n > best) localStorage.setItem(BEST_KEY, String(n));
+    } catch { /* ignore */ }
+  }, [n, enabled]);
+  return record;
+}
 
 /** Streak oynasi: bugungi streak yig'ilganda yoki muzlatish ishlatilishi kerak bo'lganda ko'rsatiladi */
 export const StreakPopup: React.FC = () => {
   const { streakPopup, dismissStreakPopup } = useApp();
+  const record = useStreakRecord(streakPopup?.streak ?? 0, streakPopup?.kind === 'gain');
   if (!streakPopup) return null;
   const frozen = streakPopup.kind === 'frozen';
   const saved = streakPopup.kind === 'gain' && streakPopup.saved;
@@ -52,6 +78,8 @@ export const StreakPopup: React.FC = () => {
             </p>
           </>
         )}
+
+        {record && <FriendDuelCard context="streak" detail={String(n)} onOpen={close} className="mt-4" />}
 
         {!frozen && n >= 2 && (
           <button

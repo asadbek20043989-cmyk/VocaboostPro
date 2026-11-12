@@ -29,6 +29,7 @@ import { Avatar } from './Avatar';
 import { DuelTab } from './DuelTab';
 import { ChallengesTab } from './ChallengesTab';
 import { Podium, GlowAvatar } from './Podium';
+import { LevelLeagues, LeagueView, LEAGUE_LEVELS, themeOf } from './LevelLeagues';
 import { levelLabel } from '../data/levels';
 import { LevelTest } from './LevelTest';
 import { HallOfHistory } from './HallOfHistory';
@@ -110,20 +111,24 @@ export const LeaderboardTab: React.FC = () => {
   // Real vaqtdagi umumiy reyting (barcha foydalanuvchilar)
   const leaderboardList = leagueUsers;
 
-  const currentUserRank = leaderboardList.findIndex(u => u.isCurrentUser) + 1;
+  // Daraja ligalari: standart — foydalanuvchining o'z ligasi; «Barcha» — umumiy reyting
+  const [leagueView, setLeagueView] = useState<LeagueView>(profile.level);
+  const lvlOf = (u: { level: string }) => (LEAGUE_LEVELS.includes(u.level as any) ? u.level : 'A1');
+  const shownList = leagueView === 'all' ? leaderboardList : leaderboardList.filter(u => lvlOf(u) === leagueView);
+  const currentUserRank = shownList.findIndex(u => u.isCurrentUser) + 1;
 
   // Raqobatni qizdiruvchi qisqa gap: kimgacha necha XP qolgan
   const rivalLine = (() => {
-    if (!currentUserRank || leaderboardList.length < 2) return '';
-    const me = leaderboardList[currentUserRank - 1];
+    if (!currentUserRank || shownList.length < 2) return '';
+    const me = shownList[currentUserRank - 1];
     if (currentUserRank === 1) {
-      const gap = me.xp - (leaderboardList[1]?.xp || 0);
-      return `👑 Siz 1-o‘rindasiz! Ikkinchi o‘rindagi sizdan ${gap.toLocaleString()} XP orqada — taxtni qo‘ldan bermang!`;
+      const gap = me.xp - (shownList[1]?.xp || 0);
+      return `👑 Siz ${leagueView === 'all' ? '' : leagueView + ' ligasida '}1-o‘rindasiz! Ikkinchi o‘rindagi sizdan ${gap.toLocaleString()} XP orqada — taxtni qo‘ldan bermang!`;
     }
-    const above = leaderboardList[currentUserRank - 2];
+    const above = shownList[currentUserRank - 2];
     const gap = Math.max(1, above.xp - me.xp + 1);
     if (currentUserRank <= 3) return `🔥 Siz TOP-3 dasiz! ${currentUserRank - 1}-o‘ringa chiqish uchun yana ${gap.toLocaleString()} XP kerak.`;
-    const third = leaderboardList[2];
+    const third = shownList[2];
     const toTop3 = third ? Math.max(1, third.xp - me.xp + 1) : 0;
     return `⚡ ${currentUserRank - 1}-o‘ringa ${gap.toLocaleString()} XP qoldi${toTop3 ? ` · TOP-3 gacha ${toTop3.toLocaleString()} XP` : ''}. Bugun bir mashq ko‘proq qiling!`;
   })();
@@ -246,11 +251,12 @@ export const LeaderboardTab: React.FC = () => {
             </div>
           )}
           {leagueMode === 'xp' && (<>
+          <LevelLeagues users={leaderboardList} view={leagueView} onView={v => { setLeagueView(v); setDisplayLimit(50); }} myLevel={profile.level} />
           {/* Top 3 Podium Box */}
           <Podium
-            users={leaderboardList.slice(0, 3).map(u => ({ id: u.id, name: u.name, avatar: u.avatar, xp: u.xp, cos: u.cos }))}
+            users={shownList.slice(0, 3).map(u => ({ id: u.id, name: u.name, avatar: u.avatar, xp: u.xp, cos: u.cos }))}
             badges={champs}
-            chip={<><Users className="w-3.5 h-3.5" /><span>{leagueWeek ? tp('{n}-hafta · ', { n: leagueWeek.week }) : ''}{leaderboardList.length > 0 ? tp("{n} ta o'quvchi", { n: leaderboardList.length.toLocaleString() }) : tt("O'quvchilar...")}</span></>}
+            chip={<><Users className="w-3.5 h-3.5" /><span>{leagueWeek ? tp('{n}-hafta · ', { n: leagueWeek.week }) : ''}{shownList.length > 0 ? tp("{n} ta o'quvchi", { n: shownList.length.toLocaleString() }) : tt("O'quvchilar...")}</span></>}
             live={{ text: !realtimeOn ? tt('Oflayn rejim') : leagueLive ? tt('Jonli reyting') : tt('Reyting yuklanmoqda…'), state: !realtimeOn ? 'off' : leagueLive ? 'live' : 'loading' }}
           />
 
@@ -272,6 +278,7 @@ export const LeaderboardTab: React.FC = () => {
           </button>
 
           {/* Current User Fixed Position Strip */}
+          {currentUserRank > 0 ? (
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/50 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <span className={`font-extrabold text-amber-400 text-center tabular-nums shrink-0 min-w-[2.6rem] leading-none ${String(currentUserRank || "-").length > 2 ? "text-sm" : "text-base"}`}>
@@ -296,11 +303,17 @@ export const LeaderboardTab: React.FC = () => {
               </span>
             </div>
           </div>
+          ) : (
+            <button type="button" onClick={() => setLeagueView(profile.level)} className="w-full p-3 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-left text-xs font-bold text-amber-200 active:scale-[0.99]">
+              ↩︎ Siz {profile.level} ligasidasiz — o‘z ligangizga qaytish
+            </button>
+          )}
 
           {/* Remaining Rankings List */}
           <div className="space-y-1.5 pt-1">
             <span className="text-xs text-slate-400 font-semibold uppercase px-1">{tt("Barcha Ishtirokchilar")}</span>
-            {leaderboardList.slice(0, displayLimit).map((user, idx) => {
+            {shownList.length === 0 && <p className="text-xs text-slate-500 text-center py-6">Bu ligada hozircha hech kim yo‘q. Birinchi bo‘ling! 🚀</p>}
+            {shownList.slice(0, displayLimit).map((user, idx) => {
               const rank = idx + 1;
               const isMe = user.isCurrentUser;
 
@@ -335,13 +348,13 @@ export const LeaderboardTab: React.FC = () => {
                 </div>
               );
             })}
-            {leaderboardList.length > displayLimit && (
+            {shownList.length > displayLimit && (
               <button
                 type="button"
                 onClick={() => setDisplayLimit(l => l + 50)}
                 className="w-full py-3 rounded-xl bg-[#1B2333] border border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all active:scale-[0.98]"
               >
-                Yana ko&apos;rsatish ({Math.min(displayLimit, leaderboardList.length)} / {leaderboardList.length})
+                Yana ko&apos;rsatish ({Math.min(displayLimit, shownList.length)} / {shownList.length})
               </button>
             )}
           </div>

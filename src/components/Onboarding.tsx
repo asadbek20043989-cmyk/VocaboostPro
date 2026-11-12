@@ -127,7 +127,7 @@ export const Onboarding: React.FC = () => {
         </div>
       </div>
     </div>
-    {testOpen && <LevelTest onClose={() => setTestOpen(false)} onApply={o => { setLevel(o.level); setTestOpen(false); setStep(2); }} />}
+    {testOpen && <LevelTest noInvite onClose={() => setTestOpen(false)} onApply={o => { setLevel(o.level); setTestOpen(false); setStep(2); }} />}
     </>
   );
 };

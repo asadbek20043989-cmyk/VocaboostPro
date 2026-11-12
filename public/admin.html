@@ -159,6 +159,15 @@
         <p class="small">Vaqt — Toshkent vaqti bilan. Statistika ilova yangilangandan keyin yig'ila boshlaydi (ilgarigi kunlar bo'yicha ma'lumot yo'q). Foydalanuvchi ilovani soatiga bir marta «ochilgan» deb hisoblanadi.</p>
         <div id="as_body"></div>
       </div>
+      <div class="card" id="prCard">
+        <div class="row" style="justify-content:space-between">
+          <h2>✅ Mashqlarni kim bajardi <span class="small">— bugungi mashq va maxsus mavzular</span></h2>
+          <div class="row"><select id="pr_day" style="max-width:170px"></select><select id="pr_kind" style="max-width:200px"></select><input id="pr_q" placeholder="Ism / ID qidirish" style="max-width:170px"></div>
+        </div>
+        <p class="small">Foydalanuvchi mashqni <b>oxirigacha bajarganda</b> yoziladi (Toshkent vaqti bilan, kuniga bir yozuv). Ma'lumot ilova yangilangandan keyin yig'ila boshlaydi.</p>
+        <div id="pr_sum" style="margin:10px 0"></div>
+        <div class="scroll"><table><thead><tr><th>Foydalanuvchi</th><th>Bugungi mashq</th><th>Maxsus mavzu / to'plam mashqlari</th></tr></thead><tbody id="pr_body"></tbody></table></div>
+      </div>
       <div class="card" id="retCard">
         <h2>🔁 Foydalanuvchilar qolishi (retention) <span class="small">— qo'shilgan haftalar bo'yicha</span></h2>
         <p class="small">Har bir hafta qo'shilganlarning qanchasi <b>1 kundan keyin</b>, <b>7 kundan keyin</b> qaytgani va <b>oxirgi 7 kunda faol</b> ekani. Ma'lumot ligadagi «qo'shilgan sana» va «oxirgi kirish» maydonlaridan olinadi.</p>
@@ -1240,15 +1249,15 @@ $('plAdd').onclick = () => { document.querySelector('[data-t="words"]').click();
 
 /* ---------- o'yinlar ---------- */
 const GAMES = [
-  ['match','🧩','Juftlik topish',{pairs:6},10,1,0],['speed','⚡','Tezlik raundi',{seconds:60,choices:4,goal:8},10,2,0],['scramble','🔤','Harflarni tartiblash',{rounds:6},10,3,0],
-  ['listen','🎧','Eshitib top',{rounds:8,choices:4},10,4,0],['gap','✍️',"Gapni to'ldir",{rounds:8,choices:4},10,5,0],['typing','⌨️',"Yozib ko'r",{rounds:6},15,6,0],
-  ['tf','✅',"To'g'ri / Noto'g'ri",{rounds:12},10,7,0],['seq','🧠','Xotira ketma-ketligi',{start:3,showMs:900,rounds:5},15,8,0],['cards','🃏','Karta juftligi',{pairs:6},15,9,1],['missing','🕵️','Harf yetishmayapti',{rounds:8,hidden:2},10,10,1],
-  ['hangman','🔠',"Hangman: so'zni top",{rounds:5,lives:6},15,11,1],['sentence','🧱','Gap quruvchi',{rounds:6},20,12,1],['dictation','🎙️','Diktant',{rounds:6},15,13,1],
+  ['match','🧩','Juftlik topish',{pairs:6},10,1,0],['speed','⚡','Tezlik raundi',{seconds:60,choices:4,goal:8},10,2,0],['scramble','🔤','Harflarni tartiblash',{rounds:6,hintBase:2,hintStep:1},10,3,0],
+  ['listen','🎧','Eshitib top',{rounds:8,choices:4},10,4,0],['gap','✍️',"Gapni to'ldir",{rounds:8,choices:4},10,5,0],['typing','⌨️',"Yozib ko'r",{rounds:6,hintBase:2,hintStep:1},15,6,0],
+  ['tf','✅',"To'g'ri / Noto'g'ri",{rounds:12},10,7,0],['seq','🧠','Xotira ketma-ketligi',{start:3,showMs:900,rounds:5},15,8,0],['cards','🃏','Karta juftligi',{pairs:6},15,9,1],['missing','🕵️','Harf yetishmayapti',{rounds:8,hidden:2,hintBase:2,hintStep:1},10,10,1],
+  ['hangman','🔠',"Hangman: so'zni top",{rounds:5,lives:6,hintBase:2,hintStep:1},15,11,1],['sentence','🧱','Gap quruvchi',{rounds:6},20,12,1],['dictation','🎙️','Diktant',{rounds:6,hintBase:2,hintStep:1},15,13,1],
   ['rain','🌧️',"So'z yomg'iri",{words:10,lives:3},15,14,1],['odd','🔍','Ortiqchasini top',{rounds:8},15,15,1],
   ['synonym','🔄','Sinonimini top',{rounds:6,choices:4},15,16,0],['antonym','⚖️','Qarama-qarshi so\'z',{rounds:6,choices:4},15,17,0],
-  ['wordsearch','🗺️','So\'z qidiruvi',{rounds:5,gridSize:6},20,18,1],['blitz','🎯','Blitz Viktorina',{seconds:60,goal:10},20,19,0],
+  ['wordsearch','🗺️','So\'z qidiruvi',{rounds:5,gridSize:6,hintBase:2,hintStep:1},20,18,1],['blitz','🎯','Blitz Viktorina',{seconds:60,goal:10},20,19,0],
   ['pronounce','🗣️','Talaffuz sinovi',{rounds:5},20,20,1]];
-const SET_LBL = { pairs:'Juftlar soni', seconds:'Vaqt (soniya)', choices:'Variantlar soni', goal:'Maqsad (to\'g\'ri javoblar)', rounds:'Raundlar soni', start:'Boshlang\'ich uzunlik', showMs:'Ko\'rsatish vaqti (ms)', hidden:'Yashirin harflar soni', lives:'Jonlar soni', words:'So\'zlar soni', gridSize:'Kataklar o\'lchami' };
+const SET_LBL = { pairs:'Juftlar soni', seconds:'Vaqt (soniya)', choices:'Variantlar soni', goal:'Maqsad (to\'g\'ri javoblar)', rounds:'Raundlar soni', start:'Boshlang\'ich uzunlik', showMs:'Ko\'rsatish vaqti (ms)', hidden:'Yashirin harflar soni', lives:'Jonlar soni', words:'So\'zlar soni', gridSize:'Kataklar o\'lchami', hintBase:'💡 Yordam: 1-harf narxi (tanga)', hintStep:'💡 Yordam: har keyingisiga qo\'shiladi (tanga)' };
 function renderGames() {
   const cfg = data.config.games || {};
   $('gList').innerHTML = GAMES.map(([id,ic,title,st,xp,ord,vip]) => { const c = cfg[id] || {}, s = { ...st, ...(c.settings||{}) };
@@ -2684,7 +2693,36 @@ function renderAStats(r) {
     ${sold.length ? sold.map(x => `<div class="hrow"><span class="nm" title="${esc(shopName(x.id))}">${esc(shopName(x.id))}</span><div class="bar"><i style="width:${Math.round(x.n / sMax * 100)}%"></i></div><span class="small" style="width:190px;text-align:right"><b>${x.n}</b> dona · ${x.buyers} xaridor · 🪙 ${x.coins}</span></div>`).join('') : '<div class="small">Hali xarid bo\'lmagan.</div>'}
     ${unsold.length ? `<details style="margin-top:8px"><summary class="small">Hali sotilmagan mahsulotlar (${unsold.length})</summary><div class="small" style="margin-top:6px">${unsold.map(x => esc(shopName(x.id))).join(' · ')}</div></details>` : ''}`;
 }
-async function loadAStats() { $('as_body').innerHTML = '<div class="small">Yuklanmoqda…</div>'; renderAStats(await api('statsOverview', { days: +$('as_days').value || 14 })); }
+let prData = [];
+const prTime = ts => ts ? new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' }) : '';
+const prPackName = k => { const id = k.replace(/^p_/, ''); const p = (packs || []).find(x => String(x.id).replace(/[^A-Za-z0-9_\-]/g, '_').slice(0, 60) === id); return p ? p.title : id; };
+function renderPractice(r) {
+  prData = r.practice || [];
+  const prev = $('pr_day').value;
+  $('pr_day').innerHTML = prData.map((d, i) => `<option value="${d.day}">${i === 0 ? 'Bugun · ' : ''}${d.day}</option>`).join('');
+  if (prev && prData.some(d => d.day === prev)) $('pr_day').value = prev;
+  drawPractice();
+}
+function drawPractice() {
+  const day = $('pr_day').value, rec = prData.find(d => d.day === day) || { users: [] };
+  // «Maxsus mavzu» ro'yxati (shu kunda bajarilganlar)
+  const packKeys = [...new Set(rec.users.flatMap(u => Object.keys(u.p || {})))];
+  const prevKind = $('pr_kind').value || 'all';
+  $('pr_kind').innerHTML = `<option value="all">Hammasi</option><option value="daily">📅 Bugungi mashq</option><option value="packs">⭐ Barcha maxsus mashqlar</option>${packKeys.map(k => `<option value="${esc(k)}">${esc(prPackName(k))}</option>`).join('')}`;
+  $('pr_kind').value = [...$('pr_kind').options].some(o => o.value === prevKind) ? prevKind : 'all';
+  const kind = $('pr_kind').value, q = $('pr_q').value.trim().toLowerCase();
+  const lb = data.leaderboard || {};
+  let rows = rec.users.map(u => ({ ...u, name: (lb[u.uid] || {}).name || '', avatar: (lb[u.uid] || {}).avatar || '' }));
+  const dailyN = rows.filter(u => u.d).length, packN = rows.filter(u => Object.keys(u.p).length).length;
+  rows = rows.filter(u => kind === 'all' ? true : kind === 'daily' ? u.d : kind === 'packs' ? Object.keys(u.p).length : u.p[kind]);
+  if (q) rows = rows.filter(u => u.name.toLowerCase().includes(q) || u.uid.toLowerCase().includes(q));
+  rows.sort((a, b) => Math.max(b.d, ...Object.values(b.p), 0) - Math.max(a.d, ...Object.values(a.p), 0));
+  const act = ((window.__prLast || {}).perDay || []).find(d => d.day === day);
+  $('pr_sum').innerHTML = `<div class="grid"><div class="stat"><b>${dailyN}</b><span>📅 Bugungi mashqni bajargan</span></div><div class="stat"><b>${packN}</b><span>⭐ Maxsus mavzuni bajargan</span></div><div class="stat"><b>${rec.users.length}</b><span>Kamida bittasini bajargan</span></div><div class="stat"><b>${act ? act.users : '—'}</b><span>Shu kuni ilovaga kirgan${act && act.users ? ` · ${Math.round(dailyN / act.users * 100)}% bajargan` : ''}</span></div></div>`;
+  $('pr_body').innerHTML = rows.map(u => `<tr><td>${u.avatar ? `<img src="${esc(u.avatar)}" alt="" style="width:26px;height:26px;border-radius:50%;vertical-align:middle;margin-right:6px">` : ''}<b>${esc(u.name || '—')}</b><br><span class="small">${esc(u.uid)}</span></td><td>${u.d ? `<span class="tag h">✅ ${prTime(u.d)}</span>` : '<span class="small">—</span>'}</td><td>${Object.entries(u.p).sort((a, b) => b[1] - a[1]).map(([k, t]) => `<span class="tag h" title="${esc(prPackName(k))}">⭐ ${esc(prPackName(k))} · ${prTime(t)}</span>`).join(' ') || '<span class="small">—</span>'}</td></tr>`).join('') || '<tr><td colspan="3" class="small">Bu kun uchun ma\'lumot yo\'q</td></tr>';
+}
+$('pr_day').onchange = () => drawPractice(); $('pr_kind').onchange = () => drawPractice(); $('pr_q').oninput = () => drawPractice();
+async function loadAStats() { $('as_body').innerHTML = '<div class="small">Yuklanmoqda…</div>'; const r = await api('statsOverview', { days: +$('as_days').value || 14 }); renderAStats(r); window.__prLast = r; renderPractice(r); }
 document.querySelector('[data-t="astats"]').addEventListener('click', guard(loadAStats));
 $('as_reload').onclick = guard(loadAStats); $('as_days').onchange = guard(loadAStats);
 

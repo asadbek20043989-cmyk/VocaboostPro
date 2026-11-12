@@ -13,6 +13,7 @@ import { ShopTab } from './components/ShopTab';
 import { LofiMini } from './components/LofiPlayer';
 import { CertificateModal } from './components/CertificateModal';
 import { StreakPopup } from './components/StreakPopup';
+import { FriendDuelHost } from './components/FriendDuel';
 import { WelcomePopup, welcomeSeen, markWelcomeSeen } from './components/WelcomePopup';
 import { RankChangePopup, loadLastRank, saveLastRank, RankDelta } from './components/RankChangePopup';
 import { LuckyWheel } from './components/LuckyWheel';
@@ -313,6 +314,8 @@ const MainScreen: React.FC = () => {
 
       {/* Streak oynasi: mashq/o'yin tugab, bosh sahifaga qaytilganda ko'rinadi */}
       <StreakPopup />
+      {/* Do'st bilan Blitz Duel oynasi (havola orqali kirish ham shu yerda ochiladi) */}
+      <FriendDuelHost />
       {/* Reyting o'zgarishi (birinchi kirishdan tashqari) */}
       {rankDelta && !welcome && !popupOpen && (
         <RankChangePopup data={rankDelta} onClose={() => setRankDelta(null)} />
