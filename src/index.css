@@ -184,6 +184,9 @@ html.light .text-cyan-200 { color: #155E75; }
 html.light .text-cyan-400 { color: #0E7490; }
 html.light .text-sky-300\/80 { color: #0369A1; }
 html.light .text-amber-200\/90 { color: #92400E; }
+html.light .text-sky-200\/90 { color: #075985; }
+html.light .text-orange-200\/90 { color: #9A3412; }
+html.light .text-fuchsia-200\/80 { color: #86198F; }
 html.light .text-violet-100 { color: #5B21B6; }
 html.light .text-emerald-100 { color: #065F46; }
 html.light .text-amber-600 { color: #B45309; }
@@ -767,11 +770,11 @@ html.light .vb-sv-ticket { color:#92400E; }
 .vb-lg-row::-webkit-scrollbar { display:none; }
 .vb-lg-card { position:relative; flex:none; scroll-snap-align:start; width:62px; padding:9px 4px 7px; border-radius:18px; display:flex; flex-direction:column; align-items:center; gap:2px; color:#94A3B8; background:linear-gradient(180deg,#161E2D,#0F1521); border:1px solid rgb(255 255 255 / .08); transition:transform .2s, box-shadow .2s, border-color .2s; }
 .vb-lg-card:active { transform:scale(.94); }
-.vb-lg-ico { font-size:19px; line-height:1; height:22px; display:flex; align-items:center; filter:grayscale(.55); transition:filter .2s; }
+.vb-lg-ico { font-size:21px; line-height:1; height:24px; display:flex; align-items:center; color:var(--c1); filter:saturate(1.15) drop-shadow(0 0 6px color-mix(in srgb, var(--c1) 55%, transparent)); transition:filter .2s; } /* emojilar to'liq rangda; «Barcha» globusi daraja rangida */
 .vb-lg-code { font-size:13px; font-weight:900; letter-spacing:.02em; color:#CBD5E1; }
 .vb-lg-cnt { display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700; color:#64748B; }
 .vb-lg-card.is-on { color:#fff; background:linear-gradient(160deg,var(--c1),var(--c2)); border-color:var(--c1); transform:translateY(-3px); box-shadow:0 8px 20px color-mix(in srgb, var(--c1) 45%, transparent); }
-.vb-lg-card.is-on .vb-lg-ico { filter:none; }
+.vb-lg-card.is-on .vb-lg-ico { color:#fff; filter:drop-shadow(0 2px 4px rgb(0 0 0 / .3)); }
 .vb-lg-card.is-on .vb-lg-code, .vb-lg-card.is-on .vb-lg-cnt { color:#fff; }
 .vb-lg-me { position:absolute; top:-8px; left:50%; transform:translateX(-50%); font-size:8.5px; font-weight:900; letter-spacing:.08em; color:#0B0F17; background:#FBBF24; padding:1px 6px; border-radius:99px; box-shadow:0 2px 8px rgb(251 191 36 / .5); }
 .vb-lg-hero { position:relative; overflow:hidden; padding:14px; border-radius:24px; background:linear-gradient(135deg,var(--c1),var(--c2)); box-shadow:0 12px 28px color-mix(in srgb, var(--c2) 45%, transparent); animation:vb-lg-in .35s ease-out; }

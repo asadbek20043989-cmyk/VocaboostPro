@@ -266,13 +266,12 @@ const hbSeen = new Map<string, { hb: number; at: number }>();
 
 /**
  * `bq` navbatidan hozir kutayotgan raqiblarni o'qiydi. Faqat tirik va bo'sh yozuvlar, o'z darajam ±1 ichida (server ham shu oraliqda ulaydi).
- * O'zim va oxirgi 5 raqib chiqarib tashlanadi. Tartib serverdagi bilan bir xil: avval o'z darajam, so'ng eng eskisi — [0] eng mos kutuvchi.
+ * Faqat o'zim chiqarib tashlanadi (oldin o'ynagan raqib bilan ham istalgan marta o'ynash mumkin). Tartib serverdagi bilan bir xil: avval o'z darajam, so'ng eng eskisi — [0] eng mos kutuvchi.
  */
 export async function peekWaiters(me: { id: string; level: string }): Promise<GbWaiter[]> {
   const v = await getJson('bq');
   const now = Date.now();
   const near = new Set(levelsNear(me.level));
-  const recent = new Set(getRecentOpps());
   const out: GbWaiter[] = [];
   const seen = new Set<string>();
   if (v && typeof v === 'object') {
@@ -286,7 +285,7 @@ export async function peekWaiters(me: { id: string; level: string }): Promise<Gb
         const prev = hbSeen.get(key);
         if (!prev) hbSeen.set(key, { hb, at: 0 }); // birinchi ko'rish: o'zgarganini keyingi so'rovda bilamiz
         else if (prev.hb !== hb) hbSeen.set(key, { hb, at: now });
-        if (!near.has(lvl) || id === me.id || recent.has(id)) continue;
+        if (!near.has(lvl) || id === me.id) continue; // oldin o'ynagan raqib ham ko'rinadi
         if (e.room) continue; // raqib topilgan yoki hozir band qilinayotgan
         const at = hbSeen.get(key)!.at;
         const alive = now - hb < WAITER_FRESH_MS || (at > 0 && now - at < WAITER_FRESH_MS);

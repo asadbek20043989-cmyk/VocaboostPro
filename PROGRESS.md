@@ -5,6 +5,8 @@ Server: `bq.mjs` — `join` ga `prefer:<uid>` (bosilgan kutuvchi birinchi; daraj
 Mijoz: `realtime.ts` `dbReadMode()`; `globalBlitz.ts` — `peekWaiters` (bq ni o'qiydi: 5 s, proksi rejimida 20 s; o'zi va oxirgi 5 raqib chiqariladi; «tirik» = hb soat bo'yicha yangi yoki hb o'zgarib turibdi), `startWaiterWatch`/`setWaiterWatchPaused`, `useGbWaiters`/`useGbToast`, `openGlobalBlitz(prefer?)`, `findOpponent(..., prefer)`. Bildirishnoma `uid:ts` kaliti bilan bir marta, 10 s turadi, kutuvchi ketsa yo'qoladi.
 UI: `GlobalBlitz.tsx` — `GlobalBlitzHost` ichida kuzatuvchi va bosiladigan toast («Kimdir Global Blitz da raqib kutyapti!»; Global Blitz oynasi yoki duel ochiq bo'lsa chiqmaydi, kuzatuv ham to'xtaydi), qidiruv oynasida «ochiq lobbi» izohi. `HomeTab.tsx` va `DuelTab` kartasida «(N) raqib kutyapti» (bosilsa eng mos kutuvchiga ulanadi). `index.css` — toast progress animatsiyasi.
 Qidiruv oynasida «Kutmasdan, saqlangan natija bilan boshlash» tugmasi (`signal.skip`, 3 s dan keyin ko'rinadi). Toast bir nechta kutuvchi bo'lsa «N kishi Global Blitz da raqib kutyapti!» deydi.
+Tuzatish: «Yangi raqib» bosilganda oldingi o'yinning eski xonasi qayta ochilardi — `bq.mjs` `join` yangi qidiruvda (`first:true`) band qilingan eski yozuvni qaytarmaydi.
+Jonli o'yinda raqib chiqarib tashlanmaydi: oldin o'ynagan odam bilan ham istalgan marta o'ynash mumkin, bildirishnoma/kartochka ham unga boradi (server `join` va `peekWaiters` dan `recent` olib tashlandi; faqat «ruh» raqib uchun qoladi). Kuniga bir raqibdan XP olish qoidasi (`same`) o'zgarmagan.
 Test: `node test/blitz/run.mjs` — `prefer` testlari qo'shildi.
 
 ---

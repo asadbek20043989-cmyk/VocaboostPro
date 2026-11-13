@@ -64,6 +64,7 @@ await t('live match: A waits, B joins -> room; client res write blocked; submit 
 });
 
 
+const W1 = () => ({ uid: 'u_w1', level: 'B1', name: 'W1', avatar: '', recent: [] });
 const sleep = ms => new Promise(x => setTimeout(x, ms));
 // kutuvchini bazaga to'g'ridan-to'g'ri yozamiz (aks holda kutuvchilar bir-birini band qilib qo'yadi)
 let tsN = 0;
@@ -113,6 +114,24 @@ await t('prefer: two people click the same waiter at once -> only one wins the w
   const rooms = Object.values(state().bglobal || {}).filter(g => g.a === 'u_w1');
   assert.equal(rooms.length, 1, JSON.stringify(state().bglobal));
   assert.ok(a.matched || b.matched);
+});
+
+await t('new search (first:true) does not return the stale room of the previous game', async () => {
+  await wait(1);
+  let r = await call({ op: 'join', ...C }); assert.equal(r.matched, true); const old = r.code;
+  // qidiruv davomida qayta so'rov (ulanish uzilgan holat) — eski xona qaytadi
+  r = await call({ op: 'join', ...C }); assert.equal(r.matched, true); assert.equal(r.code, old);
+  // «Yangi raqib»: yangi qidiruv — eski xona emas, yangi (bo'sh) yozuv
+  r = await call({ op: 'join', ...C, first: true }); assert.equal(r.matched, false);
+  assert.equal(state().bq.B1.u_carl.room, undefined);
+  // kutuvchi tomon ham (u band qilingan edi): yangi qidiruvda eski xonaga tushmaydi
+  r = await call({ op: 'join', ...W1(), first: true }); assert.equal(r.matched, true); assert.notEqual(r.code, old); // endi Carl bilan ulanadi
+});
+
+await t('live: previous opponent (in recent) can be matched again', async () => {
+  await wait(1);
+  const r = await call({ op: 'join', ...C, recent: ['u_w1', 'u_w2', 'u_w3'] });
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w1');
 });
 
 await t('ghost flow: save, play vs, reward, same-opp-per-day, limit', async () => {

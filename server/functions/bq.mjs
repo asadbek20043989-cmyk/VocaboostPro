@@ -100,7 +100,9 @@ async function opJoin(me, now) {
 
   // 1. O'z yozuvim: allaqachon band qilingan bo'lsa — o'sha xona (ulanish uzilib qayta urinilgan holat)
   let { val: mine, etag } = await dbGet(path);
-  if (mine && isClaimed(mine) && now - (Number(mine.hb) || 0) < CLAIMED_KEEP_MS) return { matched: true, code: mine.room, opp: mine.opp || null };
+  // Faqat qidiruv DAVOMIDAGI so'rovlarda (first emas). Yangi qidiruv (first:true) boshlanganda band qilingan yozuv — oldingi o'yindan
+  // qolgan eski xona (CLAIMED_KEEP_MS gacha saqlanadi): uni qaytarsak, «Yangi raqib» bosilganda tugagan duel qayta ochilib qoladi.
+  if (mine && isClaimed(mine) && !me.first && now - (Number(mine.hb) || 0) < CLAIMED_KEEP_MS) return { matched: true, code: mine.room, opp: mine.opp || null };
 
   if (!mine || !isAlive(mine, now) || isClaimed(mine)) {
     mine = { ts: now, hb: now, name: me.name, avatar: me.avatar };
@@ -121,7 +123,7 @@ async function opJoin(me, now) {
     if (!val) continue;
     if (lvl === me.level) await sweep(lvl, val, now);
     for (const [id, e] of Object.entries(val)) {
-      if (id === me.id || me.recent.includes(id) || !isFree(e, now)) continue;
+      if (id === me.id || !isFree(e, now)) continue; // jonli raqib: oldin o'ynagan odam bilan ham istalgan marta o'ynash mumkin (recent faqat «ruh» uchun)
       const k = { ts: Number(e.ts) || 0, id };
       if (!before(k, meKey)) continue;
       cands.push({ lvl, id, ts: k.ts, same: lvl === me.level ? 0 : 1 });
@@ -400,6 +402,7 @@ export const handler = async event => {
       name: safeName(body.name, cfg.bad), // haqoratli/reklama ismlar «O'yinchi» ga almashtiriladi
       bad: cfg.bad,
       avatar,
+      first: body.first === true,
       prefer: typeof body.prefer === 'string' && ID_RE.test(body.prefer) ? body.prefer : '',
       recent: Array.isArray(body.recent) ? body.recent.filter(x => typeof x === 'string' && ID_RE.test(x)).slice(0, 5) : [],
     };

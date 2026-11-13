@@ -10,7 +10,7 @@ import {
   getMyRooms, rememberRoom, forgetRoom, saveProgress, loadProgress, clearProgress, finalizeProgress,
   openFriendDuel, setFriendDuelCode, closeFriendDuel, useFriendDuelUi,
 } from '../services/friendDuel';
-import { openGlobalBlitz, rememberOpp, submitLive, cumulativeScores } from '../services/globalBlitz';
+import { openGlobalBlitz, submitLive, cumulativeScores } from '../services/globalBlitz';
 import type { GbLogItem, GbSettle } from '../services/globalBlitz';
 
 /* =====================================================================
@@ -389,10 +389,7 @@ const FriendDuelModal: React.FC<{ code: string | null; global?: boolean }> = ({ 
     refresh();
   };
 
-  /* Global Blitz: raqib eslab qolinadi; o'yin avtomatik boshlanadi (savollarni xona egasi tayyorlaydi — poyga yo'q) */
-  useEffect(() => {
-    if (global && opp) rememberOpp(opp.id);
-  }, [global, opp?.id]);
+  /* Global Blitz: o'yin avtomatik boshlanadi (savollarni xona egasi tayyorlaydi — poyga yo'q). Jonli raqib «oxirgi raqiblar» ga yozilmaydi — qayta o'ynash cheklanmaydi */
 
   useEffect(() => {
     if (!global) return;
