@@ -63,6 +63,58 @@ await t('live match: A waits, B joins -> room; client res write blocked; submit 
   const sf = await call({ op: 'submit', ...C, code: 'ZZZZZZ', n: 1, r: [] }); assert.equal(sf.status, 403);
 });
 
+
+const sleep = ms => new Promise(x => setTimeout(x, ms));
+// kutuvchini bazaga to'g'ridan-to'g'ri yozamiz (aks holda kutuvchilar bir-birini band qilib qo'yadi)
+let tsN = 0;
+const wait = async (n, level = 'B1') => { const ts = Date.now() - 5000 + (tsN++); await fetch(`${url}/bq/${level}/u_w${n}.json`, { method: 'PUT', body: JSON.stringify({ ts, hb: Date.now(), name: 'W' + n, avatar: '' }) }); };
+
+await t('prefer: clicked waiter is picked first (±1 level ok), others keep old order', async () => {
+  await wait(1);
+  await wait(2);
+  await wait(3, 'B2');
+  // control: no prefer -> oldest waiter
+  // (done last, after prefer joins, so order is still visible)
+  let r = await call({ op: 'join', ...C, prefer: 'u_w2' });
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w2'); assert.equal(state().bglobal[r.code].a, 'u_w2');
+  await sleep(15);
+  r = await call({ op: 'join', ...{ uid: 'u_dan', level: 'B1', name: 'Dan', avatar: '', recent: [] }, prefer: 'u_w3' }); // B2 waiter, level +1
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w3');
+  await sleep(15);
+  r = await call({ op: 'join', ...{ uid: 'u_eve', level: 'B1', name: 'Eve', avatar: '', recent: [] } }); // no prefer -> remaining oldest
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w1');
+});
+
+await t('prefer: out of range / missing / already claimed -> falls back to old order', async () => {
+  await wait(1);
+  await wait(5, 'C1'); // 2 levels away from B1
+  let r = await call({ op: 'join', ...C, prefer: 'u_w5' });
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w1'); // w5 not allowed
+  await sleep(15);
+  const D = { uid: 'u_dan', level: 'B1', name: 'Dan', avatar: '', recent: [] };
+  await wait(6);
+  r = await call({ op: 'join', ...D, prefer: 'u_nobody' }); // not waiting
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w6');
+  await sleep(15);
+  await wait(7);
+  await wait(8);
+  r = await call({ op: 'join', ...{ ...D, uid: 'u_e1', name: 'E1' }, prefer: 'u_w8' }); assert.equal(r.opp.id, 'u_w8');
+  await sleep(15);
+  r = await call({ op: 'join', ...{ ...D, uid: 'u_e2', name: 'E2' }, prefer: 'u_w8' }); // w8 already claimed -> oldest free
+  assert.equal(r.matched, true); assert.equal(r.opp.id, 'u_w7');
+  // invalid prefer string is ignored, not an error
+  const bad = await call({ op: 'join', ...{ ...D, uid: 'u_e3' }, prefer: '../x y' }); assert.equal(bad.status, 200);
+});
+
+await t('prefer: two people click the same waiter at once -> only one wins the waiter', async () => {
+  await wait(1);
+  const D = { uid: 'u_dan', level: 'B1', name: 'Dan', avatar: '', recent: [] };
+  const [a, b] = await Promise.all([call({ op: 'join', ...C, prefer: 'u_w1' }), call({ op: 'join', ...D, prefer: 'u_w1' })]);
+  const rooms = Object.values(state().bglobal || {}).filter(g => g.a === 'u_w1');
+  assert.equal(rooms.length, 1, JSON.stringify(state().bglobal));
+  assert.ok(a.matched || b.matched);
+});
+
 await t('ghost flow: save, play vs, reward, same-opp-per-day, limit', async () => {
   const qs = mkQ();
   // Bob saves ghost by practice (no vs)

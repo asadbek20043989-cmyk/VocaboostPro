@@ -4,17 +4,17 @@ import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { sfx } from '../services/sound';
 import {
-  FD_QUESTIONS, FdPlayer, FdQuestion, FdResult, compareResults, buildQuestions, openGlobalRoom,
+  FD_QUESTIONS, FdPlayer, FdQuestion, FdResult, compareResults, buildQuestions, openGlobalRoom, useFriendDuelUi,
 } from '../services/friendDuel';
 import {
   GB_WAIT_MS, GbGhost, GbLogItem, GbMe, GbInfo, GbSaveResult, GbWeekRow, findOpponent, saveGhost, loadWeekly, rememberOpp, getShareGhost, setShareGhost,
-  openGlobalBlitz, closeGlobalBlitz, useGlobalBlitzUi,
+  openGlobalBlitz, closeGlobalBlitz, useGlobalBlitzUi, useGbWaiters, useGbToast, dismissGbToast, startWaiterWatch, setWaiterWatchPaused,
 } from '../services/globalBlitz';
 import { GLASS, Person, Vs, Rules, Primary, Ghost, FdPlay, Countdown, ScoreCard, PlayDone, RewardLine } from './FriendDuel';
 
 /* =====================================================================
    Global Blitz — ilovadagi istalgan o'yinchi bilan Blitz Duel.
-   1) ~12 soniya jonli raqib qidiriladi (daraja bo'yicha navbat, ±1 daraja);
+   1) ~60 soniya jonli raqib qidiriladi (daraja bo'yicha navbat, ±1 daraja). «Ochiq lobbi»: kutayotganingizni boshqa o'yinchilar ko'radi (bildirishnoma / kartochka) va bosib sizga ulanishi mumkin;
    2) topilsa — «Do'st bilan Blitz Duel» xonasi ochiladi (o'sha oyna, o'sha kod);
    3) topilmasa — shu darajada oldin o'ynagan o'yinchining saqlangan natijasi bilan o'ynaladi va bu ochiq yoziladi.
    Mukofot (serverda hisoblanadi): g'alabaga XP, kuniga cheklangan soni, bir raqib bilan kuniga 1 marta. Haftalik reyting — kartada.
@@ -47,7 +47,10 @@ const GlobalBlitzModal: React.FC = () => {
   const [mine, setMine] = useState<{ res: FdResult; wrong: FdQuestion[] } | null>(null);
   const [saved, setSaved] = useState<GbSaveResult | null | undefined>(undefined); // undefined — yuborilmoqda, null — server bilan aloqa yo'q
   const [info, setInfo] = useState<GbInfo | null>(null);
-  const signal = useRef({ cancelled: false });
+  const signal = useRef<{ cancelled: boolean; skip?: boolean }>({ cancelled: false });
+  // «Ochiq lobbi»: bildirishnoma/kartochkadan kelgan bo'lsak — birinchi qidiruvda shu kutuvchiga ulanishga urinamiz (keyingi qidiruvlarda yo'q)
+  const { prefer } = useGlobalBlitzUi();
+  const preferRef = useRef<string | undefined>(prefer);
   const meRef = useRef(me);
   meRef.current = me;
 
@@ -58,7 +61,7 @@ const GlobalBlitzModal: React.FC = () => {
     signal.current = sig;
     setLeftMs(GB_WAIT_MS);
     let alive = true;
-    findOpponent(meRef.current, sig, l => alive && setLeftMs(l), i => alive && setInfo(i)).then(out => {
+    findOpponent(meRef.current, sig, l => alive && setLeftMs(l), i => alive && setInfo(i), preferRef.current).then(out => {
       if (!alive) return;
       if ((out.kind === 'ghost' || out.kind === 'none') && out.info) setInfo(out.info);
       if (out.kind === 'live') {
@@ -85,6 +88,7 @@ const GlobalBlitzModal: React.FC = () => {
     setPractice(null);
     setMine(null);
     setSaved(undefined);
+    preferRef.current = undefined;
     setRun(r => r + 1);
     setPhase('search');
   };
@@ -138,8 +142,14 @@ const GlobalBlitzModal: React.FC = () => {
           <p className="mt-1 text-xs text-slate-300 leading-relaxed">Darajangiz ({profile.level}) atrofidagi jonli o‘yinchi izlanmoqda. Topilmasa, saqlangan natija bilan o‘ynaysiz.</p>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm text-amber-300 font-bold tabular-nums"><Loader2 className="w-4 h-4 animate-spin" /> {sec} s</div>
+        <div className="mx-auto max-w-[17rem] rounded-xl bg-sky-500/10 border border-sky-400/30 px-3 py-1.5 text-[11px] text-sky-100 leading-snug">
+          🌍 <b>Ochiq lobbi:</b> {preferRef.current ? 'kutayotgan raqibga ulanilmoqda. Band bo‘lsa, boshqasi qidiriladi.' : 'kutayotganingizni boshqa o‘yinchilar ko‘radi va sizga ulanishi mumkin. Oynani yopmang.'}
+        </div>
         {info && info.rewards && <InfoLine info={info} />}
-        <Ghost onClick={close}>Bekor qilish</Ghost>
+        <div className="flex flex-col gap-2">
+          {sec > 3 && <Ghost onClick={() => { signal.current.skip = true; }}>Kutmasdan, saqlangan natija bilan boshlash</Ghost>}
+          <Ghost onClick={close}>Bekor qilish</Ghost>
+        </div>
       </div>
     );
   } else if (phase === 'intro' && ghost) {
@@ -239,16 +249,69 @@ const GlobalBlitzModal: React.FC = () => {
   );
 };
 
+/** «Kimdir Global Blitz da raqib kutyapti!» — bosilsa shu kutuvchiga ulanadi. 10 soniya turadi, progress chizig'i tugaydi */
+const WaiterToast: React.FC<{ n: number; onJoin: () => void; onClose: () => void }> = ({ n, onJoin, onClose }) => (
+  <div className="fixed inset-x-0 top-0 z-[150] flex justify-center px-3 pointer-events-none" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
+    <div role="status" className="keep-dark gb-toast-in pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-sky-400/50 bg-gradient-to-br from-[#0B2238] via-[#13183A] to-[#0E1524] shadow-xl shadow-sky-500/25">
+      <button type="button" onClick={onJoin} className="flex w-full items-center gap-3 p-3 pr-10 text-left active:scale-[0.99] transition-transform">
+        <span className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-slate-950 shrink-0"><Globe2 className="w-5 h-5" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-extrabold text-white leading-tight">{n > 1 ? `${n} kishi Global Blitz da raqib kutyapti!` : 'Kimdir Global Blitz da raqib kutyapti!'}</span>
+          <span className="block text-[11px] text-sky-200/90 mt-0.5">Bosing — darhol ulanasiz</span>
+        </span>
+      </button>
+      <button type="button" onClick={onClose} aria-label="Yopish" className="absolute right-2 top-2 w-6 h-6 rounded-full bg-white/[0.08] text-slate-300 hover:text-white flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+      <div className="h-1 bg-white/10"><div className="gb-toast-bar h-full w-full bg-gradient-to-r from-sky-400 to-indigo-500" /></div>
+    </div>
+  </div>
+);
+
 export const GlobalBlitzHost: React.FC = () => {
   const { open } = useGlobalBlitzUi();
-  return open ? <GlobalBlitzModal /> : null;
+  const fd = useFriendDuelUi();
+  const toast = useGbToast();
+  const { realtimeOn, accountId, profile } = useApp();
+  const meRef = useRef({ id: accountId, level: profile.level });
+  meRef.current = { id: accountId, level: profile.level };
+
+  // Kutayotgan raqiblarni kuzatish (bq ni o'qiydi). Global Blitz oynasi yoki duel ochiq bo'lsa — to'xtaydi va bildirishnoma chiqmaydi
+  const busy = open || fd.open;
+  useEffect(() => {
+    if (!realtimeOn || !accountId) return;
+    return startWaiterWatch(() => meRef.current);
+  }, [realtimeOn, accountId]);
+  useEffect(() => { setWaiterWatchPaused(busy); }, [busy]);
+
+  return (
+    <>
+      {open ? <GlobalBlitzModal /> : null}
+      {toast && !busy ? (
+        <WaiterToast
+          key={toast.key}
+          n={toast.n}
+          onJoin={() => { triggerHaptic('medium'); sfx.click(true); dismissGbToast(); openGlobalBlitz(toast.id); }}
+          onClose={dismissGbToast}
+        />
+      ) : null}
+    </>
+  );
 };
 
 /* ------------------------------ DuelTab uchun karta ------------------------------ */
 
+/** «(N) raqib kutyapti» — HomeTab dagi kartochka ham xuddi shu yozuvni ko'rsatadi */
+export const WaitingLine: React.FC<{ n: number }> = ({ n }) => (
+  <div className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5 leading-tight">
+    <span className="relative flex w-1.5 h-1.5 shrink-0"><span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" /><span className="relative w-1.5 h-1.5 rounded-full bg-emerald-400" /></span>
+    ({n}) raqib kutyapti
+  </div>
+);
+
 export const GlobalBlitzCard: React.FC<{ className?: string; variant?: 'full' | 'banner' }> = ({ className = '', variant = 'full' }) => {
   const { realtimeOn } = useApp();
   const { accountId } = useApp();
+  const waiters = useGbWaiters();
+  const best = waiters[0]; // eng mos kutuvchi (o'z darajam, so'ng eng eskisi) — bosilganda shunga ulanadi
   const [share, setShare] = useState(getShareGhost());
   const [weekOpen, setWeekOpen] = useState(false);
   const [week, setWeek] = useState<GbWeekRow[] | null | undefined>(undefined);
@@ -262,12 +325,13 @@ export const GlobalBlitzCard: React.FC<{ className?: string; variant?: 'full' | 
   if (variant === 'banner') {
     // Bosh sahifa uchun ixcham qator: bir bosishda raqib qidiriladi
     return (
-      <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(); }} className={`keep-dark relative w-full overflow-hidden rounded-2xl border border-sky-400/40 bg-gradient-to-br from-[#0B2238] via-[#13183A] to-[#0E1524] p-3.5 flex items-center gap-3 text-left shadow-lg shadow-sky-500/10 active:scale-[0.98] transition-all ${className}`}>
+      <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(best?.id); }} className={`keep-dark relative w-full overflow-hidden rounded-2xl border border-sky-400/40 bg-gradient-to-br from-[#0B2238] via-[#13183A] to-[#0E1524] p-3.5 flex items-center gap-3 text-left shadow-lg shadow-sky-500/10 active:scale-[0.98] transition-all ${className}`}>
         <span className="pointer-events-none absolute -right-8 -top-10 w-28 h-28 rounded-full bg-sky-400/20 blur-2xl" aria-hidden />
         <div className="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-slate-950 shrink-0"><Globe2 className="w-5 h-5" /></div>
         <div className="relative min-w-0 flex-1">
           <div className="text-sm font-extrabold text-white leading-tight">🌍 Global Blitz</div>
           <div className="text-[11px] text-slate-300 mt-0.5 truncate">Tasodifiy raqib · g‘alabaga XP</div>
+          {waiters.length > 0 && <WaitingLine n={waiters.length} />}
         </div>
         <span className="relative shrink-0 h-9 px-3 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-slate-950 font-extrabold text-xs flex items-center gap-1">O‘ynash <ChevronRight className="w-3.5 h-3.5" /></span>
       </button>
@@ -283,7 +347,8 @@ export const GlobalBlitzCard: React.FC<{ className?: string; variant?: 'full' | 
           <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">Ilovadagi istalgan o‘yinchi bilan bellashing. Jonli raqib topilmasa — oldin o‘ynagan o‘yinchining natijasi bilan.</div>
         </div>
       </div>
-      <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(); }} className="relative mt-3 w-full h-11 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-md shadow-sky-500/25 active:scale-[0.98] transition-all">
+      {waiters.length > 0 && <div className="relative mt-2.5"><WaitingLine n={waiters.length} /></div>}
+      <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(best?.id); }} className="relative mt-3 w-full h-11 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-md shadow-sky-500/25 active:scale-[0.98] transition-all">
         <Crown className="w-4 h-4" /> Raqib topish <ChevronRight className="w-4 h-4" />
       </button>
       <label className="relative mt-2.5 flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">

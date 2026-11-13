@@ -2,14 +2,14 @@
 // Jonli raqib topilsa — «Do'st bilan Blitz Duel» xonasi ochiladi (kod bir xil). Topilmasa — saqlangan natija («ruh» raqib).
 // Navbat va saqlash serverdagi /api/fn/bq orqali (poyga va tekshiruv uchun), o'z yozuvimizni kuzatish esa to'g'ridan-to'g'ri bazadan.
 import { useSyncExternalStore } from 'react';
-import { getJson } from './realtime';
+import { getJson, dbReadMode } from './realtime';
 import { todayKey } from './time';
 import { getTelegramWebApp } from './telegram';
 import { ACCOUNT_ID } from './account';
 import { pointsFor, FD_COMBO_MAX, FD_SECONDS, FD_QUESTIONS } from './friendDuel';
 import type { FdQuestion } from './friendDuel';
 
-export const GB_WAIT_MS = 12000; // jonli raqib kutish vaqti
+export const GB_WAIT_MS = 60000; // jonli raqib kutish vaqti («ochiq lobbi»: boshqalar ham kutayotganingizni ko'radi)
 const GB_RETRY_MS = 3500; // navbatda turganda serverdan qayta so'rash oralig'i
 const GB_POLL_MS = 2000; // o'z yozuvimizni tekshirish oralig'i (to'g'ridan-to'g'ri baza, funksiya chaqirilmaydi)
 
@@ -117,16 +117,19 @@ const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
  * Raqib qidiradi. `signal.cancelled` true bo'lsa — navbatdan chiqadi.
  * Jonli raqib → xona kodi; bo'lmasa → saqlangan natija; u ham bo'lmasa → 'none'.
  */
-export async function findOpponent(me: GbMe, signal: { cancelled: boolean }, onTick?: (leftMs: number) => void, onInfo?: (i: GbInfo) => void): Promise<GbOutcome> {
+export async function findOpponent(me: GbMe, signal: { cancelled: boolean; skip?: boolean }, onTick?: (leftMs: number) => void, onInfo?: (i: GbInfo) => void, prefer?: string): Promise<GbOutcome> {
   const t0 = Date.now();
-  const first = await call({ op: 'join', first: true, ...base(me) });
+  // prefer — bildirishnoma/kartochkadan bosilgan kutuvchi: server uni birinchi tanlaydi (daraja ±1 ichida bo'lsa), bo'lmasa odatdagi tartib
+  const pf = prefer ? { prefer } : {};
+  const first = await call({ op: 'join', first: true, ...base(me), ...pf });
   if (!first) return { kind: 'error' };
   if (first.matched && first.code) return { kind: 'live', code: first.code };
   let info: GbInfo | undefined = first.info && typeof first.info === 'object' ? first.info : undefined;
   if (info) onInfo?.(info);
 
   let lastJoin = Date.now();
-  while (Date.now() - t0 < GB_WAIT_MS) {
+  // signal.skip — «Kutmasdan boshlash»: kutishni to'xtatib, darrov saqlangan natijaga o'tadi
+  while (Date.now() - t0 < GB_WAIT_MS && !signal.skip) {
     if (signal.cancelled) {
       const r = await call({ op: 'leave', ...base(me) });
       return r?.matched && r.code ? { kind: 'live', code: r.code } : { kind: 'cancel' };
@@ -145,7 +148,7 @@ export async function findOpponent(me: GbMe, signal: { cancelled: boolean }, onT
     // Bizdan oldin kelgan kutayotgan bo'lsa (yoki yangi kelgan bo'lsa) — serverdan qayta so'raymiz
     if (Date.now() - lastJoin >= GB_RETRY_MS) {
       lastJoin = Date.now();
-      const r = await call({ op: 'join', ...base(me) });
+      const r = await call({ op: 'join', ...base(me), ...pf });
       if (r?.matched && r.code) return { kind: 'live', code: r.code };
     }
   }
@@ -241,12 +244,165 @@ export function cumulativeScores(log: GbLogItem[]): number[] {
   return out;
 }
 
+/* --------------------- «ochiq lobbi»: kutayotgan raqiblarni kuzatish --------------------- */
+
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const WATCH_DIRECT_MS = 5000; // to'g'ridan-to'g'ri Firebase o'qishi
+const WATCH_PROXY_MS = 20000; // proksi (server funksiyasi) orqali o'qishda siyrak — har so'rov hisoblanadi
+const WAITER_FRESH_MS = 25000; // serverdagi FRESH_MS bilan bir xil: shundan eski yozuv «tirik» emas
+export const GB_TOAST_MS = 10000; // bildirishnoma shuncha turadi
+
+export interface GbWaiter { id: string; level: string; ts: number; name: string; avatar: string }
+export interface GbToast { id: string; key: string; n: number } // n — hozir kutayotganlar soni
+interface GbWatchState { waiters: GbWaiter[]; toast: GbToast | null }
+
+const levelsNear = (level: string): string[] => {
+  const i = LEVELS.indexOf(level);
+  return i < 0 ? [] : ([level, LEVELS[i - 1], LEVELS[i + 1]].filter(Boolean) as string[]);
+};
+
+// Soat farqi bo'lsa ham «tirik»ni aniqlash uchun: har bir yozuvning hb qiymati oxirgi marta qachon o'zgargani (shu qurilma soati bilan)
+const hbSeen = new Map<string, { hb: number; at: number }>();
+
+/**
+ * `bq` navbatidan hozir kutayotgan raqiblarni o'qiydi. Faqat tirik va bo'sh yozuvlar, o'z darajam ±1 ichida (server ham shu oraliqda ulaydi).
+ * O'zim va oxirgi 5 raqib chiqarib tashlanadi. Tartib serverdagi bilan bir xil: avval o'z darajam, so'ng eng eskisi — [0] eng mos kutuvchi.
+ */
+export async function peekWaiters(me: { id: string; level: string }): Promise<GbWaiter[]> {
+  const v = await getJson('bq');
+  const now = Date.now();
+  const near = new Set(levelsNear(me.level));
+  const recent = new Set(getRecentOpps());
+  const out: GbWaiter[] = [];
+  const seen = new Set<string>();
+  if (v && typeof v === 'object') {
+    for (const [lvl, group] of Object.entries(v as Record<string, any>)) {
+      if (!group || typeof group !== 'object') continue;
+      for (const [id, e] of Object.entries(group as Record<string, any>)) {
+        if (!e || typeof e !== 'object') continue;
+        const hb = Number(e.hb) || Number(e.ts) || 0;
+        const key = `${lvl}/${id}`;
+        seen.add(key);
+        const prev = hbSeen.get(key);
+        if (!prev) hbSeen.set(key, { hb, at: 0 }); // birinchi ko'rish: o'zgarganini keyingi so'rovda bilamiz
+        else if (prev.hb !== hb) hbSeen.set(key, { hb, at: now });
+        if (!near.has(lvl) || id === me.id || recent.has(id)) continue;
+        if (e.room) continue; // raqib topilgan yoki hozir band qilinayotgan
+        const at = hbSeen.get(key)!.at;
+        const alive = now - hb < WAITER_FRESH_MS || (at > 0 && now - at < WAITER_FRESH_MS);
+        if (!alive) continue;
+        out.push({ id, level: lvl, ts: Number(e.ts) || 0, name: String(e.name || ''), avatar: typeof e.avatar === 'string' ? e.avatar : '' });
+      }
+    }
+  }
+  for (const k of Array.from(hbSeen.keys())) if (!seen.has(k)) hbSeen.delete(k);
+  out.sort((a, b) => (a.level === me.level ? 0 : 1) - (b.level === me.level ? 0 : 1) || a.ts - b.ts || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return out;
+}
+
+let wst: GbWatchState = { waiters: [], toast: null };
+const wListeners = new Set<() => void>();
+const setW = (n: GbWatchState) => { wst = n; wListeners.forEach(l => l()); };
+const subW = (cb: () => void) => { wListeners.add(cb); return () => { wListeners.delete(cb); }; };
+/** Hozir kutayotganlar (eng mos kutuvchi — [0]) */
+export const useGbWaiters = (): GbWaiter[] => useSyncExternalStore(subW, () => wst.waiters, () => wst.waiters);
+/** Bosiladigan bildirishnoma holati (null — ko'rinmaydi) */
+export const useGbToast = (): GbToast | null => useSyncExternalStore(subW, () => wst.toast, () => wst.toast);
+
+const notified = new Set<string>(); // bir kutuvchi (uid:ts) uchun bildirishnoma bir marta
+let toastTimer: ReturnType<typeof setTimeout> | null = null;
+let watchTimer: ReturnType<typeof setTimeout> | null = null;
+let watchGen = 0;
+let watchPaused = false;
+let watchGetMe: (() => { id: string; level: string }) | null = null;
+let lastOk = 0;
+
+const stopToastTimer = () => { if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } };
+export const dismissGbToast = () => { stopToastTimer(); if (wst.toast) setW({ ...wst, toast: null }); };
+
+function applyWaiters(list: GbWaiter[]) {
+  const same = list.length === wst.waiters.length && list.every((w, i) => w.id === wst.waiters[i].id && w.ts === wst.waiters[i].ts);
+  let toast = wst.toast;
+  if (toast && !list.some(w => w.id === toast!.id)) { toast = null; stopToastTimer(); } // kutuvchi ketdi — bildirishnoma yo'qoladi
+  if (!toast && !watchPaused) {
+    const fresh = list.find(w => !notified.has(`${w.id}:${w.ts}`));
+    if (fresh) {
+      if (notified.size > 200) notified.clear();
+      const key = `${fresh.id}:${fresh.ts}`;
+      notified.add(key);
+      toast = { id: fresh.id, key, n: list.length };
+      stopToastTimer();
+      toastTimer = setTimeout(dismissGbToast, GB_TOAST_MS);
+    }
+  }
+  if (toast && toast.n !== list.length) toast = { ...toast, n: list.length }; // son o'zgarsa — matn ham yangilanadi
+  if (!same || toast !== wst.toast) setW({ waiters: same ? wst.waiters : list, toast });
+}
+
+function schedule(ms: number) {
+  if (watchTimer) clearTimeout(watchTimer);
+  watchTimer = setTimeout(tick, ms);
+}
+
+async function tick() {
+  watchTimer = null;
+  const getMe = watchGetMe;
+  if (!getMe || watchPaused) return; // to'xtatilgan bo'lsa — qayta yoqilganda schedule(0) chaqiriladi
+  const gen = watchGen;
+  if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
+    const me = getMe();
+    if (me.id) {
+      try {
+        const list = await peekWaiters(me);
+        if (gen !== watchGen || watchPaused) return;
+        lastOk = Date.now();
+        applyWaiters(list);
+      } catch {
+        if (gen !== watchGen || watchPaused) return;
+        if (Date.now() - lastOk > 30000) applyWaiters([]); // uzoq vaqt o'qib bo'lmasa — eskirgan ro'yxatni ko'rsatmaymiz
+      }
+    }
+  }
+  if (gen === watchGen && !watchPaused) schedule(dbReadMode() === 'proxy' ? WATCH_PROXY_MS : WATCH_DIRECT_MS);
+}
+
+/** Kuzatuvchini ishga tushiradi (GlobalBlitzHost). Qaytgan funksiya — to'xtatish */
+export function startWaiterWatch(getMe: () => { id: string; level: string }): () => void {
+  watchGetMe = getMe;
+  const gen = ++watchGen;
+  const onVis = () => { if (gen === watchGen && !watchPaused && document.visibilityState === 'visible') schedule(0); };
+  document.addEventListener('visibilitychange', onVis);
+  schedule(1500);
+  return () => {
+    if (gen !== watchGen) return;
+    watchGen++;
+    watchGetMe = null;
+    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
+    document.removeEventListener('visibilitychange', onVis);
+    stopToastTimer();
+    hbSeen.clear();
+    setW({ waiters: [], toast: null });
+  };
+}
+
+/** Global Blitz oynasi yoki duel ochiq bo'lganda kuzatuv to'xtaydi (so'rov ham, bildirishnoma ham yo'q) */
+export function setWaiterWatchPaused(paused: boolean) {
+  if (watchPaused === paused) return;
+  watchPaused = paused;
+  if (paused) {
+    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
+    stopToastTimer();
+    if (wst.toast || wst.waiters.length) setW({ waiters: [], toast: null });
+  } else if (watchGetMe) schedule(0);
+}
+
 /* ------------------------------- oyna holati ------------------------------- */
 
-interface GbUi { open: boolean }
+/** prefer — bosilgan kutuvchining ID si (bildirishnoma/kartochka): qidiruv avval shu kutuvchiga ulanishga urinadi */
+interface GbUi { open: boolean; prefer?: string }
 let ui: GbUi = { open: false };
 const listeners = new Set<() => void>();
 const setUi = (u: GbUi) => { ui = u; listeners.forEach(l => l()); };
-export const openGlobalBlitz = () => setUi({ open: true });
+export const openGlobalBlitz = (prefer?: string) => setUi({ open: true, prefer: typeof prefer === 'string' && prefer ? prefer : undefined });
 export const closeGlobalBlitz = () => setUi({ open: false });
 export const useGlobalBlitzUi = (): GbUi => useSyncExternalStore(cb => { listeners.add(cb); return () => listeners.delete(cb); }, () => ui, () => ui);

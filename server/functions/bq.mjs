@@ -1,7 +1,8 @@
 // «Global Blitz»: tasodifiy raqib topish (navbat), saqlangan natijalar («ruh» raqib), natijani server tekshiruvi va mukofot.
 //
 // POST /api/fn/bq   { op, uid, level, name, avatar, recent: [uid...], noGhost, ... }
-//   op = 'join'      navbatga turadi va (o'zidan oldin kutayotgan bo'lsa) raqibni band qiladi. first:true — kunlik holat (info) ham qaytadi
+//   op = 'join'      navbatga turadi va (o'zidan oldin kutayotgan bo'lsa) raqibni band qiladi. first:true — kunlik holat (info) ham qaytadi.
+//                    prefer:<uid> — «ochiq lobbi»: foydalanuvchi bildirishnoma/kartochkadagi aniq kutuvchini bosgan; shu kutuvchi (daraja ±1 ichida bo'lsa) birinchi tanlanadi
 //   op = 'ghost'     jonli raqib topilmadi: navbatdan chiqadi va saqlangan natija beradi (u serverda «bplay» ga yozib qo'yiladi)
 //   op = 'leave'     «Bekor qilish»
 //   op = 'saveghost' «ruh» raqib bilan yoki mashq o'yini tugadi:
@@ -30,7 +31,9 @@ import {
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const ID_RE = /^[A-Za-z0-9_\-:.@+]{3,64}$/;
-const FRESH_MS = 25000; // navbat yozuvi shuncha vaqt «tirik» hisoblanadi (har so'rovda yangilanadi)
+const FRESH_MS = 25000; // navbat yozuvi shuncha vaqt «tirik» hisoblanadi (kutayotgan mijoz har ~3.5 soniyada yangilaydi, kutish ~60 soniya)
+// Eslatma: ilova (globalBlitz.ts, peekWaiters) `bq` ni hamma o'qiydigan tugun sifatida o'qib, kutuvchilarni ko'rsatadi.
+// Kutuvchi yozuvi: { ts, hb, name, avatar } (room yo'q = bo'sh). Botga hech qanday xabar yuborilmaydi.
 const LOCK_MS = 8000; // qulf shundan eskirsa — e'tiborga olinmaydi
 const CLAIMED_KEEP_MS = 120000; // raqib topilgan yozuv shuncha vaqtdan keyin tozalanadi
 const GHOST_MAX_AGE = 14 * 24 * 3600 * 1000;
@@ -124,7 +127,8 @@ async function opJoin(me, now) {
       cands.push({ lvl, id, ts: k.ts, same: lvl === me.level ? 0 : 1 });
     }
   }
-  cands.sort((a, b) => a.same - b.same || a.ts - b.ts);
+  // «Ochiq lobbi»: bosilgan kutuvchi (prefer) birinchi, qolganlari avvalgidek (avval o'z darajam, so'ng eng eskisi)
+  cands.sort((a, b) => (b.id === me.prefer) - (a.id === me.prefer) || a.same - b.same || a.ts - b.ts);
   if (!cands.length) return { matched: false };
 
   // 3. O'zimni qulflaymiz (boshqa kishi meni olib ketmasin), so'ng nomzodni ETag bilan band qilamiz
@@ -396,6 +400,7 @@ export const handler = async event => {
       name: safeName(body.name, cfg.bad), // haqoratli/reklama ismlar «O'yinchi» ga almashtiriladi
       bad: cfg.bad,
       avatar,
+      prefer: typeof body.prefer === 'string' && ID_RE.test(body.prefer) ? body.prefer : '',
       recent: Array.isArray(body.recent) ? body.recent.filter(x => typeof x === 'string' && ID_RE.test(x)).slice(0, 5) : [],
     };
     const now = Date.now();

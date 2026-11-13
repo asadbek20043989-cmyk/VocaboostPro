@@ -803,3 +803,10 @@ html.light .vb-lg-card:not(.is-on) .vb-lg-code { color:#334155; }
 .vip-chip-locked::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%); transform: translateX(-120%); animation: vipShine 2.6s ease-in-out infinite; }
 @keyframes vipShine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @media (prefers-reduced-motion: reduce) { .vip-chip-locked::after { animation: none; } }
+
+/* Global Blitz «ochiq lobbi» bildirishnomasi: 10 soniyalik progress chizig'i */
+@keyframes gb-toast-in { 0% { opacity: 0; transform: translateY(-16px) scale(0.96); } 100% { opacity: 1; transform: none; } }
+@keyframes gb-toast-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.gb-toast-in { animation: gb-toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.gb-toast-bar { transform-origin: left center; animation: gb-toast-bar 10s linear forwards; } /* 10 s = GB_TOAST_MS (globalBlitz.ts) */
+@media (prefers-reduced-motion: reduce) { .gb-toast-in { animation: none; } }

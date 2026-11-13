@@ -8,7 +8,8 @@ import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../services/telegram';
 import { LuckyWheel } from './LuckyWheel';
 import { openFriendDuel } from '../services/friendDuel';
-import { openGlobalBlitz } from '../services/globalBlitz';
+import { openGlobalBlitz, useGbWaiters } from '../services/globalBlitz';
+import { WaitingLine } from './GlobalBlitz';
 import { LevelPicker } from './LevelPicker';
 import { WordMap } from './WordMap';
 import { VocabStory } from './Learning';
@@ -165,6 +166,7 @@ export const HomeTab: React.FC = () => {
     profile, leagueUsers, leagueWeek, setActiveTab, bank, srs, savedWords, masteredCount, newQueue, dueWords, introducedToday, dailyQuests, claimQuest,
     openLearn, levelIcons, levelProgress, totalSpinsLeft, isPro, wheel, wheelFreeSpins, packs, todayPacks, packProgress, duels, challenges, realtimeOn,
   } = useApp();
+  const gbWaiters = useGbWaiters(); // «ochiq lobbi»: Global Blitz da kutayotganlar (eng mosi — [0])
   const liveChallenges = challenges.filter(c => !c.finalized && c.endsAt > nowMs());
   const openPacks = packs.filter(p => p.kind === 'open');
   // Maxsus mavzular: har kuni bitta mavzu bo'yicha TOP 20 lug'at (admin yuklaydi). Kelajak sanalilar ko'rinmaydi.
@@ -340,10 +342,11 @@ export const HomeTab: React.FC = () => {
             <div className="mt-1.5 text-sm font-black text-white">Do‘st bilan duel</div>
             <div className="text-[11px] text-orange-200/90 font-semibold">Havola yuboring · Chaqirish</div>
           </button>
-          <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-sky-500/30 via-indigo-500/10 to-[#151C28] border border-sky-400/50 active:scale-[0.97] transition-all">
+          <button type="button" onClick={() => { triggerHaptic('medium'); openGlobalBlitz(gbWaiters[0]?.id); }} className="relative overflow-hidden text-left rounded-2xl p-3 bg-gradient-to-br from-sky-500/30 via-indigo-500/10 to-[#151C28] border border-sky-400/50 active:scale-[0.97] transition-all">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-300 to-indigo-500 flex items-center justify-center text-slate-950 shadow-lg shadow-sky-500/30"><Globe2 className="w-6 h-6" /></div>
             <div className="mt-1.5 text-sm font-black text-white">Global Blitz</div>
             <div className="text-[11px] text-sky-200/90 font-semibold">Tasodifiy raqib · XP</div>
+            {gbWaiters.length > 0 && <WaitingLine n={gbWaiters.length} />}
           </button>
         </div>
       )}

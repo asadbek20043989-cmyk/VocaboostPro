@@ -46,6 +46,9 @@ const setMode = (m: Mode) => {
   }
 };
 
+/** O'qish hozir qaysi yo'l bilan ketyapti: 'direct' (Firebase) yoki 'proxy' (server funksiyasi — har so'rov hisoblanadi) */
+export const dbReadMode = (): Mode => mode;
+
 const urlFor = (m: Mode, path: string) => (m === 'direct' ? `${DB}/${path}.json` : `${PROXY}?p=${encodeURIComponent(path)}`);
 
 /**

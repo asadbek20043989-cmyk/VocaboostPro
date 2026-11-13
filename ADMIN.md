@@ -376,7 +376,7 @@ Hammaga yuborish 25 tadan guruhlab (≈25 xabar/s) yuboriladi; Vercel 60 soniya 
 
 ## v15 — 🌍 Global Blitz (tasodifiy raqib bilan Blitz Duel)
 
-**Qanday ishlaydi.** O'yinchi «Raqib topish» ni bosadi → ~12 soniya jonli raqib qidiriladi (o'z darajasi ±1). Topilsa — ikkalasi uchun server xona ochadi va o'yin avtomatik boshlanadi. Topilmasa — shu darajada oldin o'ynagan o'yinchining saqlangan natijasi («ruh») bilan o'ynaladi va bu ochiq yoziladi. Hech kim o'ynamagan bo'lsa — mashq (mukofotsiz); natija keyingi o'yinchilar uchun saqlanadi.
+**Qanday ishlaydi.** O'yinchi «Raqib topish» ni bosadi → ~60 soniya jonli raqib qidiriladi (o‘z darajasi ±1; kutayotganni boshqa o‘yinchilar bildirishnoma va kartochkada ko‘rib, bosib ulanishi mumkin). Topilsa — ikkalasi uchun server xona ochadi va o'yin avtomatik boshlanadi. Topilmasa — shu darajada oldin o'ynagan o'yinchining saqlangan natijasi («ruh») bilan o'ynaladi va bu ochiq yoziladi. Hech kim o'ynamagan bo'lsa — mashq (mukofotsiz); natija keyingi o'yinchilar uchun saqlanadi.
 
 **Mukofot qoidalari (hammasi serverda).**
 - G'alabaga `config/blitz.xp` (standart 10 XP). XP sovg'a (`grants`) sifatida beriladi — ilova uni o'zi oladi, «Global Blitz g'alabasi» deb xabar chiqadi.
