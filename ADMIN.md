@@ -397,3 +397,19 @@ Hammaga yuborish 25 tadan guruhlab (≈25 xabar/s) yuboriladi; Vercel 60 soniya 
 **Halol cheklovlar.** Savollar mijozga to'g'ri javob bilan keladi (do'st duelidagi kabi), shuning uchun texnik foydalanuvchi javobni oldindan bilib, tez yuborishi mumkin. Himoya: 0,4 s dan tez to'g'ri javob qabul qilinmaydi, javoblar yig'indisi o'yin vaqtidan oshmasligi tekshiriladi, mukofot esa kunlik limit va «bir raqib — kuniga bir marta» bilan cheklangan. Ya'ni zarar eng ko'pi bilan kuniga 5 × XP.
 
 **Sinov.** `node test/blitz/run.mjs` — soxta Firebase bilan bq/db/tozalash testlari (jonli xona, ruh, mukofot, limit, bir xil raqib, config, tozalash).
+
+---
+
+# v17 — Umumiy chat (Liga → 💬 Chat)
+
+Hamma foydalanuvchi uchun bitta xona. Xabarlarni **faqat server** (`server/functions/chat.mjs`) yozadi; mijoz `chat/general` dan Firebase jonli oqimi orqali o'qiydi.
+
+**Deploydan oldin majburiy:** `database.rules.json` ni Firebase Console → Realtime Database → Rules ga qayta joylang (yangi tugunlar: `chat` o'qiladi, `chatMute`, `chatLim`, `chatReports` yopiq). Qoidalarsiz chat ochilmaydi.
+
+Himoya: Telegram imzosi (BOT_TOKEN bor bo'lsa faqat tasdiqlangan `tg_` hisob yozadi), ism/daraja ligadan olinadi, sekin rejim (3 s), daqiqada 12 xabar, bir xil matn takrori yo'q, haqorat / havola / @username / telefon filtri (ismlar filtri + Global Blitz «taqiqlangan so'zlar» + chatning o'z ro'yxati), 3 ta shikoyatdan keyin xabar avtomatik yashiriladi.
+
+Admin → 💬 Umumiy chat: yoqish/o'chirish, limitlar, minimal XP, qoidalar matni, qo'shimcha taqiqlangan so'zlar; shikoyatlar (xabarni o'chirish / qaytarish / foydalanuvchini cheklash); cheklanganlar ro'yxati; so'nggi 200 xabar.
+
+Xarajat: xabar yuborish va shikoyat — 1 ta funksiya chaqiruvi; o'qish — to'g'ridan-to'g'ri Firebase (funksiyasiz). Xona ~80 xabargacha o'zi tozalanadi.
+
+Test: `node test/chat/run.mjs` (15 ta test).

@@ -28,6 +28,7 @@ import { botSetRemind } from '../services/bot';
 import { Avatar } from './Avatar';
 import { DuelTab } from './DuelTab';
 import { ChallengesTab } from './ChallengesTab';
+import { ChatTab } from './ChatTab';
 import { Podium, GlowAvatar } from './Podium';
 import { LevelLeagues, LeagueView, LEAGUE_LEVELS, themeOf } from './LevelLeagues';
 import { levelLabel } from '../data/levels';
@@ -46,7 +47,7 @@ export const LeaderboardTab: React.FC = () => {
   const [linkMsg, setLinkMsg] = useState('');
 
   const { pendingDuelCode } = useApp();
-  const [activeSubTab, setActiveSubTab] = useState<'league' | 'duel' | 'challenge' | 'profile' | 'hall'>(() => {
+  const [activeSubTab, setActiveSubTab] = useState<'league' | 'duel' | 'challenge' | 'chat' | 'profile' | 'hall'>(() => {
     let want = '';
     try {
       want = sessionStorage.getItem('vb_liga_sub') || '';
@@ -54,7 +55,7 @@ export const LeaderboardTab: React.FC = () => {
     } catch {
       /* ignore */
     }
-    return pendingDuelCode || want === 'duel' ? 'duel' : want === 'challenge' ? 'challenge' : 'league';
+    return pendingDuelCode || want === 'duel' ? 'duel' : want === 'challenge' ? 'challenge' : want === 'chat' ? 'chat' : 'league';
   });
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(50);
@@ -154,14 +155,14 @@ export const LeaderboardTab: React.FC = () => {
   return (
     <div className="space-y-3 pb-8 max-w-md mx-auto">
       {/* Segmented Sub-Tab Switcher */}
-      <div className="flex items-center gap-1 p-1 bg-[#151C28] rounded-xl border border-slate-800">
+      <div className="flex items-center gap-1 p-1 bg-[#151C28] rounded-xl border border-slate-800 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           type="button"
           onClick={() => {
             triggerHaptic('selection');
             setActiveSubTab('league');
           }}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+          className={`flex-1 shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
             activeSubTab === 'league'
               ? 'bg-amber-500 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
@@ -173,9 +174,23 @@ export const LeaderboardTab: React.FC = () => {
           type="button"
           onClick={() => {
             triggerHaptic('selection');
+            setActiveSubTab('chat');
+          }}
+          className={`flex-1 shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+            activeSubTab === 'chat'
+              ? 'bg-amber-500 text-slate-950 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          💬 Chat
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('selection');
             setActiveSubTab('challenge');
           }}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+          className={`flex-1 shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
             activeSubTab === 'challenge'
               ? 'bg-amber-500 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
@@ -189,7 +204,7 @@ export const LeaderboardTab: React.FC = () => {
             triggerHaptic('selection');
             setActiveSubTab('duel');
           }}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+          className={`flex-1 shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
             activeSubTab === 'duel'
               ? 'bg-amber-500 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
@@ -203,7 +218,7 @@ export const LeaderboardTab: React.FC = () => {
             triggerHaptic('selection');
             setActiveSubTab('profile');
           }}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+          className={`flex-1 shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
             activeSubTab === 'profile'
               ? 'bg-amber-500 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
@@ -365,6 +380,7 @@ export const LeaderboardTab: React.FC = () => {
       {activeSubTab === 'hall' && <HallOfHistory onBack={() => setActiveSubTab('league')} />}
       {activeSubTab === 'duel' && <DuelTab />}
       {activeSubTab === 'challenge' && <ChallengesTab />}
+      {activeSubTab === 'chat' && <ChatTab />}
 
       {/* SUB-VIEW 2: Shaxsiy Profil */}
       {activeSubTab === 'profile' && (

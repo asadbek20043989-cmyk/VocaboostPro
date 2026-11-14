@@ -8,6 +8,7 @@ import { handler as bot } from '../../server/functions/bot.mjs';
 import { handler as bq } from '../../server/functions/bq.mjs';
 import { handler as broadcast } from '../../server/functions/broadcast-background.mjs';
 import { handler as cert } from '../../server/functions/cert.mjs';
+import { handler as chat } from '../../server/functions/chat.mjs';
 import { handler as db } from '../../server/functions/db.mjs';
 import { handler as grants } from '../../server/functions/grants.mjs';
 import { handler as inbox } from '../../server/functions/inbox.mjs';
@@ -22,7 +23,7 @@ import { handler as tgemoji } from '../../server/functions/tgemoji.mjs';
 import { handler as tts } from '../../server/functions/tts.mjs';
 
 const HANDLERS = {
-  admin, ai, bot, bq, cert, db, grants, inbox, shop, tgavatar, tgemoji, tts,
+  admin, ai, bot, bq, cert, chat, db, grants, inbox, shop, tgavatar, tgemoji, tts,
   'tg-webhook': tgWebhook,
   'broadcast-background': broadcast,
   remind,

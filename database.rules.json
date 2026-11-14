@@ -97,6 +97,22 @@
       ".read": false,
       ".write": false
     },
+    "chat": {
+      ".read": true,
+      ".write": false
+    },
+    "chatMute": {
+      ".read": false,
+      ".write": false
+    },
+    "chatLim": {
+      ".read": false,
+      ".write": false
+    },
+    "chatReports": {
+      ".read": false,
+      ".write": false
+    },
     "hall": {
       ".read": true,
       ".write": false

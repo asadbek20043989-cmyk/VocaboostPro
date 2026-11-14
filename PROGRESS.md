@@ -18,3 +18,14 @@ Mijoz: `globalBlitz.ts` (submitLive, saveGhost vs, info, haftalik reyting), `Fri
 Admin: 🌍 Global Blitz bo'limi. Qoidalar: `database.rules.json` yangilandi (qayta joylang!). Hujjat: ADMIN.md (v15).
 
 Sinalgan: `node test/blitz/run.mjs` (6 test, o'tdi). Sinalmagan: `vite build` / to'liq `tsc` (bu muhitda node_modules va tarmoq yo'q) — deploydan oldin `npm install && npm run lint && npm run build` ishga tushiring.
+
+---
+
+# v17 — Umumiy chat (tugallandi)
+
+Server: `server/functions/chat.mjs` (send + report, mute, tezlik limiti, filtr, avto-tozalash), `api/fn/[name].js` ga `chat` qo'shildi, `db.mjs` da `chat` faqat o'qishga ruxsat (yozish yopiq), `admin.mjs` da chatOverview/chatSet/chatDelete/chatRestore/chatMute/chatUnmute/chatClear.
+Mijoz: `services/chat.ts`, `components/ChatTab.tsx`, `LeaderboardTab.tsx` ga «💬 Chat» sub-tab (sub-tab paneli 5 tabga mos gorizontal aylanadigan qilindi).
+Admin: «💬 Umumiy chat» bo'limi. Qoidalar: `database.rules.json` yangilandi (qayta joylang!).
+
+Sinalgan: `node test/chat/run.mjs` (15 ta), `node test/blitz/run.mjs` (11 ta, o'tdi), `vite build` (o'tdi), `tsc` (faqat eski xato: `speech.ts(98)` — bu o'zgarishga aloqasiz, asl zipda ham bor).
+Sinalmagan: haqiqiy Telegram ichida / Firebase'da qo'lda sinov (bu muhitda yo'q) — deploydan keyin 2 ta akkauntdan yozib ko'ring.

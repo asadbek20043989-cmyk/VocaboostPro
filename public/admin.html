@@ -128,6 +128,7 @@
       <button data-t="chal">🏁 Chellenjlar</button>
       <button data-t="wheel">🎡 Baraban</button>
       <button data-t="blitz">🌍 Global Blitz</button>
+      <button data-t="chat">💬 Umumiy chat <span id="chatBadge" class="tag d" style="display:none"></span></button>
       <span class="tg">Foydalanuvchilar</span>
       <button data-t="users">👥 Foydalanuvchilar</button>
       <button data-t="inbox">✉️ Xabarlar <span id="inboxBadge" class="tag d" style="display:none"></span></button>
@@ -587,6 +588,39 @@
         <div class="row" style="justify-content:space-between"><h2>✉️ Foydalanuvchilar xabarlari <span class="small" id="inCount"></span></h2><div class="row"><select id="inFilter" style="max-width:170px"><option value="all">Hammasi</option><option value="unread">O'qilmaganlar</option><option value="replied">Javob berilgan</option></select><button class="sec" id="inRefresh">Yangilash</button></div></div>
         <p class="small">Foydalanuvchi profilidagi «Adminga xabar» orqali yuborgan xabarlar shu yerda ism, ID va vaqti bilan ko'rinadi. «Javob yozish» bosilsa, javob foydalanuvchining Telegram chatiga botdan boradi.</p>
         <div id="inBox"></div>
+      </div>
+    </section>
+
+    <section id="t-chat" class="hide">
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><h2>💬 Umumiy chat sozlamalari</h2><button class="sec" id="chRefresh">Yangilash</button></div>
+        <p class="small">Liga bo'limidagi «💬 Chat» — hamma uchun bitta xona. Xabarlarni <b>faqat server</b> yozadi: ism ligadan olinadi, Telegram imzosi tekshiriladi, haqorat/havola/@username/telefon filtri va tezlik limiti ishlaydi. O'zgarishlar ~30 soniyada kuchga kiradi.</p>
+        <div class="grid">
+          <div><label>Chat</label><select id="ch_on"><option value="1">Yoqilgan</option><option value="0">O'chirilgan (hamma uchun yozish yopiladi)</option></select></div>
+          <div><label>Xabarlar orasidagi eng kam vaqt (soniya)</label><input id="ch_slow" type="number" min="0" max="120" /></div>
+          <div><label>Daqiqada eng ko'pi bilan xabar</label><input id="ch_perMin" type="number" min="1" max="60" /></div>
+          <div><label>Yozish uchun minimal XP (spamdan himoya)</label><input id="ch_minXp" type="number" min="0" /></div>
+          <div><label>Xabar uzunligi (belgi)</label><input id="ch_maxLen" type="number" min="20" max="1000" /></div>
+          <div><label>Nechta shikoyatdan keyin xabar yashirilsin</label><input id="ch_hideAt" type="number" min="1" max="50" /></div>
+          <div><label>Xonada saqlanadigan oxirgi xabarlar soni</label><input id="ch_keep" type="number" min="20" max="300" /></div>
+        </div>
+        <label>Qoidalar (chat tepasida ko'rinadi)</label>
+        <input id="ch_rules" maxlength="300" />
+        <label>Qo'shimcha taqiqlangan so'zlar (vergul yoki yangi qator bilan). Global Blitz ro'yxati ham avtomatik ishlaydi</label>
+        <textarea id="ch_bad" style="min-height:70px" placeholder="so'z1, so'z2"></textarea>
+        <div class="row" style="margin-top:10px"><button id="chSave">Saqlash</button><button class="bad" id="chClear">Chatni to'liq tozalash</button></div>
+      </div>
+      <div class="card">
+        <h2>🚩 Shikoyatlar <span class="small" id="chRepCount"></span></h2>
+        <div id="chReports"></div>
+      </div>
+      <div class="card">
+        <h2>🔇 Cheklanganlar <span class="small" id="chMutedCount"></span></h2>
+        <div id="chMuted"></div>
+      </div>
+      <div class="card">
+        <h2>🗨 So'nggi xabarlar <span class="small" id="chMsgCount"></span></h2>
+        <div id="chMsgs"></div>
       </div>
     </section>
 
@@ -1112,6 +1146,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('section[id^="t-"]').forEach(s => s.classList.toggle('hide', s.id !== 't-' + b.dataset.t));
   if (b.dataset.t === 'blitz' && typeof loadBlitz === 'function') loadBlitz();
+  if (b.dataset.t === 'chat' && typeof loadChat === 'function') loadChat();
 });
 
 async function load() {
@@ -2153,6 +2188,57 @@ $('blSave').onclick = guard(async () => {
   await loadBlitz();
 });
 $('blDefaults').onclick = () => { $('bl_win').value = blitzDefs.msgWin || ''; $('bl_lose').value = blitzDefs.msgLose || ''; $('bl_draw').value = blitzDefs.msgDraw || ''; $('bl_btn').value = blitzDefs.button || ''; };
+/* ---------- 💬 Umumiy chat ---------- */
+let chatData = { messages: [], reports: [], muted: [], cfg: {} };
+const fmtUntil = ms => ms > 3e13 ? 'doimiy' : fmtTs(ms);
+async function loadChat() {
+  try {
+    chatData = await api('chatOverview');
+    const c = chatData.cfg || {};
+    const ae = document.activeElement && document.activeElement.id;
+    if (!(ae && ae.startsWith('ch_'))) {
+      $('ch_on').value = c.enabled === false ? '0' : '1'; $('ch_slow').value = c.slowSec ?? 3; $('ch_perMin').value = c.perMin ?? 12; $('ch_minXp').value = c.minXp ?? 0;
+      $('ch_maxLen').value = c.maxLen ?? 300; $('ch_hideAt').value = c.hideAt ?? 3; $('ch_keep').value = c.keep ?? 80; $('ch_rules').value = c.rules || ''; $('ch_bad').value = c.badWords || '';
+    }
+    renderChat();
+  } catch (e) { flash(String(e.message || e), false); }
+}
+function chatBtns(m) {
+  return `<div class="acts"><button class="bad" data-a="del" data-id="${esc(m.id)}">O'chirish</button><button class="sec" data-a="mute" data-uid="${esc(m.uid)}" data-name="${esc(m.name||'')}">Muddatli cheklash</button></div>`;
+}
+function renderChat() {
+  const reps = chatData.reports || [], msgs = chatData.messages || [], muted = chatData.muted || [];
+  $('chatBadge').style.display = reps.length ? '' : 'none'; $('chatBadge').textContent = reps.length;
+  $('chRepCount').textContent = `(${reps.length})`; $('chMutedCount').textContent = `(${muted.length})`; $('chMsgCount').textContent = `(${msgs.length})`;
+  $('chReports').innerHTML = reps.map(r => `<div class="gcard" style="border-color:${r.hidden ? '#ef4444' : '#f5b301'}">
+    <div class="row" style="justify-content:space-between"><div><b>${esc(r.name||'—')}</b> <span class="tag d">${r.n} ta shikoyat</span> ${r.hidden ? '<span class="tag d">yashirilgan</span>' : r.live ? '' : '<span class="tag">xonadan o\'chgan</span>'}<br><span class="small">${esc(r.uid)}</span></div><div class="small">🕒 ${esc(fmtTs(r.ts))}</div></div>
+    <p style="white-space:pre-wrap;margin:8px 0">${esc(r.text)}</p>
+    <div class="acts">${r.live ? `<button class="bad" data-a="del" data-id="${esc(r.id)}">Xabarni o'chirish</button>` : ''}<button class="sec" data-a="restore" data-id="${esc(r.id)}">${r.hidden ? 'Qaytarish (shikoyat asossiz)' : 'Shikoyatni yopish'}</button><button class="sec" data-a="mute" data-uid="${esc(r.uid)}" data-name="${esc(r.name||'')}">Muddatli cheklash</button></div></div>`).join('') || '<div class="small">Shikoyat yo\'q.</div>';
+  $('chMuted').innerHTML = muted.map(m => `<div class="row" style="justify-content:space-between;margin-bottom:6px"><div><b>${esc(m.name||'—')}</b> <span class="small">${esc(m.uid)} · ${esc(fmtUntil(m.until))}${m.reason ? ' · ' + esc(m.reason) : ''}</span></div><button class="sec" data-a="unmute" data-uid="${esc(m.uid)}">Cheklovni olish</button></div>`).join('') || '<div class="small">Hech kim cheklanmagan.</div>';
+  $('chMsgs').innerHTML = msgs.map(m => `<div class="gcard" style="${m.hidden ? 'opacity:.6' : ''}"><div class="row" style="justify-content:space-between"><div><b>${esc(m.name||'—')}</b> <span class="small">${esc(m.uid)} · ${esc(m.lv||'')}</span> ${m.hidden ? '<span class="tag d">yashirilgan</span>' : ''}</div><div class="small">🕒 ${esc(fmtTs(m.ts))}</div></div><p style="white-space:pre-wrap;margin:6px 0">${esc(m.text)}</p>${chatBtns(m)}</div>`).join('') || '<div class="small">Xabar yo\'q.</div>';
+  ['chReports', 'chMuted', 'chMsgs'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.onclick = guard(async () => {
+    const a = b.dataset.a;
+    if (a === 'del') { if (!confirm("Xabar o'chirilsinmi?")) return; await api('chatDelete', { id: b.dataset.id }); }
+    if (a === 'restore') await api('chatRestore', { id: b.dataset.id });
+    if (a === 'unmute') await api('chatUnmute', { uid: b.dataset.uid });
+    if (a === 'mute') {
+      const v = prompt(`${b.dataset.name || b.dataset.uid} necha DAQIQAGA cheklansin?\n(60 = 1 soat, 1440 = 1 kun, 10080 = 1 hafta, 525600 = doimiy)`, '1440'); if (v === null) return;
+      if (!(+v >= 1)) return flash('Daqiqani raqam bilan kiriting', false);
+      const reason = prompt('Sabab (ixtiyoriy):', '') || '';
+      await api('chatMute', { uid: b.dataset.uid, minutes: +v, reason });
+    }
+    flash('Bajarildi ✅'); await loadChat();
+  })));
+}
+$('chRefresh').onclick = () => loadChat();
+$('chSave').onclick = guard(async () => {
+  await api('chatSet', { value: { enabled: $('ch_on').value === '1', slowSec: +$('ch_slow').value, perMin: +$('ch_perMin').value, minXp: +$('ch_minXp').value, maxLen: +$('ch_maxLen').value, hideAt: +$('ch_hideAt').value, keep: +$('ch_keep').value, rules: $('ch_rules').value, badWords: $('ch_bad').value } });
+  flash("Saqlandi ✅ (o'zgarish ~30 soniyada kuchga kiradi)"); await loadChat();
+});
+$('chClear').onclick = guard(async () => {
+  if (!confirm("Chatdagi BARCHA xabarlar va shikoyatlar o'chirilsinmi? Bu amalni qaytarib bo'lmaydi.")) return;
+  await api('chatClear'); flash('Chat tozalandi ✅'); await loadChat();
+});
 /* ---------- 📣 Taklif ---------- */
 function renderRefs() {
   const c = data.config.referral || {};

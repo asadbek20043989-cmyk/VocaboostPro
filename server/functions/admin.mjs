@@ -7,6 +7,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { verifyInitData, tgApi, sendMessage, sendPhoto, openAppMarkup, makeStartMarkup, makeCustomButtonsMarkup, cleanStyle, escHtml, siteUrl, issueCertificate, statsFromLb, notifyGift, CERT_TPLS, DEFAULT_START_TEXT, DEFAULT_START_BUTTON, tashkentDay, tashkentNow, cleanSegment, inSegment } from '../lib/tg.mjs';
 
 import { finishWeek } from '../lib/week.mjs';
+import { cleanChatCfg } from './chat.mjs';
 import { cleanCfg, dropCfgCache, weekKeyOf, DEFAULT_MSG_WIN, DEFAULT_MSG_LOSE, DEFAULT_MSG_DRAW, DEFAULT_BUTTON } from '../lib/blitz.mjs';
 import { loadRt, mergeRt, drainWeekRest, sampleMessage, sendAuto, DEFAULT_MILESTONES } from '../lib/engage.mjs';
 import { triggerBroadcastResume, cleanMilestones, DEFAULT_REF_MILESTONES, DEFAULT_REF_FRIEND_TEXT, DEFAULT_REF_MILESTONE_TEXT } from '../lib/tg.mjs';
@@ -224,6 +225,63 @@ export const handler = async event => {
         const items = Object.entries(h).map(([id, v]) => ({ id, ...v })).sort((a, b) => (b.week || 0) - (a.week || 0));
         const league = (await call('GET', 'config/league')) || {};
         return json(200, { items, league });
+      }
+
+      // ---------- Umumiy chat moderatsiyasi ----------
+      case 'chatOverview': {
+        const [room, reports, mutes, rawCfg, lb] = await Promise.all([
+          call('GET', 'chat/general'), call('GET', 'chatReports'), call('GET', 'chatMute'), call('GET', 'config/chat'), call('GET', 'leaderboard'),
+        ]);
+        const now = Date.now();
+        const messages = Object.entries(room || {}).filter(([, v]) => v && v.text).map(([id, v]) => ({ id, ...v })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        const reps = Object.entries(reports || {}).filter(([, v]) => v && v.text).map(([id, v]) => ({ id, uid: v.uid, name: v.name, text: v.text, ts: v.ts, n: v.n || 0, last: v.last || 0, live: !!(room && room[id]), hidden: !!(room && room[id] && room[id].hidden) })).sort((a, b) => (b.last || 0) - (a.last || 0));
+        const muted = Object.entries(mutes || {}).filter(([, v]) => v && Number(v.until) > now).map(([uid, v]) => ({ uid, name: String((lb && lb[uid] && lb[uid].name) || ''), until: Number(v.until), reason: String(v.reason || '') }));
+        return json(200, { messages: messages.slice(0, 200), reports: reps.slice(0, 100), muted, cfg: cleanChatCfg(rawCfg) });
+      }
+
+      case 'chatSet': {
+        const v = body.value && typeof body.value === 'object' ? body.value : {};
+        await call('PUT', 'config/chat', cleanChatCfg(v)); // server ham shu qoidalar bilan o'qiydi
+        return json(200, { ok: true });
+      }
+
+      // Xabarni o'chirish (hamma uchun darhol yo'qoladi). Unga tegishli shikoyatlar ham tozalanadi
+      case 'chatDelete': {
+        if (!/^[A-Za-z0-9_\-]{6,40}$/.test(body.id || '')) return json(400, { error: 'ID xato' });
+        await call('DELETE', `chat/general/${body.id}`);
+        await call('DELETE', `chatReports/${body.id}`);
+        return json(200, { ok: true });
+      }
+
+      // Yashirilgan xabarni qaytarish (shikoyat asossiz bo'lsa) va shikoyatlarni tozalash
+      case 'chatRestore': {
+        if (!/^[A-Za-z0-9_\-]{6,40}$/.test(body.id || '')) return json(400, { error: 'ID xato' });
+        if (await call('GET', `chat/general/${body.id}/ts`)) await call('PATCH', `chat/general/${body.id}`, { hidden: null });
+        await call('DELETE', `chatReports/${body.id}`);
+        return json(200, { ok: true });
+      }
+
+      case 'chatMute': {
+        const uid = String(body.uid || '');
+        if (!ID_RE.test(uid)) return json(400, { error: 'ID xato' });
+        const mins = Math.round(Number(body.minutes));
+        if (!Number.isFinite(mins) || mins < 1) return json(400, { error: 'Daqiqani kiriting' });
+        const until = mins >= 60 * 24 * 365 ? 32503680000000 : Date.now() + mins * 60000; // 1 yildan ko'p = doimiy
+        await call('PUT', `chatMute/${uid}`, { until, reason: String(body.reason || '').slice(0, 120), at: Date.now() });
+        return json(200, { ok: true, until });
+      }
+
+      case 'chatUnmute': {
+        const uid = String(body.uid || '');
+        if (!ID_RE.test(uid)) return json(400, { error: 'ID xato' });
+        await call('DELETE', `chatMute/${uid}`);
+        return json(200, { ok: true });
+      }
+
+      case 'chatClear': {
+        await call('DELETE', 'chat/general');
+        await call('DELETE', 'chatReports');
+        return json(200, { ok: true });
       }
 
       // ---------- Foydalanuvchilarning adminga xabarlari ----------
